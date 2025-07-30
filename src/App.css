@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light mode colors */
+  --color-notion-gray-100: #f7f6f3;
+  --color-notion-gray-200: #e9e9e7;
+  --color-notion-gray-300: #ddddda;
+  --color-notion-gray-400: #b8b7b4;
+  --color-notion-gray-500: #9b9a97;
+  --color-notion-gray-600: #787774;
+  --color-notion-gray-700: #5e5d5a;
+  --color-notion-gray-800: #373530;
+  --color-notion-gray-900: #2f2e2a;
+
+  --color-notion-brown: #9f6b53;
+  --color-notion-orange: #d9730d;
+  --color-notion-yellow: #dfab01;
+  --color-notion-green: #0f7b6c;
+  --color-notion-blue: #0b6e99;
+  --color-notion-purple: #6940a5;
+  --color-notion-pink: #ad1a72;
+  --color-notion-red: #e03e3e;
+
+  --color-notion-brown-light: #f4eeee;
+  --color-notion-orange-light: #faebdd;
+  --color-notion-yellow-light: #fbf3db;
+  --color-notion-green-light: #ddedea;
+  --color-notion-blue-light: #ddebf1;
+  --color-notion-purple-light: #eae4f2;
+  --color-notion-pink-light: #f4dfeb;
+  --color-notion-red-light: #fbe4e4;
+
+  --font-family-notion: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+    "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    /* Dark mode - inverted grays */
+    --color-notion-gray-100: #191919;
+    --color-notion-gray-200: #2f2f2f;
+    --color-notion-gray-300: #3f3f3f;
+    --color-notion-gray-400: #4f4f4f;
+    --color-notion-gray-500: #6f6f6f;
+    --color-notion-gray-600: #8f8f8f;
+    --color-notion-gray-700: #afafaf;
+    --color-notion-gray-800: #cfcfcf;
+    --color-notion-gray-900: #ffffff;
+
+    /* Dark mode - slightly muted colors */
+    --color-notion-brown: #b8956a;
+    --color-notion-orange: #e6a54a;
+    --color-notion-yellow: #e6c84a;
+    --color-notion-green: #4a9b8e;
+    --color-notion-blue: #4a8bb8;
+    --color-notion-purple: #8b6bb1;
+    --color-notion-pink: #c4548c;
+    --color-notion-red: #e85a5a;
+
+    /* Dark mode - darker light variants */
+    --color-notion-brown-light: #2d2019;
+    --color-notion-orange-light: #2d1f0f;
+    --color-notion-yellow-light: #2d2a0f;
+    --color-notion-green-light: #0f2d2a;
+    --color-notion-blue-light: #0f1f2d;
+    --color-notion-purple-light: #1f0f2d;
+    --color-notion-pink-light: #2d0f1f;
+    --color-notion-red-light: #2d0f0f;
+  }
+}
+/* Tauri drag region */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region] button {
+  -webkit-app-region: no-drag;
+}
