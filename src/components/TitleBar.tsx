@@ -83,7 +83,7 @@ const TitleBar: React.FC = () => {
 
   return (
     <div 
-      className="flex items-center justify-between h-8 bg-notion-gray-200/50 dark:bg-notion-gray-300/30 border-b border-notion-gray-300/30 dark:border-notion-gray-500/20 px-3 select-none backdrop-blur-sm"
+      className="flex items-center justify-between h-8 bg-notion-gray-200/50 dark:bg-notion-gray-300/10 border-b border-notion-gray-300/30 dark:border-notion-gray-500/20 px-3 select-none backdrop-blur-sm"
       data-tauri-drag-region
     >
       {/* Left side - App name */}

@@ -1,0 +1,79 @@
+import React from 'react';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+const Input: React.FC<InputProps> = ({ 
+  label, 
+  error, 
+  helperText, 
+  leftIcon, 
+  rightIcon, 
+  className = '',
+  ...props 
+}) => {
+  const inputClasses = `
+    w-full px-3 py-2 text-sm
+    bg-white dark:bg-notion-gray-200 
+    border border-notion-gray-300 dark:border-notion-gray-400 
+    rounded-lg
+    text-notion-gray-900 dark:text-notion-gray-900
+    placeholder-notion-gray-500 dark:placeholder-notion-gray-500
+    focus:outline-none focus:ring-2 focus:ring-notion-blue focus:border-transparent
+    disabled:opacity-50 disabled:cursor-not-allowed
+    transition-all duration-200
+    ${error ? 'border-notion-red focus:ring-notion-red' : ''}
+    ${leftIcon ? 'pl-10' : ''}
+    ${rightIcon ? 'pr-10' : ''}
+    ${className}
+  `;
+
+  return (
+    <div className="w-full">
+      {label && (
+        <label className="block text-sm font-medium text-notion-gray-700 dark:text-notion-gray-700 mb-2">
+          {label}
+        </label>
+      )}
+      
+      <div className="relative">
+        {leftIcon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="text-notion-gray-500 dark:text-notion-gray-500">
+              {leftIcon}
+            </div>
+          </div>
+        )}
+        
+        <input className={inputClasses} {...props} />
+        
+        {rightIcon && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <div className="text-notion-gray-500 dark:text-notion-gray-500">
+              {rightIcon}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {error && (
+        <p className="mt-1 text-sm text-notion-red">
+          {error}
+        </p>
+      )}
+      
+      {helperText && !error && (
+        <p className="mt-1 text-sm text-notion-gray-500 dark:text-notion-gray-500">
+          {helperText}
+        </p>
+      )}
+    </div>
+  );
+};
+
+export default Input;
