@@ -7,31 +7,32 @@ const TitleBar: React.FC = () => {
     // Check system preference or localStorage
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('darkMode');
-      if (stored) return JSON.parse(stored);
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored !== null) {
+        console.log('Found stored theme:', stored);
+        return JSON.parse(stored);
+      }
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      console.log('Using system preference:', systemDark);
+      return systemDark;
     }
     return false;
   });
 
   useEffect(() => {
-    // Apply dark mode on mount
+    // Apply dark mode on mount and whenever it changes
+    console.log('Applying theme:', isDarkMode ? 'dark' : 'light');
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [isDarkMode]);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
+    console.log('Toggling theme from', isDarkMode ? 'dark' : 'light', 'to', newMode ? 'dark' : 'light');
     setIsDarkMode(newMode);
     localStorage.setItem('darkMode', JSON.stringify(newMode));
-    
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   };
 
   const handleMinimize = async () => {

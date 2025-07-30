@@ -34,39 +34,35 @@
     "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    /* Dark mode - inverted grays */
-    --color-notion-gray-100: #191919;
-    --color-notion-gray-200: #2f2f2f;
-    --color-notion-gray-300: #3f3f3f;
-    --color-notion-gray-400: #4f4f4f;
-    --color-notion-gray-500: #6f6f6f;
-    --color-notion-gray-600: #8f8f8f;
-    --color-notion-gray-700: #afafaf;
-    --color-notion-gray-800: #cfcfcf;
-    --color-notion-gray-900: #ffffff;
+/* Dark mode colors when .dark class is applied */
+.dark {
+  --color-notion-gray-100: #191919;
+  --color-notion-gray-200: #2f2f2f;
+  --color-notion-gray-300: #3f3f3f;
+  --color-notion-gray-400: #4f4f4f;
+  --color-notion-gray-500: #6f6f6f;
+  --color-notion-gray-600: #8f8f8f;
+  --color-notion-gray-700: #afafaf;
+  --color-notion-gray-800: #cfcfcf;
+  --color-notion-gray-900: #ffffff;
 
-    /* Dark mode - slightly muted colors */
-    --color-notion-brown: #b8956a;
-    --color-notion-orange: #e6a54a;
-    --color-notion-yellow: #e6c84a;
-    --color-notion-green: #4a9b8e;
-    --color-notion-blue: #4a8bb8;
-    --color-notion-purple: #8b6bb1;
-    --color-notion-pink: #c4548c;
-    --color-notion-red: #e85a5a;
+  --color-notion-brown: #b8956a;
+  --color-notion-orange: #e6a54a;
+  --color-notion-yellow: #e6c84a;
+  --color-notion-green: #4a9b8e;
+  --color-notion-blue: #4a8bb8;
+  --color-notion-purple: #8b6bb1;
+  --color-notion-pink: #c4548c;
+  --color-notion-red: #e85a5a;
 
-    /* Dark mode - darker light variants */
-    --color-notion-brown-light: #2d2019;
-    --color-notion-orange-light: #2d1f0f;
-    --color-notion-yellow-light: #2d2a0f;
-    --color-notion-green-light: #0f2d2a;
-    --color-notion-blue-light: #0f1f2d;
-    --color-notion-purple-light: #1f0f2d;
-    --color-notion-pink-light: #2d0f1f;
-    --color-notion-red-light: #2d0f0f;
-  }
+  --color-notion-brown-light: #2d2019;
+  --color-notion-orange-light: #2d1f0f;
+  --color-notion-yellow-light: #2d2a0f;
+  --color-notion-green-light: #0f2d2a;
+  --color-notion-blue-light: #0f1f2d;
+  --color-notion-purple-light: #1f0f2d;
+  --color-notion-pink-light: #2d0f1f;
+  --color-notion-red-light: #2d0f0f;
 }
 /* Tauri drag region */
 [data-tauri-drag-region] {
@@ -75,4 +71,46 @@
 
 [data-tauri-drag-region] button {
   -webkit-app-region: no-drag;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b8b7b4;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9b9a97;
+  background-clip: content-box;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #4f4f4f;
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6f6f6f;
+  background-clip: content-box;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b8b7b4 transparent;
+}
+
+.dark * {
+  scrollbar-color: #4f4f4f transparent;
 }
