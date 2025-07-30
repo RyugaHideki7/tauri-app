@@ -15,9 +15,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-notion-gray-100 dark:bg-notion-gray-100 font-notion">
+    <div className="h-screen flex flex-col bg-notion-gray-100 dark:bg-notion-gray-100 font-notion">
       <TitleBar />
-      <main className="container mx-auto px-6 py-16 text-center">
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-6 py-16 text-center">
         <h1 className="text-4xl font-bold text-notion-gray-900 dark:text-notion-gray-900 mb-8">
           Welcome to Tauri + React
         </h1>
@@ -102,7 +103,8 @@ function App() {
           )}
         </div>
 
-        <ColorPalette />
+          <ColorPalette />
+        </div>
       </main>
     </div>
   );
