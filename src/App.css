@@ -12,6 +12,7 @@
   --color-notion-gray-800: #373530;
   --color-notion-gray-900: #2f2e2a;
 
+  /* Enhanced color palette */
   --color-notion-brown: #9f6b53;
   --color-notion-orange: #d9730d;
   --color-notion-yellow: #dfab01;
@@ -21,6 +22,7 @@
   --color-notion-pink: #ad1a72;
   --color-notion-red: #e03e3e;
 
+  /* Light background variants */
   --color-notion-brown-light: #f4eeee;
   --color-notion-orange-light: #faebdd;
   --color-notion-yellow-light: #fbf3db;
@@ -30,40 +32,81 @@
   --color-notion-pink-light: #f4dfeb;
   --color-notion-red-light: #fbe4e4;
 
+  /* Success and warning colors */
+  --color-success: #10b981;
+  --color-success-light: #d1fae5;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+
+  /* Enhanced background and surface colors for light mode */
+  --color-background: #fafbfc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-border: #e1e5e9;
+  --color-border-light: #f1f3f4;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-shadow-light: rgba(0, 0, 0, 0.04);
+  --color-shadow-medium: rgba(0, 0, 0, 0.12);
+
   --font-family-notion: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
     "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 /* Dark mode colors when .dark class is applied */
 .dark {
-  --color-notion-gray-100: #191919;
-  --color-notion-gray-200: #2f2f2f;
-  --color-notion-gray-300: #3f3f3f;
-  --color-notion-gray-400: #4f4f4f;
-  --color-notion-gray-500: #6f6f6f;
-  --color-notion-gray-600: #8f8f8f;
-  --color-notion-gray-700: #afafaf;
-  --color-notion-gray-800: #cfcfcf;
-  --color-notion-gray-900: #ffffff;
+  --color-notion-gray-100: #0f0f0f;
+  --color-notion-gray-200: #1a1a1a;
+  --color-notion-gray-300: #262626;
+  --color-notion-gray-400: #404040;
+  --color-notion-gray-500: #525252;
+  --color-notion-gray-600: #737373;
+  --color-notion-gray-700: #a3a3a3;
+  --color-notion-gray-800: #d4d4d4;
+  --color-notion-gray-900: #f5f5f5;
 
-  --color-notion-brown: #b8956a;
-  --color-notion-orange: #e6a54a;
-  --color-notion-yellow: #e6c84a;
-  --color-notion-green: #4a9b8e;
-  --color-notion-blue: #4a8bb8;
-  --color-notion-purple: #8b6bb1;
-  --color-notion-pink: #c4548c;
-  --color-notion-red: #e85a5a;
+  /* Enhanced dark mode colors */
+  --color-notion-brown: #c4956a;
+  --color-notion-orange: #fb923c;
+  --color-notion-yellow: #fbbf24;
+  --color-notion-green: #34d399;
+  --color-notion-blue: #60a5fa;
+  --color-notion-purple: #a78bfa;
+  --color-notion-pink: #f472b6;
+  --color-notion-red: #f87171;
 
-  --color-notion-brown-light: #2d2019;
-  --color-notion-orange-light: #2d1f0f;
-  --color-notion-yellow-light: #2d2a0f;
-  --color-notion-green-light: #0f2d2a;
-  --color-notion-blue-light: #0f1f2d;
-  --color-notion-purple-light: #1f0f2d;
-  --color-notion-pink-light: #2d0f1f;
-  --color-notion-red-light: #2d0f0f;
+  /* Dark background variants */
+  --color-notion-brown-light: #1c1917;
+  --color-notion-orange-light: #1c1917;
+  --color-notion-yellow-light: #1c1917;
+  --color-notion-green-light: #064e3b;
+  --color-notion-blue-light: #0c4a6e;
+  --color-notion-purple-light: #581c87;
+  --color-notion-pink-light: #831843;
+  --color-notion-red-light: #7f1d1d;
+
+  /* Dark mode success and warning colors */
+  --color-success: #22c55e;
+  --color-success-light: #052e16;
+  --color-warning: #eab308;
+  --color-warning-light: #1e1b0c;
+  --color-info: #3b82f6;
+  --color-info-light: #0c1e3a;
+
+  /* Dark background and surface colors */
+  --color-background: #0f0f0f;
+  --color-surface: #1a1a1a;
+  --color-surface-elevated: #262626;
+  --color-surface-hover: #2a2a2a;
+  --color-border: #404040;
+  --color-border-light: #262626;
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow-light: rgba(0, 0, 0, 0.2);
+  --color-shadow-medium: rgba(0, 0, 0, 0.4);
 }
+
 /* Tauri drag region */
 [data-tauri-drag-region] {
   -webkit-app-region: drag;

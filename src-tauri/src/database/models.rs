@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use chrono::{DateTime, Utc, NaiveDate, NaiveTime};
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -79,7 +80,23 @@ impl UserRole {
             UserRole::Site02 => "site02",
             UserRole::Performance => "performance",
             UserRole::Admin => "admin",
-            UserRole::Consommateur => "Consommateur",
+            UserRole::Consommateur => "consommateur",
+        }
+    }
+}
+
+impl FromStr for UserRole {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "client" => Ok(UserRole::Client),
+            "site01" => Ok(UserRole::Site01),
+            "site02" => Ok(UserRole::Site02),
+            "performance" => Ok(UserRole::Performance),
+            "admin" => Ok(UserRole::Admin),
+            "consommateur" => Ok(UserRole::Consommateur),
+            _ => Err(format!("Invalid user role: {}", s)),
         }
     }
 }

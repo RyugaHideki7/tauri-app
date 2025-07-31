@@ -10,15 +10,19 @@ import DashboardPage from "./pages/DashboardPage";
 import ComponentsPage from "./pages/ComponentsPage";
 import LinesPage from "./pages/LinesPage";
 import ProductsPage from "./pages/ProductsPage";
+import ProfilePage from "./pages/ProfilePage";
+import UsersPage from "./pages/UsersPage";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TitleBar from "./components/TitleBar";
 import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from 'react-hot-toast';
 import "./App.css";
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <Router>
         <div className="h-screen flex flex-col bg-notion-gray-100 dark:bg-notion-gray-100 font-notion">
           {/* TitleBar is now always visible across all routes */}
@@ -44,19 +48,8 @@ const App: React.FC = () => {
                 <Route path="components" element={<ComponentsPage />} />
                 <Route path="lines" element={<LinesPage />} />
                 <Route path="products" element={<ProductsPage />} />
-                <Route
-                  path="users"
-                  element={
-                    <div className="p-8">
-                      <h1 className="text-3xl font-bold text-notion-gray-900 dark:text-notion-gray-900">
-                        Users
-                      </h1>
-                      <p className="text-notion-gray-600 dark:text-notion-gray-600 mt-2">
-                        User management coming soon...
-                      </p>
-                    </div>
-                  }
-                />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="users" element={<UsersPage />} />
                 <Route
                   path="settings"
                   element={

@@ -1,11 +1,12 @@
 use sqlx::PgPool;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use uuid::Uuid;
 use chrono::Utc;
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
-use super::models::{User, CreateUser};
+use super::models::{User, CreateUser, UserRole};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginRequest {
@@ -125,5 +126,122 @@ impl AuthService {
         .await?;
 
         Ok(users)
+    }
+
+    pub async fn change_password(
+        &self,
+        user_id: &Uuid,
+        current_password: &str,
+        new_password: &str,
+    ) -> Result<()> {
+        // Get the user
+        let user = self.get_user_by_id(user_id).await?
+            .ok_or_else(|| anyhow!("User not found"))?;
+
+        // Verify current password
+        if !verify(current_password, &user.password_hash)? {
+            return Err(anyhow!("Current password is incorrect"));
+        }
+
+        // Hash new password
+        let new_password_hash = hash(new_password, DEFAULT_COST)?;
+        let now = Utc::now();
+
+        // Update password
+        sqlx::query(
+            "UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3"
+        )
+        .bind(&new_password_hash)
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_user_role(
+        &self,
+        user_id: &Uuid,
+        new_role: &str,
+    ) -> Result<()> {
+        // Validate role using FromStr
+        if let Err(e) = UserRole::from_str(new_role) {
+            return Err(anyhow!("Invalid role specified"));
+        }
+
+        let now = Utc::now();
+
+        sqlx::query(
+            "UPDATE users SET role = $1, updated_at = $2 WHERE id = $3"
+        )
+        .bind(new_role)
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_username(
+        &self,
+        user_id: &Uuid,
+        new_username: &str,
+    ) -> Result<()> {
+        // Check if username already exists
+        let existing_user = sqlx::query_as::<_, User>(
+            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE username = $1 AND id != $2"
+        )
+        .bind(new_username)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if existing_user.is_some() {
+            return Err(anyhow!("Username already exists"));
+        }
+
+        let now = Utc::now();
+
+        sqlx::query(
+            "UPDATE users SET username = $1, updated_at = $2 WHERE id = $3"
+        )
+        .bind(new_username)
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_user(&self, user_id: &Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_user_password(
+        &self,
+        user_id: &Uuid,
+        new_password: &str,
+    ) -> Result<()> {
+        let password_hash = hash(new_password, DEFAULT_COST)?;
+        let now = Utc::now();
+
+        sqlx::query(
+            "UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3"
+        )
+        .bind(&password_hash)
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
     }
 }
