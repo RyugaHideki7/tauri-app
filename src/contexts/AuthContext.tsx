@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 
 interface User {
+  id: string;
   username: string;
-  // Add more user properties as needed
+  role: string;
 }
 
 interface AuthContextType {
@@ -27,10 +29,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = () => {
       const isAuth = localStorage.getItem('isAuthenticated');
-      const username = localStorage.getItem('username');
+      const userData = localStorage.getItem('userData');
       
-      if (isAuth === 'true' && username) {
-        setUser({ username });
+      if (isAuth === 'true' && userData) {
+        try {
+          const user = JSON.parse(userData);
+          setUser(user);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('isAuthenticated');
+          localStorage.removeItem('userData');
+        }
       }
       setIsLoading(false);
     };
@@ -41,27 +50,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     
-    // Simulate API call - replace with actual authentication logic
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (username === 'admin' && password === 'password') {
-          const userData = { username };
-          setUser(userData);
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('username', username);
-          resolve({ success: true });
-        } else {
-          resolve({ success: false, error: 'Invalid username or password' });
-        }
+    try {
+      const response = await invoke<{
+        success: boolean;
+        user?: { id: string; username: string; role: string };
+        message: string;
+      }>('login', {
+        request: { username, password }
+      });
+
+      if (response.success && response.user) {
+        setUser(response.user);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userData', JSON.stringify(response.user));
         setIsLoading(false);
-      }, 1000);
-    });
+        return { success: true };
+      } else {
+        setIsLoading(false);
+        return { success: false, error: response.message };
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Login error:', error);
+      return { success: false, error: 'Login failed. Please try again.' };
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('username');
+    localStorage.removeItem('userData');
   };
 
   const value: AuthContextType = {
