@@ -7,13 +7,10 @@ import {
 } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import ComponentsPage from "./pages/ComponentsPage";
 import LinesPage from "./pages/LinesPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
-import ThemeShowcasePage from "./pages/ThemeShowcasePage";
-import ColorTest from "./components/ColorTest";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TitleBar from "./components/TitleBar";
@@ -49,9 +46,6 @@ const App: React.FC = () => {
               >
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
-                <Route path="components" element={<ComponentsPage />} />
-                <Route path="theme" element={<ThemeShowcasePage />} />
-                <Route path="color-test" element={<ColorTest />} />
                 <Route path="lines" element={<LinesPage />} />
                 <Route path="products" element={<ProductsPage />} />
                 <Route path="profile" element={<ProfilePage />} />

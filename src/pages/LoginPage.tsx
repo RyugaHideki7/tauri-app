@@ -95,7 +95,7 @@ const LoginPage: React.FC = () => {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-notion-gray-100 dark:bg-notion-gray-300 rounded-lg">
+          <div className="mt-6 p-4 bg-notion-gray-100 dark:bg-notion-gray-300">
             <p className="text-xs text-notion-gray-600 text-center">
               Demo credentials: <br />
               <span className="font-mono">admin / password</span>

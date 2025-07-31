@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Table from '../components/Table';
+import Button from '../components/Button';
 
 interface ProductionLine {
   id: string;
@@ -154,25 +155,25 @@ const LinesPage: React.FC = () => {
         </h1>
         <div className="flex space-x-2">
           {selectedLines.length > 0 && (
-            <button
+            <Button
               onClick={handleDeleteSelected}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              variant="danger"
             >
               Delete Selected ({selectedLines.length})
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             onClick={() => setBulkModal(true)}
-            className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
+            variant="secondary"
           >
             Bulk Create
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
+            variant="primary"
           >
             Add Line
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -219,8 +220,8 @@ const LinesPage: React.FC = () => {
             render: (value) => (
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                 value 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
+                  ? 'bg-notion-blue-light text-notion-blue' 
+                  : 'bg-notion-red-light text-notion-red'
               }`}>
                 {value ? 'Active' : 'Inactive'}
               </span>
@@ -302,22 +303,24 @@ const LinesPage: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setShowCreateModal(false);
                   setEditingLine(null);
                   setFormData({ name: '', description: '', is_active: true });
                 }}
-                className="px-4 py-2 text-notion-gray-700 border border-notion-gray-300 rounded-lg hover:bg-notion-gray-100"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
                 onClick={handleCreateLine}
-                className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600"
               >
                 {editingLine ? 'Update' : 'Create'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -344,21 +347,23 @@ const LinesPage: React.FC = () => {
               />
             </div>
             <div className="flex justify-end space-x-2">
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setBulkModal(false);
                   setBulkText('');
                 }}
-                className="px-4 py-2 text-notion-gray-700 border border-notion-gray-300 rounded-lg hover:bg-notion-gray-100"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
                 onClick={handleBulkCreate}
-                className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600"
               >
                 Create Lines
-              </button>
+              </Button>
             </div>
           </div>
         </div>

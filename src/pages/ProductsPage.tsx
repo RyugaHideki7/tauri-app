@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import Table from '../components/Table';
+import React, { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import Table from "../components/Table";
+import Button from "../components/Button";
 
 interface Product {
   id: string;
@@ -25,10 +26,10 @@ const ProductsPage: React.FC = () => {
 
   // Form states
   const [formData, setFormData] = useState<CreateProductRequest>({
-    designation: '',
-    code: '',
+    designation: "",
+    code: "",
   });
-  const [bulkText, setBulkText] = useState('');
+  const [bulkText, setBulkText] = useState("");
 
   useEffect(() => {
     loadProducts();
@@ -37,10 +38,10 @@ const ProductsPage: React.FC = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const result = await invoke<Product[]>('get_products');
+      const result = await invoke<Product[]>("get_products");
       setProducts(result);
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error("Error loading products:", error);
     } finally {
       setLoading(false);
     }
@@ -49,69 +50,74 @@ const ProductsPage: React.FC = () => {
   const handleCreateProduct = async () => {
     try {
       if (editingProduct) {
-        await invoke('update_product', {
+        await invoke("update_product", {
           request: {
             id: editingProduct.id,
             ...formData,
           },
         });
       } else {
-        await invoke('create_product', { request: formData });
+        await invoke("create_product", { request: formData });
       }
-      
+
       setShowCreateModal(false);
       setEditingProduct(null);
-      setFormData({ designation: '', code: '' });
+      setFormData({ designation: "", code: "" });
       loadProducts();
     } catch (error) {
-      console.error('Error creating/updating product:', error);
+      console.error("Error creating/updating product:", error);
     }
   };
 
   const handleBulkCreate = async () => {
     try {
       const products = bulkText
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .map((line) => {
+          const parts = line.split("|").map((p) => p.trim());
           return {
             designation: parts[0],
-            code: parts[1] || '',
+            code: parts[1] || "",
           };
         });
 
       if (products.length > 0) {
-        await invoke('bulk_create_products', { request: { products } });
+        await invoke("bulk_create_products", { request: { products } });
         setBulkModal(false);
-        setBulkText('');
+        setBulkText("");
         loadProducts();
       }
     } catch (error) {
-      console.error('Error bulk creating products:', error);
+      console.error("Error bulk creating products:", error);
     }
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
+    if (confirm("Are you sure you want to delete this product?")) {
       try {
-        await invoke('delete_product', { productId });
+        await invoke("delete_product", { productId });
         loadProducts();
       } catch (error) {
-        console.error('Error deleting product:', error);
+        console.error("Error deleting product:", error);
       }
     }
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedProducts.length > 0 && confirm(`Delete ${selectedProducts.length} selected products?`)) {
+    if (
+      selectedProducts.length > 0 &&
+      confirm(`Delete ${selectedProducts.length} selected products?`)
+    ) {
       try {
-        await invoke('delete_multiple_products', { productIds: selectedProducts });
+        await invoke("delete_multiple_products", {
+          productIds: selectedProducts,
+        });
         setSelectedProducts([]);
         loadProducts();
       } catch (error) {
-        console.error('Error deleting products:', error);
+        console.error("Error deleting products:", error);
       }
     }
   };
@@ -126,9 +132,9 @@ const ProductsPage: React.FC = () => {
   };
 
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev =>
+    setSelectedProducts((prev) =>
       prev.includes(productId)
-        ? prev.filter(id => id !== productId)
+        ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
   };
@@ -149,25 +155,16 @@ const ProductsPage: React.FC = () => {
         </h1>
         <div className="flex space-x-2">
           {selectedProducts.length > 0 && (
-            <button
-              onClick={handleDeleteSelected}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-            >
+            <Button onClick={handleDeleteSelected} variant="danger">
               Delete Selected ({selectedProducts.length})
-            </button>
+            </Button>
           )}
-          <button
-            onClick={() => setBulkModal(true)}
-            className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          <Button onClick={() => setBulkModal(true)} variant="secondary">
             Bulk Create
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)} variant="primary">
             Add Product
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -175,21 +172,24 @@ const ProductsPage: React.FC = () => {
       <Table
         columns={[
           {
-            key: 'select',
+            key: "select",
             header: (
               <input
                 type="checkbox"
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setSelectedProducts(products.map(product => product.id));
+                    setSelectedProducts(products.map((product) => product.id));
                   } else {
                     setSelectedProducts([]);
                   }
                 }}
-                checked={selectedProducts.length === products.length && products.length > 0}
+                checked={
+                  selectedProducts.length === products.length &&
+                  products.length > 0
+                }
               />
             ) as any,
-            width: '50px',
+            width: "50px",
             render: (_, product) => (
               <input
                 type="checkbox"
@@ -199,22 +199,22 @@ const ProductsPage: React.FC = () => {
             ),
           },
           {
-            key: 'designation',
-            header: 'Designation',
+            key: "designation",
+            header: "Designation",
             render: (value) => <span className="font-medium">{value}</span>,
           },
           {
-            key: 'code',
-            header: 'Code',
+            key: "code",
+            header: "Code",
           },
           {
-            key: 'created_at',
-            header: 'Created',
+            key: "created_at",
+            header: "Created",
             render: (value) => new Date(value).toLocaleDateString(),
           },
           {
-            key: 'actions',
-            header: 'Actions',
+            key: "actions",
+            header: "Actions",
             render: (_, product) => (
               <div className="space-x-2">
                 <button
@@ -242,7 +242,7 @@ const ProductsPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-notion-gray-200 rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">
-              {editingProduct ? 'Edit Product' : 'Create New Product'}
+              {editingProduct ? "Edit Product" : "Create New Product"}
             </h2>
             <div className="space-y-4">
               <div>
@@ -252,7 +252,9 @@ const ProductsPage: React.FC = () => {
                 <input
                   type="text"
                   value={formData.designation}
-                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, designation: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
                   placeholder="Product designation"
                 />
@@ -264,29 +266,33 @@ const ProductsPage: React.FC = () => {
                 <input
                   type="text"
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, code: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
                   placeholder="Product code"
                 />
               </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setShowCreateModal(false);
                   setEditingProduct(null);
-                  setFormData({ designation: '', code: '' });
+                  setFormData({ designation: "", code: "" });
                 }}
-                className="px-4 py-2 text-notion-gray-700 border border-notion-gray-300 rounded-lg hover:bg-notion-gray-100"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
                 onClick={handleCreateProduct}
-                className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600"
               >
-                {editingProduct ? 'Update' : 'Create'}
-              </button>
+                {editingProduct ? "Update" : "Create"}
+              </Button>
             </div>
           </div>
         </div>
@@ -313,21 +319,23 @@ const ProductsPage: React.FC = () => {
               />
             </div>
             <div className="flex justify-end space-x-2">
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setBulkModal(false);
-                  setBulkText('');
+                  setBulkText("");
                 }}
-                className="px-4 py-2 text-notion-gray-700 border border-notion-gray-300 rounded-lg hover:bg-notion-gray-100"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
                 onClick={handleBulkCreate}
-                className="px-4 py-2 bg-notion-blue text-white rounded-lg hover:bg-blue-600"
               >
                 Create Products
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-hot-toast';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import Table from '../components/Table';
+import Select from '../components/Select';
 
 interface User {
   id: string;
@@ -226,9 +228,11 @@ export const UsersPage: React.FC = () => {
       case 'site02':
         return 'bg-notion-blue-light text-notion-blue border-notion-blue/20';
       case 'client':
-        return 'bg-notion-green-light text-notion-green border-notion-green/20';
+        return 'bg-notion-blue-light text-notion-blue border-notion-blue/20';
+      case 'consommateur':
+        return 'bg-notion-orange-light text-notion-orange border-notion-orange/20';
       default:
-        return 'bg-notion-gray-200 dark:bg-notion-gray-300 text-notion-gray-700 dark:text-notion-gray-700 border-notion-gray-300 dark:border-notion-gray-400';
+        return 'bg-notion-gray-200 text-notion-gray-700 border-notion-gray-300';
     }
   };
 
@@ -246,16 +250,16 @@ export const UsersPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-notion-gray-100 p-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-notion-gray-100 mb-2">
+              <h1 className="text-2xl font-bold text-notion-gray-900 mb-2">
                 User Management
               </h1>
-              <p className="text-gray-600 dark:text-notion-gray-600 mb-6">
+              <p className="text-notion-gray-600 mb-6">
                 Manage users, roles, and permissions
               </p>
             </div>
@@ -284,104 +288,88 @@ export const UsersPage: React.FC = () => {
         )}
 
         {/* Users Table */}
-        <div className="bg-white dark:bg-notion-gray-200 rounded-lg shadow-lg dark:shadow-none border border-gray-200 dark:border-notion-gray-400 p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-notion-gray-100 dark:bg-notion-gray-300 border-b border-notion-gray-300 dark:border-notion-gray-400">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-notion-gray-500 uppercase tracking-wider">
-                    Username
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-notion-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-notion-gray-500 uppercase tracking-wider">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-notion-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-notion-gray-300 dark:divide-notion-gray-400">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-notion-gray-300 transition-colors border-b border-gray-100 dark:border-notion-gray-400 last:border-b-0">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-notion-purple rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white text-sm font-bold">
-                            {user.username.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 dark:text-notion-gray-100">
-                            {user.username}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-notion-gray-500">
-                            ID: {user.id.slice(0, 8)}...
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(user.role)}`}>
-                        {getRoleLabel(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-notion-gray-500 dark:text-notion-gray-500">
-                      {formatDate(user.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-notion-gray-500 dark:text-notion-gray-500">
-                      {formatDate(user.updated_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditModal(user)}
-                          className="text-notion-blue hover:text-notion-blue/80"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDeleteModal(user)}
-                          className="text-notion-red hover:text-notion-red/80"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {users.length === 0 && (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-notion-gray-400 dark:text-notion-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-notion-gray-900 dark:text-notion-gray-100">No users found</h3>
-              <p className="mt-1 text-sm text-notion-gray-500 dark:text-notion-gray-500">Get started by creating a new user.</p>
-            </div>
-          )}
-        </div>
+        <Table
+          columns={[
+            {
+              key: 'username',
+              header: 'User',
+              render: (value, user) => (
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-notion-purple rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-bold">
+                      {user.username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-sm font-medium text-notion-gray-900">
+                      {user.username}
+                    </div>
+                    <div className="text-sm text-notion-gray-500">
+                      ID: {user.id.slice(0, 8)}...
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              key: 'role',
+              header: 'Role',
+              render: (value) => (
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(value)}`}>
+                  {getRoleLabel(value)}
+                </span>
+              )
+            },
+            {
+              key: 'created_at',
+              header: 'Created At',
+              render: (value) => formatDate(value)
+            },
+            {
+              key: 'updated_at',
+              header: 'Updated At',
+              render: (value) => formatDate(value)
+            },
+            {
+              key: 'actions',
+              header: 'Actions',
+              render: (_, user) => (
+                <div className="flex items-center justify-end space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditModal(user)}
+                    className="text-notion-blue hover:text-notion-blue/80"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openDeleteModal(user)}
+                    className="text-notion-red hover:text-notion-red/80"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </Button>
+                </div>
+              )
+            }
+          ]}
+          data={users}
+          hoverable={true}
+        />
 
         {/* Create User Modal */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-notion-gray-200 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-100">
+                  <h2 className="text-xl font-semibold text-notion-gray-900">
                     Create New User
                   </h2>
                   <button
@@ -414,22 +402,12 @@ export const UsersPage: React.FC = () => {
                     helperText="Minimum 8 characters"
                   />
                   
-                  <div>
-                    <label className="block text-sm font-medium text-notion-gray-700 dark:text-notion-gray-300 mb-2">
-                      Role
-                    </label>
-                    <select
-                      value={createForm.role}
-                      onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                      className="w-full px-3 py-2.5 text-sm bg-white dark:bg-notion-gray-300 border border-notion-gray-300 dark:border-notion-gray-400 rounded-lg text-notion-gray-900 dark:text-notion-gray-100 focus:outline-none focus:ring-2 focus:ring-notion-blue focus:border-notion-blue transition-all duration-200 shadow-sm dark:shadow-none"
-                    >
-                      {ROLES.map((role) => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Role"
+                    value={createForm.role}
+                    onChange={(value) => setCreateForm({ ...createForm, role: value })}
+                    options={ROLES}
+                  />
                   
                   <div className="flex items-center justify-end space-x-3 pt-4">
                     <Button
@@ -458,10 +436,10 @@ export const UsersPage: React.FC = () => {
         {/* Edit User Modal */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-notion-gray-200 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-100">
+                  <h2 className="text-xl font-semibold text-notion-gray-900">
                     Edit User
                   </h2>
                   <button
@@ -484,22 +462,12 @@ export const UsersPage: React.FC = () => {
                     required
                   />
                   
-                  <div>
-                    <label className="block text-sm font-medium text-notion-gray-700 dark:text-notion-gray-300 mb-2">
-                      Role
-                    </label>
-                    <select
-                      value={editForm.role}
-                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                      className="w-full px-3 py-2.5 text-sm bg-white dark:bg-notion-gray-300 border border-notion-gray-300 dark:border-notion-gray-400 rounded-lg text-notion-gray-900 dark:text-notion-gray-100 focus:outline-none focus:ring-2 focus:ring-notion-blue focus:border-notion-blue transition-all duration-200 shadow-sm dark:shadow-none"
-                    >
-                      {ROLES.map((role) => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Role"
+                    value={editForm.role}
+                    onChange={(value) => setEditForm({ ...editForm, role: value })}
+                    options={ROLES}
+                  />
                   
                   <Input
                     label="New Password (Optional)"
@@ -537,10 +505,10 @@ export const UsersPage: React.FC = () => {
         {/* Delete User Modal */}
         {isDeleteModalOpen && userToDelete && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-notion-gray-200 rounded-xl shadow-xl max-w-md w-full">
+            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full border border-border">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-100">
+                  <h2 className="text-xl font-semibold text-notion-gray-900">
                     Delete User
                   </h2>
                   <button
