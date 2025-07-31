@@ -1,11 +1,12 @@
-import React from 'react';
+import React from "react";
 
 interface SelectOption {
   value: string;
   label: string;
 }
 
-interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+interface SelectProps
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -15,16 +16,16 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   placeholder?: string;
 }
 
-const Select: React.FC<SelectProps> = ({ 
-  label, 
-  error, 
-  helperText, 
+const Select: React.FC<SelectProps> = ({
+  label,
+  error,
+  helperText,
   options,
   value,
   onChange,
   placeholder,
-  className = '',
-  ...props 
+  className = "",
+  ...props
 }) => {
   const baseClasses = `
     w-full px-3 py-2 border transition-all duration-200
@@ -36,7 +37,11 @@ const Select: React.FC<SelectProps> = ({
     ${baseClasses}
     bg-surface text-notion-gray-900
     border-border focus:border-notion-blue focus:ring-notion-blue/30
-    ${error ? 'border-notion-red focus:ring-notion-red/30 focus:border-notion-red' : ''}
+    ${
+      error
+        ? "border-notion-red focus:ring-notion-red/30 focus:border-notion-red"
+        : ""
+    }
     ${className}
   `;
 
@@ -47,8 +52,8 @@ const Select: React.FC<SelectProps> = ({
           {label}
         </label>
       )}
-      
-      <select 
+
+      <select
         className={selectClasses}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -65,17 +70,11 @@ const Select: React.FC<SelectProps> = ({
           </option>
         ))}
       </select>
-      
-      {error && (
-        <p className="mt-1 text-sm text-notion-red">
-          {error}
-        </p>
-      )}
-      
+
+      {error && <p className="mt-1 text-sm text-notion-red">{error}</p>}
+
       {helperText && !error && (
-        <p className="mt-1 text-sm text-notion-gray-500">
-          {helperText}
-        </p>
+        <p className="mt-1 text-sm text-notion-gray-500">{helperText}</p>
       )}
     </div>
   );

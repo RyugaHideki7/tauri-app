@@ -1,110 +1,92 @@
 @import "tailwindcss";
 
-@theme {
-  /* Light mode colors */
-  --color-notion-gray-100: #f7f6f3;
-  --color-notion-gray-200: #e9e9e7;
-  --color-notion-gray-300: #ddddda;
-  --color-notion-gray-400: #b8b7b4;
-  --color-notion-gray-500: #9b9a97;
-  --color-notion-gray-600: #787774;
-  --color-notion-gray-700: #5e5d5a;
-  --color-notion-gray-800: #373530;
-  --color-notion-gray-900: #2f2e2a;
+:root {
+  /* Container */
+  --container-center: true;
+  --container-padding: 2rem;
+  --container-screens-2xl: 1400px;
 
-  /* Enhanced color palette */
-  --color-notion-brown: #9f6b53;
-  --color-notion-orange: #d9730d;
-  --color-notion-yellow: #dfab01;
-  --color-notion-green: #0f7b6c;
-  --color-notion-blue: #0b6e99;
-  --color-notion-purple: #6940a5;
-  --color-notion-pink: #ad1a72;
-  --color-notion-red: #e03e3e;
+  /* Light Mode Colors */
+  --color-background: 0 0% 100%;
+  --color-foreground: 221 83% 20%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 221 83% 20%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 221 83% 20%;
+  --color-primary: 188 95% 42%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-secondary: 197 71% 90%;
+  --color-secondary-foreground: 221 83% 20%;
+  --color-muted: 197 71% 95%;
+  --color-muted-foreground: 221 39% 45%;
+  --color-accent: 158 64% 52%;
+  --color-accent-foreground: 0 0% 100%;
+  --color-destructive: 0 84% 60%;
+  --color-destructive-foreground: 0 0% 98%;
+  --color-border: 197 71% 85%;
+  --color-input: 197 71% 90%;
+  --color-ring: 188 95% 42%;
 
-  /* Light background variants */
-  --color-notion-brown-light: #f4eeee;
-  --color-notion-orange-light: #faebdd;
-  --color-notion-yellow-light: #fbf3db;
-  --color-notion-green-light: #ddedea;
-  --color-notion-blue-light: #ddebf1;
-  --color-notion-purple-light: #eae4f2;
-  --color-notion-pink-light: #f4dfeb;
-  --color-notion-red-light: #fbe4e4;
+  /* Named Colors */
+  --color-navy: 221 83% 20%;
+  --color-cyan: 188 95% 42%;
+  --color-light-blue: 197 71% 73%;
+  --color-green: 158 64% 52%;
+  --color-ice-blue: 197 71% 95%;
+  --color-loader: var(--color-cyan);
 
-  /* Success and warning colors */
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-info: #3b82f6;
-  --color-info-light: #dbeafe;
+  /* Border radius */
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
 
-  /* Enhanced background and surface colors for light mode */
-  --color-background: #f7f6f3;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-surface-hover: #f8fafc;
-  --color-border: #e9e9e7;
-  --color-border-light: #f1f3f4;
-  --color-shadow: rgba(0, 0, 0, 0.08);
-  --color-shadow-light: rgba(0, 0, 0, 0.04);
-  --color-shadow-medium: rgba(0, 0, 0, 0.12);
-
-  --font-family-notion: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
-    "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  /* Font family */
+  --font-family-sans: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
 }
 
-/* Dark mode colors when .dark class is applied */
+/* Dark Mode Colors */
 .dark {
-  --color-notion-gray-100: #1a1a1a;
-  --color-notion-gray-200: #262626;
-  --color-notion-gray-300: #404040;
-  --color-notion-gray-400: #525252;
-  --color-notion-gray-500: #737373;
-  --color-notion-gray-600: #a3a3a3;
-  --color-notion-gray-700: #d4d4d4;
-  --color-notion-gray-800: #e5e5e5;
-  --color-notion-gray-900: #ffffff;
+  --color-background: 240 10% 3.9%;
+  --color-foreground: 30 30% 90%;
+  --color-card: 240 10% 3.9%;
+  --color-card-foreground: 30 30% 90%;
+  --color-popover: 240 10% 3.9%;
+  --color-popover-foreground: 30 30% 90%;
+  --color-primary: 30 30% 90%;
+  --color-primary-foreground: 240 5.9% 10%;
+  --color-secondary: 240 3.7% 15.9%;
+  --color-secondary-foreground: 30 30% 90%;
+  --color-muted: 240 3.7% 15.9%;
+  --color-muted-foreground: 30 15% 65%;
+  --color-accent: 240 3.7% 15.9%;
+  --color-accent-foreground: 30 30% 90%;
+  --color-destructive: 0 62.8% 30.6%;
+  --color-destructive-foreground: 0 0% 98%;
+  --color-border: 240 3.7% 25.9%;
+  --color-input: 240 3.7% 25.9%;
+  --color-ring: 30 30% 90%;
 
-  /* Enhanced dark mode colors */
-  --color-notion-brown: #d4a574;
-  --color-notion-orange: #ff9f40;
-  --color-notion-yellow: #ffd93d;
-  --color-notion-green: #4ade80;
-  --color-notion-blue: #60a5fa;
-  --color-notion-purple: #a78bfa;
-  --color-notion-pink: #f472b6;
-  --color-notion-red: #f87171;
+  --color-navy: 240 10% 3.9%;
+  --color-cyan: 30 30% 90%;
+  --color-light-blue: 30 15% 65%;
+  --color-green: 158 64% 45%;
+  --color-ice-blue: 240 3.7% 15.9%;
+}
 
-  /* Dark background variants */
-  --color-notion-brown-light: #2d1b0e;
-  --color-notion-orange-light: #2d1a0a;
-  --color-notion-yellow-light: #2d2408;
-  --color-notion-green-light: #0a2e1a;
-  --color-notion-blue-light: #0f2a44;
-  --color-notion-purple-light: #2d1b4e;
-  --color-notion-pink-light: #4a1a2e;
-  --color-notion-red-light: #4a1a1a;
+/* Base styles */
+* {
+  border-color: hsl(var(--color-border));
+}
 
-  /* Dark mode success and warning colors */
-  --color-success: #22c55e;
-  --color-success-light: #052e16;
-  --color-warning: #eab308;
-  --color-warning-light: #1e1b0c;
-  --color-info: #3b82f6;
-  --color-info-light: #0c1e3a;
-
-  /* Dark background and surface colors */
-  --color-background: #0f0f0f;
-  --color-surface: #1a1a1a;
-  --color-surface-elevated: #262626;
-  --color-surface-hover: #2a2a2a;
-  --color-border: #404040;
-  --color-border-light: #2a2a2a;
-  --color-shadow: rgba(0, 0, 0, 0.3);
-  --color-shadow-light: rgba(0, 0, 0, 0.2);
-  --color-shadow-medium: rgba(0, 0, 0, 0.4);
+body {
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-foreground));
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Tauri drag region */
@@ -126,36 +108,21 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #b8b7b4;
+  background: hsl(var(--color-muted-foreground) / 0.3);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9b9a97;
-  background-clip: content-box;
-}
-
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-thumb {
-  background: #4f4f4f;
-  background-clip: content-box;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #6f6f6f;
+  background: hsl(var(--color-muted-foreground) / 0.5);
   background-clip: content-box;
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #b8b7b4 transparent;
-}
-
-.dark * {
-  scrollbar-color: #4f4f4f transparent;
+  scrollbar-color: hsl(var(--color-muted-foreground) / 0.3) transparent;
 }
 
 /* Custom select styling */
@@ -169,4 +136,114 @@ select {
 
 .dark select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Loader Styles */
+.loader {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  mask-image: radial-gradient(circle 8px, transparent 85%, black);
+}
+
+.loader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+      50% 70% at 50% 120%,
+      var(--color-loader) 98%,
+      transparent
+    ),
+    radial-gradient(70% 50% at -20% 50%, var(--color-loader) 98%, transparent),
+    radial-gradient(50% 70% at 50% -20%, var(--color-loader) 98%, transparent),
+    radial-gradient(70% 50% at 120% 50%, var(--color-loader) 98%, transparent);
+  background-position: top, right, bottom, left;
+  background-size: 100% 50.1%, 50.1% 100%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(
+    0 0 15px color-mix(in srgb, var(--color-loader) 30%, transparent)
+  );
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile sidebar functionality */
+.sidebar-nav-container {
+  /* Dynamic centering - controlled by JavaScript */
+  justify-content: center;
+
+  /* Smooth scrolling handled by GSAP */
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+
+  /* Prevent text selection during scrolling */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Chevron animations - handled by GSAP */
+.chevron-left,
+.chevron-right {
+  transform-origin: center;
+}
+
+/* GSAP Smooth Scroll */
+.smooth-scroll-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden; /* Hidden by default for smooth scroll */
+  z-index: 1;
+}
+
+.smooth-scroll-content {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  min-height: 100vh;
+}
+
+/* Ensure sidebar stays fixed above smooth scroll content */
+.sidebar-fixed {
+  position: fixed !important;
+  z-index: 100 !important;
+}
+
+/* Optional: Fallback for users who prefer native scrolling */
+@media (prefers-reduced-motion: reduce) {
+  .smooth-scroll-container {
+    overflow-y: auto;
+  }
+
+  .smooth-scroll-content {
+    transform: none !important;
+    will-change: auto;
+  }
+}
+
+/* Custom scrollbar styling for better UX */
+.smooth-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.smooth-scroll-container::-webkit-scrollbar-track {
+  background: hsl(var(--color-muted));
+}
+
+.smooth-scroll-container::-webkit-scrollbar-thumb {
+  background: hsl(var(--color-muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.smooth-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--color-muted-foreground) / 0.5);
 }

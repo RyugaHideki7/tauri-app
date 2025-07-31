@@ -8,78 +8,63 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Notion-inspired color palette
-        'notion-gray': {
-          100: 'var(--color-notion-gray-100)',
-          200: 'var(--color-notion-gray-200)',
-          300: 'var(--color-notion-gray-300)',
-          400: 'var(--color-notion-gray-400)',
-          500: 'var(--color-notion-gray-500)',
-          600: 'var(--color-notion-gray-600)',
-          700: 'var(--color-notion-gray-700)',
-          800: 'var(--color-notion-gray-800)',
-          900: 'var(--color-notion-gray-900)',
+        // Semantic color system from README
+        background: 'hsl(var(--color-background))',
+        foreground: 'hsl(var(--color-foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--color-card))',
+          foreground: 'hsl(var(--color-card-foreground))',
         },
-        'notion-brown': {
-          DEFAULT: 'var(--color-notion-brown)',
-          light: 'var(--color-notion-brown-light)',
+        popover: {
+          DEFAULT: 'hsl(var(--color-popover))',
+          foreground: 'hsl(var(--color-popover-foreground))',
         },
-        'notion-orange': {
-          DEFAULT: 'var(--color-notion-orange)',
-          light: 'var(--color-notion-orange-light)',
+        primary: {
+          DEFAULT: 'hsl(var(--color-primary))',
+          foreground: 'hsl(var(--color-primary-foreground))',
         },
-        'notion-yellow': {
-          DEFAULT: 'var(--color-notion-yellow)',
-          light: 'var(--color-notion-yellow-light)',
+        secondary: {
+          DEFAULT: 'hsl(var(--color-secondary))',
+          foreground: 'hsl(var(--color-secondary-foreground))',
         },
-        'notion-green': {
-          DEFAULT: 'var(--color-notion-green)',
-          light: 'var(--color-notion-green-light)',
+        muted: {
+          DEFAULT: 'hsl(var(--color-muted))',
+          foreground: 'hsl(var(--color-muted-foreground))',
         },
-        'notion-blue': {
-          DEFAULT: 'var(--color-notion-blue)',
-          light: 'var(--color-notion-blue-light)',
+        accent: {
+          DEFAULT: 'hsl(var(--color-accent))',
+          foreground: 'hsl(var(--color-accent-foreground))',
         },
-        'notion-purple': {
-          DEFAULT: 'var(--color-notion-purple)',
-          light: 'var(--color-notion-purple-light)',
+        destructive: {
+          DEFAULT: 'hsl(var(--color-destructive))',
+          foreground: 'hsl(var(--color-destructive-foreground))',
         },
-        'notion-pink': {
-          DEFAULT: 'var(--color-notion-pink)',
-          light: 'var(--color-notion-pink-light)',
-        },
-        'notion-red': {
-          DEFAULT: 'var(--color-notion-red)',
-          light: 'var(--color-notion-red-light)',
-        },
-        // Semantic colors
-        'success': {
-          DEFAULT: 'var(--color-success)',
-          light: 'var(--color-success-light)',
-        },
-        'warning': {
-          DEFAULT: 'var(--color-warning)',
-          light: 'var(--color-warning-light)',
-        },
-        'info': {
-          DEFAULT: 'var(--color-info)',
-          light: 'var(--color-info-light)',
-        },
-        // Surface colors
-        'background': 'var(--color-background)',
-        'surface': 'var(--color-surface)',
-        'surface-elevated': 'var(--color-surface-elevated)',
-        'surface-hover': 'var(--color-surface-hover)',
-        'border': 'var(--color-border)',
-        'border-light': 'var(--color-border-light)',
+        border: 'hsl(var(--color-border))',
+        input: 'hsl(var(--color-input))',
+        ring: 'hsl(var(--color-ring))',
+        
+        // Named colors
+        navy: 'hsl(var(--color-navy))',
+        cyan: 'hsl(var(--color-cyan))',
+        'light-blue': 'hsl(var(--color-light-blue))',
+        green: 'hsl(var(--color-green))',
+        'ice-blue': 'hsl(var(--color-ice-blue))',
+        loader: 'hsl(var(--color-loader))',
+      },
+      borderRadius: {
+        lg: 'var(--radius-lg)',
+        md: 'var(--radius-md)',
+        sm: 'var(--radius-sm)',
       },
       fontFamily: {
-        'notion': 'var(--font-family-notion)',
+        sans: 'var(--font-family-sans)',
       },
-      boxShadow: {
-        'notion': 'var(--color-shadow)',
-        'notion-light': 'var(--color-shadow-light)',
-        'notion-medium': 'var(--color-shadow-medium)',
+      container: {
+        center: 'var(--container-center)',
+        padding: 'var(--container-padding)',
+        screens: {
+          '2xl': 'var(--container-screens-2xl)',
+        },
       },
     },
   },

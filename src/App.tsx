@@ -11,12 +11,14 @@ import LinesPage from "./pages/LinesPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
+import ColorTestPage from "./pages/ColorTestPage";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TitleBar from "./components/TitleBar";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Toaster } from 'react-hot-toast';
+import "./lib/fontawesome"; // Initialize FontAwesome
 import "./App.css";
 
 const App: React.FC = () => {
@@ -25,7 +27,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <Toaster position="top-right" />
         <Router>
-        <div className="h-screen flex flex-col bg-background font-notion">
+        <div className="h-screen flex flex-col bg-background font-sans">
           {/* TitleBar is now always visible across all routes */}
           <TitleBar />
           
@@ -50,14 +52,15 @@ const App: React.FC = () => {
                 <Route path="products" element={<ProductsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="color-test" element={<ColorTestPage />} />
                 <Route
                   path="settings"
                   element={
                     <div className="p-8">
-                      <h1 className="text-3xl font-bold text-notion-gray-900 dark:text-notion-gray-100">
+                      <h1 className="text-3xl font-bold text-foreground">
                         Settings
                       </h1>
-                      <p className="text-notion-gray-600 dark:text-notion-gray-400 mt-2">
+                      <p className="text-muted-foreground mt-2">
                         Settings page coming soon...
                       </p>
                     </div>
