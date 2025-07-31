@@ -1,6 +1,8 @@
 pub mod models;
-pub mod migrations;
 pub mod auth;
+pub mod migrations;
+pub mod lines;
+pub mod products;
 
 use sqlx::{postgres::{PgPool, PgPoolOptions}};
 use anyhow::Result;

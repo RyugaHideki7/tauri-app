@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 use chrono::{DateTime, Utc, NaiveDate, NaiveTime};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -22,7 +22,7 @@ pub struct CreateUser {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ProductionLine {
-    pub id: String,
+    pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub is_active: bool,
@@ -32,7 +32,7 @@ pub struct ProductionLine {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Product {
-    pub id: String,
+    pub id: Uuid,
     pub designation: String,
     pub code: String,
     pub created_at: DateTime<Utc>,
@@ -41,11 +41,11 @@ pub struct Product {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct NonConformityReport {
-    pub id: String,
+    pub id: Uuid,
     pub report_number: String,
     pub report_date: DateTime<Utc>,
-    pub line_id: String,
-    pub product_id: String,
+    pub line_id: Uuid,
+    pub product_id: Uuid,
     pub production_date: NaiveDate,
     pub team: String, // A, B, or C
     pub time: NaiveTime,

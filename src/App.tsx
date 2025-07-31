@@ -8,6 +8,8 @@ import {
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ComponentsPage from "./pages/ComponentsPage";
+import LinesPage from "./pages/LinesPage";
+import ProductsPage from "./pages/ProductsPage";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TitleBar from "./components/TitleBar";
@@ -40,6 +42,8 @@ const App: React.FC = () => {
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="components" element={<ComponentsPage />} />
+                <Route path="lines" element={<LinesPage />} />
+                <Route path="products" element={<ProductsPage />} />
                 <Route
                   path="users"
                   element={
