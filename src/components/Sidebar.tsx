@@ -48,6 +48,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
     {
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4 4 4 0 004-4V5z" />
+        </svg>
+      ),
+      label: 'Theme',
+      path: '/theme'
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      label: 'Color Test',
+      path: '/color-test'
+    },
+    {
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
@@ -85,28 +103,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
   ];
 
   return (
-    <div className={`h-full bg-white dark:bg-notion-gray-200 border-r border-notion-gray-300 dark:border-notion-gray-400 flex flex-col transition-all duration-300 shadow-sm dark:shadow-none ${
+    <div className={`h-full bg-surface border-r border-border flex flex-col transition-all duration-300 shadow-sm dark:shadow-notion ${
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
       {/* Header */}
-      <div className="p-4 border-b border-notion-gray-300 dark:border-notion-gray-400">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-notion-blue rounded flex items-center justify-center">
                 <span className="text-white text-xs font-bold">T</span>
               </div>
-              <span className="font-semibold text-notion-gray-900 dark:text-white">
+              <span className="font-semibold text-notion-gray-900">
                 Tauri App
               </span>
             </div>
           )}
           <button
             onClick={onToggle}
-            className="p-1.5 rounded-lg hover:bg-notion-gray-200 dark:hover:bg-notion-gray-300 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <svg className="w-4 h-4 text-notion-gray-700 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-notion-gray-700 dark:text-notion-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -123,8 +141,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
                 className={({ isActive }) =>
                   `flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-notion-blue/10 dark:bg-notion-blue/20 text-notion-blue shadow-sm dark:shadow-none'
-                      : 'text-notion-gray-700 dark:text-white hover:bg-notion-gray-200 dark:hover:bg-notion-gray-300 hover:text-notion-gray-900 dark:hover:text-notion-gray-900'
+                      ? 'bg-notion-blue/10 dark:bg-notion-blue/20 text-notion-blue shadow-sm dark:shadow-notion'
+                      : 'text-notion-gray-700 hover:bg-surface-hover hover:text-notion-gray-900'
                   }`
                 }
                 title={isCollapsed ? item.label : undefined}
@@ -140,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-notion-gray-300 dark:border-notion-gray-400">
+      <div className="p-4 border-t border-border">
         {!isCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 min-w-0">
@@ -149,16 +167,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
                   {username.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm text-notion-gray-700 dark:text-white truncate font-medium">
+              <span className="text-sm text-notion-gray-700 truncate font-medium">
                 {username}
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg hover:bg-notion-gray-200 dark:hover:bg-notion-gray-300 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
               title="Logout"
             >
-              <svg className="w-4 h-4 text-notion-gray-700 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-notion-gray-700 dark:text-notion-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
@@ -172,10 +190,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg hover:bg-notion-gray-200 dark:hover:bg-notion-gray-300 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
               title="Logout"
             >
-              <svg className="w-4 h-4 text-notion-gray-700 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-notion-gray-700 dark:text-notion-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>

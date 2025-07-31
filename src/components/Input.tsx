@@ -27,10 +27,9 @@ const Input: React.FC<InputProps> = ({
 
   const inputClasses = `
     ${baseClasses}
-    bg-white dark:bg-notion-gray-300 
-    border-notion-gray-300 dark:border-notion-gray-400 
-    text-notion-gray-900 dark:text-notion-gray-100
-    ${error ? 'border-notion-red focus:ring-notion-red focus:border-notion-red' : ''}
+    bg-surface text-notion-gray-900 dark:text-notion-gray-100
+    border-border focus:border-notion-blue focus:ring-notion-blue/50
+    ${error ? 'border-notion-red focus:ring-notion-red/50 focus:border-notion-red' : ''}
     ${leftIcon ? 'pl-10' : ''}
     ${rightIcon ? 'pr-10' : ''}
     ${className}
@@ -71,7 +70,7 @@ const Input: React.FC<InputProps> = ({
       )}
       
       {helperText && !error && (
-        <p className="mt-1 text-sm text-notion-gray-500 dark:text-notion-gray-600">
+        <p className="mt-1 text-sm text-notion-gray-500 dark:text-notion-gray-400">
           {helperText}
         </p>
       )}

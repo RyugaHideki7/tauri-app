@@ -18,10 +18,10 @@ const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: 'bg-notion-blue hover:bg-notion-blue-dark text-white shadow-md hover:shadow-lg transition-all duration-200 border border-notion-blue hover:border-notion-blue-dark',
-    secondary: 'bg-white dark:bg-notion-gray-300 hover:bg-gray-50 dark:hover:bg-notion-gray-400 text-gray-700 dark:text-notion-gray-100 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-300 dark:border-notion-gray-500 hover:border-gray-400 dark:hover:border-notion-gray-600',
-    ghost: 'text-gray-700 dark:text-notion-gray-300 hover:bg-gray-100 dark:hover:bg-notion-gray-300 focus:ring-gray-400/50',
-    danger: 'bg-notion-red text-white hover:bg-notion-red/90 focus:ring-notion-red/50 shadow-md hover:shadow-lg dark:shadow-none'
+    primary: 'bg-notion-blue hover:bg-notion-blue/90 text-white shadow-md hover:shadow-lg dark:shadow-notion transition-all duration-200 border border-notion-blue hover:border-notion-blue/90 focus:ring-notion-blue/50',
+    secondary: 'bg-surface hover:bg-surface-hover text-notion-gray-700 shadow-md hover:shadow-lg dark:shadow-notion transition-all duration-200 border border-border hover:border-notion-gray-400 focus:ring-notion-gray-400/50',
+    ghost: 'text-notion-gray-700 hover:bg-surface-hover focus:ring-notion-gray-400/50 transition-all duration-200',
+    danger: 'bg-notion-red text-white hover:bg-notion-red/90 focus:ring-notion-red/50 shadow-md hover:shadow-lg dark:shadow-notion transition-all duration-200 border border-notion-red hover:border-notion-red/90'
   };
   
   const sizes = {

@@ -39,10 +39,10 @@ const ComponentsPage: React.FC = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-notion-gray-900 dark:text-notion-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-notion-gray-900 mb-2">
           Component Library
         </h1>
-        <p className="text-notion-gray-600 dark:text-notion-gray-600">
+        <p className="text-notion-gray-600">
           Explore our Notion-inspired component collection
         </p>
       </div>
@@ -51,10 +51,10 @@ const ComponentsPage: React.FC = () => {
         
         {/* Button Examples */}
         <div>
-          <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-notion-gray-900 mb-6">
             Button Components
           </h2>
-          <div className="bg-white dark:bg-notion-gray-200 p-6 rounded-lg border border-notion-gray-300 dark:border-notion-gray-400">
+          <div className="bg-surface p-6 rounded-lg border border-border">
             <div className="flex flex-wrap gap-4">
               <Button variant="primary">Primary Button</Button>
               <Button variant="secondary">Secondary Button</Button>
@@ -69,10 +69,10 @@ const ComponentsPage: React.FC = () => {
 
         {/* Input Examples */}
         <div>
-          <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-notion-gray-900 mb-6">
             Input Components
           </h2>
-          <div className="bg-white dark:bg-notion-gray-200 p-6 rounded-lg border border-notion-gray-300 dark:border-notion-gray-400">
+          <div className="bg-surface p-6 rounded-lg border border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="Email Address"
@@ -110,7 +110,7 @@ const ComponentsPage: React.FC = () => {
 
         {/* Table Example */}
         <div>
-          <h2 className="text-xl font-semibold text-notion-gray-900 dark:text-notion-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-notion-gray-900 mb-6">
             Table Component
           </h2>
           <Table 

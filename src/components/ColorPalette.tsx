@@ -14,7 +14,7 @@ const ColorPalette: React.FC = () => {
 
   return (
     <div className="mt-12">
-      <h2 className="text-2xl font-semibold text-notion-gray-900 dark:text-notion-gray-900 mb-6">
+      <h2 className="text-2xl font-semibold text-notion-gray-900 mb-6">
         Notion Color Palette
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -24,7 +24,7 @@ const ColorPalette: React.FC = () => {
               <div className={`${color.bg} h-16 w-full rounded-lg shadow-sm`} />
               <div className={`${color.light} h-16 w-full rounded-lg shadow-sm`} />
             </div>
-            <p className="mt-2 text-sm font-medium text-notion-gray-700 dark:text-notion-gray-700">
+            <p className="mt-2 text-sm font-medium text-notion-gray-700">
               {color.name}
             </p>
           </div>

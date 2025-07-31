@@ -1,39 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
+import { useTheme } from './ThemeProvider';
 
 const TitleBar: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check system preference or localStorage
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('darkMode');
-      if (stored !== null) {
-        console.log('Found stored theme:', stored);
-        return JSON.parse(stored);
-      }
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      console.log('Using system preference:', systemDark);
-      return systemDark;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    // Apply dark mode on mount and whenever it changes
-    console.log('Applying theme:', isDarkMode ? 'dark' : 'light');
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    console.log('Toggling theme from', isDarkMode ? 'dark' : 'light', 'to', newMode ? 'dark' : 'light');
-    setIsDarkMode(newMode);
-    localStorage.setItem('darkMode', JSON.stringify(newMode));
-  };
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleMinimize = async () => {
     try {
@@ -96,7 +67,7 @@ const TitleBar: React.FC = () => {
       {/* Right side - Controls */}
       <div className="flex items-center space-x-0.5">
         <button
-          onClick={toggleDarkMode}
+          onClick={toggleTheme}
           className="p-1.5 rounded hover:bg-notion-gray-300/40 dark:hover:bg-notion-gray-400/30 transition-all duration-200 opacity-60 hover:opacity-100"
           title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
         >

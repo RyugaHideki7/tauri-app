@@ -41,11 +41,11 @@
   --color-info-light: #dbeafe;
 
   /* Enhanced background and surface colors for light mode */
-  --color-background: #fafbfc;
+  --color-background: #f7f6f3;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
   --color-surface-hover: #f8fafc;
-  --color-border: #e1e5e9;
+  --color-border: #e9e9e7;
   --color-border-light: #f1f3f4;
   --color-shadow: rgba(0, 0, 0, 0.08);
   --color-shadow-light: rgba(0, 0, 0, 0.04);
@@ -57,35 +57,35 @@
 
 /* Dark mode colors when .dark class is applied */
 .dark {
-  --color-notion-gray-100: #0f0f0f;
-  --color-notion-gray-200: #1a1a1a;
-  --color-notion-gray-300: #262626;
-  --color-notion-gray-400: #404040;
-  --color-notion-gray-500: #525252;
-  --color-notion-gray-600: #737373;
-  --color-notion-gray-700: #a3a3a3;
-  --color-notion-gray-800: #d4d4d4;
-  --color-notion-gray-900: #f5f5f5;
+  --color-notion-gray-100: #1a1a1a;
+  --color-notion-gray-200: #262626;
+  --color-notion-gray-300: #404040;
+  --color-notion-gray-400: #525252;
+  --color-notion-gray-500: #737373;
+  --color-notion-gray-600: #a3a3a3;
+  --color-notion-gray-700: #d4d4d4;
+  --color-notion-gray-800: #e5e5e5;
+  --color-notion-gray-900: #ffffff;
 
   /* Enhanced dark mode colors */
-  --color-notion-brown: #c4956a;
-  --color-notion-orange: #fb923c;
-  --color-notion-yellow: #fbbf24;
-  --color-notion-green: #34d399;
+  --color-notion-brown: #d4a574;
+  --color-notion-orange: #ff9f40;
+  --color-notion-yellow: #ffd93d;
+  --color-notion-green: #4ade80;
   --color-notion-blue: #60a5fa;
   --color-notion-purple: #a78bfa;
   --color-notion-pink: #f472b6;
   --color-notion-red: #f87171;
 
   /* Dark background variants */
-  --color-notion-brown-light: #1c1917;
-  --color-notion-orange-light: #1c1917;
-  --color-notion-yellow-light: #1c1917;
-  --color-notion-green-light: #064e3b;
-  --color-notion-blue-light: #0c4a6e;
-  --color-notion-purple-light: #581c87;
-  --color-notion-pink-light: #831843;
-  --color-notion-red-light: #7f1d1d;
+  --color-notion-brown-light: #2d1b0e;
+  --color-notion-orange-light: #2d1a0a;
+  --color-notion-yellow-light: #2d2408;
+  --color-notion-green-light: #0a2e1a;
+  --color-notion-blue-light: #0f2a44;
+  --color-notion-purple-light: #2d1b4e;
+  --color-notion-pink-light: #4a1a2e;
+  --color-notion-red-light: #4a1a1a;
 
   /* Dark mode success and warning colors */
   --color-success: #22c55e;
@@ -101,7 +101,7 @@
   --color-surface-elevated: #262626;
   --color-surface-hover: #2a2a2a;
   --color-border: #404040;
-  --color-border-light: #262626;
+  --color-border-light: #2a2a2a;
   --color-shadow: rgba(0, 0, 0, 0.3);
   --color-shadow-light: rgba(0, 0, 0, 0.2);
   --color-shadow-medium: rgba(0, 0, 0, 0.4);

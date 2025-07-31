@@ -39,13 +39,13 @@ const LoginPage: React.FC = () => {
   return (
     <div className="h-full flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-notion-gray-200 rounded-lg shadow-lg p-8 border border-notion-gray-300 dark:border-notion-gray-400">
+        <div className="bg-surface rounded-lg shadow-lg dark:shadow-notion p-8 border border-border">
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-notion-gray-900 dark:text-notion-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-notion-gray-900 mb-2">
               Welcome Back
             </h1>
-            <p className="text-notion-gray-600 dark:text-notion-gray-600">
+            <p className="text-notion-gray-600">
               Sign in to your account
             </p>
           </div>
@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-notion-gray-100 dark:bg-notion-gray-300 rounded-lg">
-            <p className="text-xs text-notion-gray-600 dark:text-notion-gray-600 text-center">
+            <p className="text-xs text-notion-gray-600 text-center">
               Demo credentials: <br />
               <span className="font-mono">admin / password</span>
             </p>

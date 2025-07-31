@@ -6,10 +6,10 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-notion-gray-900 dark:text-notion-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-notion-gray-900 mb-2">
           Welcome back, {username}!
         </h1>
-        <p className="text-notion-gray-600 dark:text-notion-gray-600">
+        <p className="text-notion-gray-600">
           Here's what's happening with your projects today.
         </p>
       </div>
@@ -24,14 +24,14 @@ const DashboardPage: React.FC = () => {
         ].map((stat, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-notion-gray-200 p-6 rounded-lg border border-notion-gray-300 dark:border-notion-gray-400 shadow-sm"
+            className="bg-surface p-6 rounded-lg border border-border shadow-sm dark:shadow-notion"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-notion-gray-600 dark:text-notion-gray-600 mb-1">
+                <p className="text-sm text-notion-gray-600 mb-1">
                   {stat.title}
                 </p>
-                <p className="text-2xl font-bold text-notion-gray-900 dark:text-notion-gray-900">
+                <p className="text-2xl font-bold text-notion-gray-900">
                   {stat.value}
                 </p>
               </div>
@@ -41,7 +41,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-4">
               <span className="text-sm text-notion-green font-medium">{stat.change}</span>
-              <span className="text-sm text-notion-gray-500 dark:text-notion-gray-500 ml-1">
+              <span className="text-sm text-notion-gray-500 ml-1">
                 from last month
               </span>
             </div>
@@ -50,9 +50,9 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white dark:bg-notion-gray-200 rounded-lg border border-notion-gray-300 dark:border-notion-gray-400 shadow-sm">
-        <div className="p-6 border-b border-notion-gray-300 dark:border-notion-gray-400">
-          <h2 className="text-lg font-semibold text-notion-gray-900 dark:text-notion-gray-900">
+      <div className="bg-surface rounded-lg border border-border shadow-sm dark:shadow-notion">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-notion-gray-900">
             Recent Activity
           </h2>
         </div>
@@ -69,10 +69,10 @@ const DashboardPage: React.FC = () => {
                   <div className="w-2 h-2 bg-notion-blue rounded-full"></div>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-notion-gray-900 dark:text-notion-gray-900">
+                  <p className="text-sm text-notion-gray-900">
                     <span className="font-medium">{activity.user}</span> {activity.action}
                   </p>
-                  <p className="text-xs text-notion-gray-500 dark:text-notion-gray-500">
+                  <p className="text-xs text-notion-gray-500">
                     {activity.time}
                   </p>
                 </div>
