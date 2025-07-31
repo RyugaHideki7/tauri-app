@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import Input from '../components/Input';
 
@@ -7,36 +8,36 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
 
     // Simple validation
     if (!username || !password) {
       setError('Please fill in all fields');
-      setIsLoading(false);
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('username', username);
-        navigate('/dashboard');
-      } else {
-        setError('Invalid username or password');
-      }
-      setIsLoading(false);
-    }, 1000);
+    const result = await login(username, password);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error || 'Login failed');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-notion-gray-100 dark:bg-notion-gray-100 flex items-center justify-center p-4">
+    <div className="h-full flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-notion-gray-200 rounded-lg shadow-lg p-8 border border-notion-gray-300 dark:border-notion-gray-400">
           {/* Logo/Title */}

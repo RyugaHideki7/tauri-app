@@ -44,7 +44,7 @@ const Input: React.FC<InputProps> = ({
       <div className="relative">
         {leftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <div className="text-notion-gray-500 dark:text-notion-gray-500">
+            <div className="text-notion-gray-500 dark:text-notion-gray-400 [&>svg]:text-current [&>svg]:stroke-current">
               {leftIcon}
             </div>
           </div>
@@ -54,7 +54,7 @@ const Input: React.FC<InputProps> = ({
         
         {rightIcon && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <div className="text-notion-gray-500 dark:text-notion-gray-500">
+            <div className="text-notion-gray-500 dark:text-notion-gray-400 [&>svg]:text-current [&>svg]:stroke-current">
               {rightIcon}
             </div>
           </div>
