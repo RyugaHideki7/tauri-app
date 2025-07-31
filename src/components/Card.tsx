@@ -32,12 +32,10 @@ const Card: React.FC<CardProps> = ({
 
   return (
     <div className={cn(
-      themeClasses.bg.surface,
-      'rounded-lg border',
-      themeClasses.border.default,
+      'bg-surface border border-border',
       paddingClasses[padding],
-      shadowClasses[shadow],
-      hover && themeClasses.interactive.hover,
+      shadow !== 'none' && 'shadow-sm dark:shadow-notion',
+      hover && 'hover:bg-surface-hover transition-colors duration-200',
       className
     )}>
       {children}

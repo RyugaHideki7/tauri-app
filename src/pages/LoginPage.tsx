@@ -37,9 +37,9 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex items-center justify-center p-4">
+    <div className="h-full flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="bg-surface rounded-lg shadow-lg dark:shadow-notion p-8 border border-border">
+        <div className="bg-surface shadow-sm dark:shadow-notion p-6 sm:p-8 border border-border">
           {/* Logo/Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-notion-gray-900 mb-2">

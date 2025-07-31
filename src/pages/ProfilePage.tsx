@@ -105,33 +105,33 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-notion-gray-100 p-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-notion-gray-900 dark:text-notion-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-notion-gray-900 mb-2">
             Profile Settings
           </h1>
-          <p className="text-notion-gray-600 dark:text-notion-gray-600">
+          <p className="text-notion-gray-600">
             Manage your account settings and preferences
           </p>
         </div>
 
         {/* Profile Card */}
-        <div className="bg-white dark:bg-notion-gray-200 rounded-xl shadow-lg dark:shadow-none border border-gray-200 dark:border-notion-gray-400 overflow-hidden">
+        <div className="bg-surface border border-border overflow-hidden">
           {/* Profile Header */}
-          <div className="bg-gradient-to-r from-notion-blue to-notion-purple p-6">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <span className="text-2xl font-bold text-white">
+              <div className="w-16 h-16 bg-notion-gray-200 dark:bg-notion-gray-300 flex items-center justify-center">
+                <span className="text-2xl font-bold text-notion-gray-700">
                   {(username || user?.username || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-xl font-semibold text-notion-gray-900">
                   {username || user?.username || 'User'}
                 </h2>
-                <p className="text-white/80 text-sm">
+                <p className="text-notion-gray-600 text-sm">
                   {user?.role || 'Member'}
                 </p>
               </div>
@@ -139,14 +139,14 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="border-b border-gray-200 dark:border-notion-gray-400 bg-gray-50 dark:bg-notion-gray-200">
-            <nav className="flex space-x-8 px-6">
+          <div className="border-b border-border bg-notion-gray-100 dark:bg-notion-gray-200">
+            <nav className="flex px-6">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 px-4 font-medium text-sm transition-colors border-b-2 ${
                   activeTab === 'profile'
-                    ? 'border-notion-blue text-notion-blue bg-white dark:bg-notion-gray-300 rounded-t-lg'
-                    : 'border-transparent text-gray-600 dark:text-notion-gray-500 hover:text-gray-900 dark:hover:text-notion-gray-300 hover:border-gray-300 hover:bg-white/50 dark:hover:bg-notion-gray-300/50 rounded-t-lg'
+                    ? 'border-notion-blue text-notion-blue'
+                    : 'border-transparent text-notion-gray-600 hover:text-notion-gray-900 hover:border-notion-gray-300'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -158,10 +158,10 @@ export const ProfilePage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('password')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 px-4 font-medium text-sm transition-colors border-b-2 ${
                   activeTab === 'password'
-                    ? 'border-notion-blue text-notion-blue bg-white dark:bg-notion-gray-300 rounded-t-lg'
-                    : 'border-transparent text-gray-600 dark:text-notion-gray-500 hover:text-gray-900 dark:hover:text-notion-gray-300 hover:border-gray-300 hover:bg-white/50 dark:hover:bg-notion-gray-300/50 rounded-t-lg'
+                    ? 'border-notion-blue text-notion-blue'
+                    : 'border-transparent text-notion-gray-600 hover:text-notion-gray-900 hover:border-notion-gray-300'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -179,12 +179,12 @@ export const ProfilePage: React.FC = () => {
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-notion-gray-100 mb-4">
+                  <h3 className="text-lg font-semibold text-notion-gray-900 mb-4">
                     Personal Information
                   </h3>
                   
                   {profileError && (
-                    <div className="mb-4 p-4 bg-notion-red-light dark:bg-notion-red-light text-notion-red rounded-lg border border-notion-red/20">
+                    <div className="mb-4 p-4 bg-notion-red-light text-notion-red border border-notion-red/20">
                       <div className="flex items-center space-x-2">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -195,7 +195,7 @@ export const ProfilePage: React.FC = () => {
                   )}
                   
                   <form onSubmit={handleProfileSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <Input
                         label="Username"
                         type="text"
@@ -215,7 +215,7 @@ export const ProfilePage: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="flex items-center justify-end space-x-3 pt-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6">
                       <Button
                         type="button"
                         variant="secondary"
@@ -241,15 +241,15 @@ export const ProfilePage: React.FC = () => {
             {activeTab === 'password' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-notion-gray-100 mb-4">
+                  <h3 className="text-lg font-semibold text-notion-gray-900 mb-4">
                     Change Password
                   </h3>
-                  <p className="text-gray-600 dark:text-notion-gray-600 text-sm mb-6">
+                  <p className="text-notion-gray-600 text-sm mb-6">
                     Ensure your account is using a long, random password to stay secure.
                   </p>
                   
                   {passwordError && (
-                    <div className="mb-4 p-4 bg-notion-red-light dark:bg-notion-red-light text-notion-red rounded-lg border border-notion-red/20">
+                    <div className="mb-4 p-4 bg-notion-red-light text-notion-red border border-notion-red/20">
                       <div className="flex items-center space-x-2">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -269,7 +269,7 @@ export const ProfilePage: React.FC = () => {
                       required
                     />
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <Input
                         label="New Password"
                         type="password"
@@ -290,7 +290,7 @@ export const ProfilePage: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="flex items-center justify-end space-x-3 pt-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6">
                       <Button
                         type="button"
                         variant="secondary"
