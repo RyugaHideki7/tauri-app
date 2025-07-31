@@ -33,13 +33,27 @@ impl Database {
         
         let db = Database { pool };
         
-        // Run migrations with error handling
-        println!("Running database migrations...");
-        if let Err(e) = db.run_migrations().await {
-            eprintln!("Migration failed: {}", e);
-            return Err(e);
+        // Check if the users table exists to determine if we need to run migrations
+        let needs_migration = sqlx::query_scalar::<_, bool>(
+            "SELECT NOT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'users'
+            )"
+        )
+        .fetch_one(&db.pool)
+        .await?;
+        
+        if needs_migration {
+            println!("Running database migrations...");
+            if let Err(e) = db.run_migrations().await {
+                eprintln!("Migration failed: {}", e);
+                return Err(e);
+            }
+            println!("Database migrations completed successfully");
+        } else {
+            println!("Database is up to date, skipping migrations");
         }
-        println!("Database migrations completed successfully");
         
         Ok(db)
     }

@@ -22,7 +22,7 @@ pub struct LoginResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserInfo {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub username: String,
     pub role: String,
 }
@@ -39,7 +39,7 @@ impl AuthService {
     pub async fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
         // Find user by username
         let user_result = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE username = ?"
+            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE username = $1"
         )
         .bind(&request.username)
         .fetch_optional(&self.pool)
@@ -75,22 +75,22 @@ impl AuthService {
     }
 
     pub async fn create_user(&self, create_user: CreateUser) -> Result<User> {
-        let user_id = Uuid::new_v4().to_string();
+        let user_id = Uuid::new_v4();
         let password_hash = hash(&create_user.password, DEFAULT_COST)?;
         let now = Utc::now();
 
         sqlx::query(
-            r#"
+            "
             INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            "#,
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "
         )
         .bind(&user_id)
         .bind(&create_user.username)
         .bind(&password_hash)
         .bind(&create_user.role)
-        .bind(now.to_rfc3339())
-        .bind(now.to_rfc3339())
+        .bind(now)
+        .bind(now)
         .execute(&self.pool)
         .await?;
 
@@ -106,9 +106,9 @@ impl AuthService {
         Ok(user)
     }
 
-    pub async fn get_user_by_id(&self, user_id: &str) -> Result<Option<User>> {
+    pub async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<User>> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE id = ?"
+            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE id = $1"
         )
         .bind(user_id)
         .fetch_optional(&self.pool)

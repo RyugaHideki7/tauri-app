@@ -115,100 +115,104 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
 
 async fn create_initial_admin_user(pool: &PgPool) -> Result<()> {
     // Check if admin user already exists
-    let existing_admin = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM users WHERE username = 'admin'"
+    let existing_admin: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM users WHERE username = $1"
     )
+    .bind("admin")
     .fetch_one(pool)
     .await?;
 
     if existing_admin == 0 {
-        let admin_id = Uuid::new_v4().to_string();
-        let password_hash = hash("admin123", DEFAULT_COST)?;
-        let now = Utc::now().to_rfc3339();
+        // Create admin user
+        let user_id = Uuid::new_v4();
+        let username = "admin";
+        let password = "admin123"; // In production, use a more secure password
+        let password_hash = hash(password, DEFAULT_COST)?;
+        let role = "admin";
+        let now = Utc::now();
 
         sqlx::query(
-            r#"
-            INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            "#,
+            "INSERT INTO users (id, username, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
         )
-        .bind(&admin_id)
-        .bind("admin")
-        .bind(&password_hash)
-        .bind("admin")
-        .bind(&now)
-        .bind(&now)
+        .bind(user_id)
+        .bind(username)
+        .bind(password_hash)
+        .bind(role)
+        .bind(now)
+        .bind(now)
         .execute(pool)
         .await?;
-
-        println!("Created initial admin user: username=admin, password=admin123");
     }
+
+    println!("Created initial admin user: username=admin, password=admin123");
 
     Ok(())
 }
 
 async fn create_sample_data(pool: &PgPool) -> Result<()> {
     // Check if sample data already exists
-    let existing_lines = sqlx::query_scalar::<_, i64>(
+    let existing_lines: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM production_lines"
     )
     .fetch_one(pool)
     .await?;
 
     if existing_lines == 0 {
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
+        
+        // Insert sample production lines one by one to avoid parameter binding issues
+        let line1_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+        )
+        .bind(line1_id)
+        .bind("Line 1")
+        .bind("Main production line")
+        .bind(true)
+        .bind(now)
+        .bind(now)
+        .execute(pool)
+        .await?;
 
-        // Create sample production lines
-        let lines = vec![
-            ("Ligne 1", "Production line 1"),
-            ("Ligne 2", "Production line 2"),
-            ("Ligne 3", "Production line 3"),
-        ];
+        let line2_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+        )
+        .bind(line2_id)
+        .bind("Line 2")
+        .bind("Secondary production line")
+        .bind(true)
+        .bind(now)
+        .bind(now)
+        .execute(pool)
+        .await?;
 
-        for (name, description) in lines {
-            let line_id = Uuid::new_v4().to_string();
-            sqlx::query(
-                r#"
-                INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-                "#,
-            )
-            .bind(&line_id)
-            .bind(name)
-            .bind(description)
-            .bind(true)
-            .bind(&now)
-            .bind(&now)
-            .execute(pool)
-            .await?;
-        }
+        // Insert sample products
+        let product1_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO products (id, designation, code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+        )
+        .bind(product1_id)
+        .bind("Product A")
+        .bind("PROD-A-001")
+        .bind(now)
+        .bind(now)
+        .execute(pool)
+        .await?;
 
-        // Create sample products
-        let products = vec![
-            ("Eau Minérale 500ml", "EM500"),
-            ("Eau Minérale 1L", "EM1000"),
-            ("Eau Gazeuse 500ml", "EG500"),
-            ("Eau Gazeuse 1L", "EG1000"),
-        ];
+        let product2_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO products (id, designation, code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+        )
+        .bind(product2_id)
+        .bind("Product B")
+        .bind("PROD-B-001")
+        .bind(now)
+        .bind(now)
+        .execute(pool)
+        .await?;
 
-        for (designation, code) in products {
-            let product_id = Uuid::new_v4().to_string();
-            sqlx::query(
-                r#"
-                INSERT INTO products (id, designation, code, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?)
-                "#,
-            )
-            .bind(&product_id)
-            .bind(designation)
-            .bind(code)
-            .bind(&now)
-            .bind(&now)
-            .execute(pool)
-            .await?;
-        }
-
-        println!("Created sample production lines and products");
+        println!("Created sample production data");
     }
 
     Ok(())

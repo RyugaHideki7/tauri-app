@@ -51,6 +51,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
+      // Check if we're running in Tauri environment
+      if (typeof window === 'undefined' || !(window as any).__TAURI_INTERNALS__) {
+        setIsLoading(false);
+        return { success: false, error: 'Please use the desktop application for login. Close the browser and use the Tauri app window.' };
+      }
+
       const response = await invoke<{
         success: boolean;
         user?: { id: string; username: string; role: string };
