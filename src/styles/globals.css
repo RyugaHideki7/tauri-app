@@ -65,8 +65,21 @@
 /* Global styles */
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+}
+
+/* Enable dragging for the title bar */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+/* Disable dragging on interactive elements */
+button,
+input,
+a,
+[data-tauri-drag-region="false"] {
+  -webkit-app-region: no-drag;
 }
 
 html,

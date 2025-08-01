@@ -28,7 +28,7 @@ function App() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-7xl font-bold text-gray-900 mb-4">
             Tailwind CSS v4 Test
           </h1>
           <p className="text-lg text-gray-600 mb-6">
@@ -57,7 +57,7 @@ function App() {
 
         {/* Interactive Components Test */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <h2 className="text-2xl font-bold text-primary">
             Components Test
           </h2>
           

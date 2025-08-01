@@ -2,8 +2,8 @@ mod database;
 
 use database::{
     auth::{AuthService, LoginRequest, LoginResponse, UserInfo},
-    models::CreateUser,
     lines::{BulkCreateLinesRequest, CreateLineRequest, LinesService, UpdateLineRequest},
+    models::CreateUser,
     products::{
         BulkCreateProductsRequest, CreateProductRequest, ProductsService, UpdateProductRequest,
     },
@@ -69,9 +69,10 @@ async fn change_password(
 ) -> Result<(), String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let user_uuid = uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
-    
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
     auth_service
         .change_password(&user_uuid, &current_password, &new_password)
         .await
@@ -86,9 +87,10 @@ async fn update_user_role(
 ) -> Result<(), String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let user_uuid = uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
-    
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
     auth_service
         .update_user_role(&user_uuid, &new_role)
         .await
@@ -104,9 +106,13 @@ async fn create_user(
 ) -> Result<UserInfo, String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let create_user = CreateUser { username, password, role };
-    
+
+    let create_user = CreateUser {
+        username,
+        password,
+        role,
+    };
+
     auth_service
         .create_user(create_user)
         .await
@@ -126,9 +132,10 @@ async fn update_username(
 ) -> Result<(), String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let user_uuid = uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
-    
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
     auth_service
         .update_username(&user_uuid, &new_username)
         .await
@@ -136,15 +143,13 @@ async fn update_username(
 }
 
 #[tauri::command]
-async fn delete_user(
-    db_state: State<'_, DatabaseState>,
-    user_id: String,
-) -> Result<(), String> {
+async fn delete_user(db_state: State<'_, DatabaseState>, user_id: String) -> Result<(), String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let user_uuid = uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
-    
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
     auth_service
         .delete_user(&user_uuid)
         .await
@@ -159,9 +164,10 @@ async fn update_user_password(
 ) -> Result<(), String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
-    
-    let user_uuid = uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
-    
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
     auth_service
         .update_user_password(&user_uuid, &new_password)
         .await

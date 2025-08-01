@@ -51,13 +51,14 @@ const TitleBar: React.FC = () => {
 
   return (
     <div
-      className="flex items-center justify-between h-10 bg-[var(--color-card)] border-b border-[var(--color-border)] px-4 select-none"
+      className="flex items-center justify-between h-10 bg-card border-b border-border select-none"
       data-tauri-drag-region
+      style={{ paddingLeft: "16px", paddingRight: "16px" }}
     >
       {/* Left side - App name */}
       <div className="flex items-center">
-        <span className="text-sm font-medium text-[var(--color-foreground)] tracking-wide">
-          Tauri App
+        <span className="text-2xl font-bold text-foreground tracking-wide">
+          Ifri
         </span>
       </div>
 
@@ -66,7 +67,7 @@ const TitleBar: React.FC = () => {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-muted)] transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
           title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
           <FontAwesomeIcon
@@ -76,22 +77,24 @@ const TitleBar: React.FC = () => {
         </button>
 
         {/* Separator */}
-        <div className="w-px h-4 bg-[var(--color-border)] mx-3"></div>
+        <div className="w-px h-4 bg-border mx-3"></div>
 
         {/* Window controls */}
         <div className="flex items-center space-x-1">
           <button
             onClick={handleMinimize}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-muted)] transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
             title="Minimize"
+            data-tauri-drag-region="false"
           >
             <FontAwesomeIcon icon="minus" className="w-3.5 h-3.5" />
           </button>
 
           <button
             onClick={handleMaximize}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-muted)] transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-all duration-200 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
             title="Maximize"
+            data-tauri-drag-region="false"
           >
             <FontAwesomeIcon icon="expand" className="w-3.5 h-3.5" />
           </button>
@@ -100,6 +103,7 @@ const TitleBar: React.FC = () => {
             onClick={handleClose}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-red-500 hover:text-white transition-all duration-200 text-[var(--color-muted-foreground)]"
             title="Close"
+            data-tauri-drag-region="false"
           >
             <FontAwesomeIcon icon="times" className="w-3.5 h-3.5" />
           </button>
