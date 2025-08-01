@@ -9,7 +9,23 @@ import {
   faUser,
   faCog,
   faBars,
-  faSearch
+  faSearch,
+  faChartBar,
+  faFileAlt,
+  faFolder,
+  faBell,
+  faHeart,
+  faBookmark,
+  faCalendar,
+  faEnvelope,
+  faUsers,
+  faDatabase,
+  faCloud,
+  faShield,
+  faTools,
+  faQuestionCircle,
+  faChevronLeft,
+  faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to the library
@@ -23,5 +39,21 @@ library.add(
   faUser,
   faCog,
   faBars,
-  faSearch
+  faSearch,
+  faChartBar,
+  faFileAlt,
+  faFolder,
+  faBell,
+  faHeart,
+  faBookmark,
+  faCalendar,
+  faEnvelope,
+  faUsers,
+  faDatabase,
+  faCloud,
+  faShield,
+  faTools,
+  faQuestionCircle,
+  faChevronLeft,
+  faInfoCircle
 );
