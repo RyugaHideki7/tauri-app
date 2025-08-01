@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light mode colors */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(221 83% 20%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(221 83% 20%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(221 83% 20%);
+  --color-primary: hsl(188 95% 42%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(197 71% 90%);
+  --color-secondary-foreground: hsl(221 83% 20%);
+  --color-muted: hsl(197 71% 95%);
+  --color-muted-foreground: hsl(221 39% 45%);
+  --color-accent: hsl(158 64% 52%);
+  --color-accent-foreground: hsl(0 0% 100%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(197 71% 85%);
+  --color-input: hsl(197 71% 90%);
+  --color-ring: hsl(188 95% 42%);
+
+  /* Additional IFRI colors */
+  --color-navy: hsl(221 83% 20%);
+  --color-cyan: hsl(188 95% 42%);
+  --color-light-blue: hsl(197 71% 73%);
+  --color-green: hsl(158 64% 52%);
+  --color-ice-blue: hsl(197 71% 95%);
+  --color-loader: var(--color-cyan);
+}
+
+  .dark {
+    /* Dark mode colors */
+    --color-background: hsl(240 10% 3.9%);
+    --color-foreground: hsl(30 30% 90%);
+    --color-card: hsl(240 10% 3.9%);
+    --color-card-foreground: hsl(30 30% 90%);
+    --color-popover: hsl(240 10% 3.9%);
+    --color-popover-foreground: hsl(30 30% 90%);
+    --color-primary: hsl(30 30% 90%);
+    --color-primary-foreground: hsl(240 5.9% 10%);
+    --color-secondary: hsl(240 3.7% 15.9%);
+    --color-secondary-foreground: hsl(30 30% 90%);
+    --color-muted: hsl(240 3.7% 15.9%);
+    --color-muted-foreground: hsl(30 15% 65%);
+    --color-accent: hsl(240 3.7% 15.9%);
+    --color-accent-foreground: hsl(30 30% 90%);
+    --color-destructive: hsl(0 62.8% 30.6%);
+    --color-destructive-foreground: hsl(0 0% 98%);
+    --color-border: hsl(240 3.7% 25.9%);
+    --color-input: hsl(240 3.7% 25.9%);
+    --color-ring: hsl(30 30% 90%);
+
+    /* Coffee theme specific colors */
+    --color-navy: hsl(240 10% 3.9%);
+    --color-cyan: hsl(30 30% 90%);
+    --color-light-blue: hsl(30 15% 65%);
+    --color-green: hsl(158 64% 45%);
+    --color-ice-blue: hsl(240 3.7% 15.9%);
+  }
+
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-foreground));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
