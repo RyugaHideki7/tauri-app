@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import Table from '../components/Table';
-import Button from '../components/Button';
+import Table from '../components/ui/Table';
+import Button from '../components/ui/Button';
 
 interface ProductionLine {
   id: string;

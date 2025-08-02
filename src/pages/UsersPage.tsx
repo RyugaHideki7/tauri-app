@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-hot-toast';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import Table from '../components/Table';
-import Select from '../components/Select';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Table from '../components/ui/Table';
+import Select from '../components/ui/Select';
 
 interface User {
   id: string;

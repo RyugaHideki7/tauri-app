@@ -86,6 +86,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userData');
+    // Clean up any legacy keys
+    localStorage.removeItem('username');
   };
 
   const value: AuthContextType = {

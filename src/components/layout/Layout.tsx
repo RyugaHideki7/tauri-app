@@ -9,6 +9,10 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Title bar wraps everything */}
@@ -17,12 +21,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden border-t border-border/50">
         {/* Sidebar */}
-        <Sidebar />
+        <Sidebar 
+          isCollapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+        />
         
         {/* Main content */}
         <main className="flex-1 overflow-hidden bg-background">
           <div className="h-full overflow-y-auto custom-scrollbar">
-            <div className="max-w-4xl mx-auto py-8 px-6">
+            <div className="max-w-6xl mx-auto py-6 px-8">
               {children}
             </div>
           </div>

@@ -9,7 +9,7 @@ const DashboardPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-notion-gray-900 mb-2">
           Welcome back, {username}!
         </h1>
-        <p className="text-notion-gray-600">
+        <p className="text-gray-600">
           Here's what's happening with your projects today.
         </p>
       </div>

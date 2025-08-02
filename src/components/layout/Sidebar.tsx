@@ -1,5 +1,8 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAuth } from "../../contexts/AuthContext";
+import { NAVIGATION_ITEMS, NAVIGATION_ICONS } from "../../constants/navigation";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -8,120 +11,90 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
   const navigate = useNavigate();
-  const username = localStorage.getItem('username') || 'User';
+  const { user, logout } = useAuth();
+  const username = user?.username || "User";
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('username');
-    navigate('/login');
+    logout();
+    navigate("/login", { replace: true });
   };
 
-  const menuItems = [
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-      label: 'Profile',
-      path: '/profile'
-    },
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 1v6m8-6v6" />
-        </svg>
-      ),
-      label: 'Dashboard',
-      path: '/dashboard'
-    },
-
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      ),
-      label: 'Lines',
-      path: '/lines'
-    },
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      ),
-      label: 'Products',
-      path: '/products'
-    },
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-      ),
-      label: 'Users',
-      path: '/users'
-    },
-    {
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      label: 'Settings',
-      path: '/settings'
-    }
-  ];
+  const menuItems = NAVIGATION_ITEMS;
 
   return (
-    <div className={`h-full bg-background/80 border-r border-border flex flex-col transition-all duration-300 backdrop-blur-sm ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    <div
+      className={`h-full bg-card border-r border-border flex flex-col transition-all duration-300 ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
+    >
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                <span className="text-primary-foreground text-xs font-bold">T</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-primary-foreground text-sm font-bold">
+                  I
+                </span>
               </div>
-              <span className="font-semibold text-foreground">
-                Tauri App
+              <span className="font-semibold text-foreground text-lg">
+                Ifri
               </span>
             </div>
           )}
+          {isCollapsed && (
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm mx-auto">
+              <span className="text-primary-foreground text-sm font-bold">
+                I
+              </span>
+            </div>
+          )}
+          {!isCollapsed && (
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title="Collapse sidebar"
+            >
+              <FontAwesomeIcon
+                icon={NAVIGATION_ICONS.COLLAPSE}
+                className="w-4 h-4 text-muted-foreground"
+              />
+            </button>
+          )}
+        </div>
+        {isCollapsed && (
           <button
             onClick={onToggle}
-            className="p-1.5 rounded-lg hover:bg-accent transition-colors"
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="w-full mt-3 p-2 rounded-lg hover:bg-muted transition-colors"
+            title="Expand sidebar"
           >
-            <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <FontAwesomeIcon
+              icon={NAVIGATION_ICONS.EXPAND}
+              className="w-4 h-4 text-muted-foreground mx-auto"
+            />
           </button>
-        </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2">
-        <ul className="space-y-1">
+      <nav className="flex-1 p-3 bg-card">
+        <ul className="space-y-2 text-foreground">
           {menuItems.map((item) => (
             <li key={item.path}>
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  `flex items-center px-3 py-3 rounded-xl text-xl font-medium transition-all duration-200 group ${
                     isActive
-                      ? 'bg-primary/10 text-primary shadow-sm'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`
+                      ? "bg-muted text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  } ${isCollapsed ? "justify-center" : ""}`
                 }
                 title={isCollapsed ? item.label : undefined}
               >
-                <span className="flex-shrink-0">{item.icon}</span>
+                <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                  <FontAwesomeIcon icon={item.icon} className="w-4 h-4" />
+                </span>
                 {!isCollapsed && (
                   <span className="ml-3 truncate">{item.label}</span>
                 )}
@@ -134,42 +107,47 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
       {/* User Section */}
       <div className="p-4 border-t border-border">
         {!isCollapsed ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 min-w-0">
-              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-primary-foreground text-xs font-bold">
+          <div className="flex items-center justify-between bg-muted/50 rounded-xl p-3">
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-primary-foreground text-sm font-bold">
                   {username.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm text-foreground truncate font-medium">
-                {username}
-              </span>
+              <div className="min-w-0">
+                <span className="text-sm text-foreground truncate font-medium block">
+                  {username}
+                </span>
+                <span className="text-xs text-muted-foreground">Online</span>
+              </div>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+              className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Logout"
             >
-              <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <FontAwesomeIcon
+                icon={NAVIGATION_ICONS.LOGOUT}
+                className="w-4 h-4"
+              />
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center space-y-2">
-            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground text-xs font-bold">
+          <div className="flex flex-col items-center space-y-3">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-primary-foreground text-sm font-bold">
                 {username.charAt(0).toUpperCase()}
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+              className="p-2 rounded-lg  hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Logout"
             >
-              <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <FontAwesomeIcon
+                icon={NAVIGATION_ICONS.LOGOUT}
+                className="w-4 h-4"
+              />
             </button>
           </div>
         )}
