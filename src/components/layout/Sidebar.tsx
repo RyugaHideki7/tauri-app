@@ -34,21 +34,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-primary-foreground text-sm font-bold">
-                  I
-                </span>
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img 
+                  src="/IFRI.png" 
+                  alt="IFRI Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <span className="font-semibold text-foreground text-lg">
+              <span className="font-semibold text-foreground text-xl">
                 Ifri
               </span>
             </div>
           )}
           {isCollapsed && (
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm mx-auto">
-              <span className="text-primary-foreground text-sm font-bold">
-                I
-              </span>
+            <div className="w-10 h-10 flex items-center justify-center mx-auto">
+              <img 
+                src="/IFRI.png" 
+                alt="IFRI Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
           )}
           {!isCollapsed && (

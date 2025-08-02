@@ -296,7 +296,7 @@ export const UsersPage: React.FC = () => {
             {
               key: 'username',
               header: 'User',
-              render: (value, user) => (
+              render: (_, user) => (
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-primary-foreground text-sm font-bold">
