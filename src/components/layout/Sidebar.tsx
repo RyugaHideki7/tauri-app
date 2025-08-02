@@ -84,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-3 rounded-xl text-xl font-medium transition-all duration-200 group ${
+                  `flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                     isActive
                       ? "bg-muted text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -105,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-border">
+      <div className="p-2 border-t border-border">
         {!isCollapsed ? (
           <div className="flex items-center justify-between bg-muted/50 rounded-xl p-3">
             <div className="flex items-center space-x-3 min-w-0">
@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="p-2 rounded-lg text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Logout"
             >
               <FontAwesomeIcon
@@ -135,13 +135,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
         ) : (
           <div className="flex flex-col items-center space-y-3">
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-primary-foreground text-sm font-bold">
+              <span className="text-primary-foreground text-lg font-bold">
                 {username.charAt(0).toUpperCase()}
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg  hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="p-2 rounded-lg text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Logout"
             >
               <FontAwesomeIcon

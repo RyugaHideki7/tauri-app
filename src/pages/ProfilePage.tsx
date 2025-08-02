@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { invoke } from '@tauri-apps/api/core';
-import { toast } from 'react-hot-toast';
+import { useToast } from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const { addToast } = useToast();
   
   // Profile info state
   const [username, setUsername] = useState(user?.username || '');
@@ -51,10 +52,10 @@ export const ProfilePage: React.FC = () => {
         newUsername: username.trim(),
       });
       
-      // Update localStorage
-      localStorage.setItem('username', username.trim());
+      // Update the user context and localStorage
+      updateUser({ username: username.trim() });
       
-      toast.success('Username updated successfully');
+      addToast('Username updated successfully', 'success');
     } catch (error) {
       console.error('Error updating username:', error);
       setProfileError(error instanceof Error ? error.message : 'Failed to update username');
@@ -92,7 +93,7 @@ export const ProfilePage: React.FC = () => {
         newPassword,
       });
       
-      toast.success('Password updated successfully');
+      addToast('Password updated successfully', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');

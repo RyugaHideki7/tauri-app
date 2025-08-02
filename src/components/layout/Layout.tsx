@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TitleBar from "./TitleBar";
 import Sidebar from "./Sidebar";
+import { Toaster } from "react-hot-toast";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,7 +28,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
         
         {/* Main content */}
-        <main className="flex-1 overflow-hidden bg-background">
+        <main className="flex-1 overflow-hidden bg-background relative">
+          {/* Toast notifications */}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              className: 'bg-background text-foreground border border-border shadow-lg',
+              duration: 3000,
+              success: {
+                className: '!bg-green-50 !text-green-700 !border-green-200',
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                className: '!bg-red-50 !text-red-700 !border-red-200',
+              },
+            }}
+          />
           <div className="h-full overflow-y-auto custom-scrollbar">
             <div className="max-w-6xl mx-auto py-6 px-8">
               {children}
