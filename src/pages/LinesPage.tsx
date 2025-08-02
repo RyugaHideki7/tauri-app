@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
+import Dialog from '../components/ui/Dialog';
 
 interface ProductionLine {
   id: string;
@@ -257,117 +258,122 @@ const LinesPage: React.FC = () => {
         hoverable={true}
       />
 
-      {/* Create/Edit Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-notion-gray-200 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {editingLine ? 'Edit Line' : 'Create New Line'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-notion-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
-                  placeholder="Line name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-notion-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
-                  placeholder="Optional description"
-                  rows={3}
-                />
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="mr-2"
-                />
-                <label htmlFor="is_active" className="text-sm font-medium text-notion-gray-700">
-                  Active
-                </label>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingLine(null);
-                  setFormData({ name: '', description: '', is_active: true });
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleCreateLine}
-              >
-                {editingLine ? 'Update' : 'Create'}
-              </Button>
-            </div>
+      {/* Create/Edit Dialog */}
+      <Dialog
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingLine(null);
+          setFormData({ name: '', description: '', is_active: true });
+        }}
+        title={editingLine ? 'Edit Line' : 'Create New Line'}
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Name
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
+              placeholder="e.g., Assembly Line 1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 min-h-[100px]"
+              placeholder="Optional description of the production line"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="h-4 w-4 rounded border-border/50 dark:border-border/30 focus:ring-primary/50 text-primary"
+            />
+            <label htmlFor="is_active" className="ml-2 block text-sm font-medium text-foreground">
+              Active
+            </label>
           </div>
         </div>
-      )}
+        <div className="flex justify-end space-x-2 mt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setShowCreateModal(false);
+              setEditingLine(null);
+              setFormData({ name: '', description: '', is_active: true });
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleCreateLine}
+          >
+            {editingLine ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      </Dialog>
 
-      {/* Bulk Create Modal */}
-      {showBulkModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-notion-gray-200 rounded-lg p-6 w-full max-w-2xl">
-            <h2 className="text-xl font-bold mb-4">Bulk Create Lines</h2>
-            <div className="mb-4">
-              <p className="text-sm text-notion-gray-600 mb-2">
-                Enter one line per row. Format: Name | Description | Active (true/false)
-              </p>
-              <p className="text-xs text-notion-gray-500 mb-4">
-                Example: Line A | Production line for product A | true
-              </p>
-              <textarea
-                value={bulkText}
-                onChange={(e) => setBulkText(e.target.value)}
-                className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
-                placeholder="Line A | Description A | true&#10;Line B | Description B | false"
-                rows={10}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setBulkModal(false);
-                  setBulkText('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleBulkCreate}
-              >
-                Create Lines
-              </Button>
-            </div>
-          </div>
+      {/* Bulk Create Dialog */}
+      <Dialog
+        isOpen={showBulkModal}
+        onClose={() => {
+          setBulkModal(false);
+          setBulkText('');
+        }}
+        title="Bulk Create Lines"
+        maxWidth="2xl"
+      >
+        <div className="mb-4">
+          <p className="text-sm text-foreground mb-2">
+            Enter one line per row. Format: Name | Description | Active (true/false)
+          </p>
+          <p className="text-xs text-muted-foreground mb-4">
+            Example: Assembly Line 1 | Main production line for electronics | true
+          </p>
+          <textarea
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            className="w-full px-4 py-3 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 font-mono text-sm"
+            placeholder="Assembly Line 1 | Main production line | true&#10;Packaging Line | Final packaging station | true"
+            rows={10}
+          />
         </div>
-      )}
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setBulkModal(false);
+              setBulkText('');
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleBulkCreate}
+            disabled={!bulkText.trim()}
+          >
+            Create Lines
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 };

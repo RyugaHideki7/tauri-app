@@ -21,15 +21,15 @@ const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      "bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary",
+      "bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors duration-200",
     secondary:
-      "bg-secondary hover:bg-secondary/80 text-secondary-foreground focus:ring-secondary",
+      "bg-secondary hover:bg-secondary/90 active:bg-secondary/80 text-secondary-foreground focus:ring-2 focus:ring-secondary/50 focus:ring-offset-2 transition-colors duration-200",
     outline:
-      "border border-border hover:bg-accent hover:text-accent-foreground text-foreground focus:ring-primary",
+      "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground active:bg-accent/80 text-foreground focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors duration-200",
     ghost:
-      "hover:bg-accent hover:text-accent-foreground text-foreground focus:ring-primary",
+      "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 text-foreground focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors duration-200",
     danger:
-      "bg-destructive hover:bg-destructive/90 text-destructive-foreground focus:ring-destructive",
+      "bg-destructive hover:bg-destructive/90 active:bg-destructive/80 text-destructive-foreground focus:ring-2 focus:ring-destructive/50 focus:ring-offset-2 transition-colors duration-200",
   };
 
   const sizeClasses = {

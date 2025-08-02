@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Table from '../components/ui/Table';
 import Select from '../components/ui/Select';
+import Dialog from '../components/ui/Dialog';
 
 interface User {
   id: string;
@@ -363,206 +364,161 @@ export const UsersPage: React.FC = () => {
           hoverable={true}
         />
 
-        {/* Create User Modal */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900">
-                    Create New User
-                  </h2>
-                  <button
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="text-notion-gray-500 hover:text-notion-gray-700 dark:text-notion-gray-500 dark:hover:text-notion-gray-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <form onSubmit={handleCreateUser} className="space-y-4">
-                  <Input
-                    label="Username"
-                    type="text"
-                    value={createForm.username}
-                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-                    placeholder="Enter username"
-                    required
-                  />
-                  
-                  <Input
-                    label="Password"
-                    type="password"
-                    value={createForm.password}
-                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    placeholder="Enter password"
-                    required
-                    helperText="Minimum 8 characters"
-                  />
-                  
-                  <Select
-                    label="Role"
-                    value={createForm.role}
-                    onChange={(value) => setCreateForm({ ...createForm, role: value })}
-                    options={ROLES}
-                  />
-                  
-                  <div className="flex items-center justify-end space-x-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setIsCreateModalOpen(false)}
-                      disabled={isCreating}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={isCreating}
-                      isLoading={isCreating}
-                    >
-                      Create User
-                    </Button>
-                  </div>
-                </form>
-              </div>
+        {/* Create User Dialog */}
+        <Dialog
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Create New User"
+          maxWidth="md"
+        >
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <Input
+              label="Username"
+              type="text"
+              value={createForm.username}
+              onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+              placeholder="Enter username"
+              required
+            />
+            
+            <Input
+              label="Password"
+              type="password"
+              value={createForm.password}
+              onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+              placeholder="Enter password"
+              required
+              helperText="Minimum 8 characters"
+            />
+            
+            <Select
+              label="Role"
+              value={createForm.role}
+              onChange={(value) => setCreateForm({ ...createForm, role: value })}
+              options={ROLES}
+            />
+            
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsCreateModalOpen(false)}
+                disabled={isCreating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isCreating}
+                isLoading={isCreating}
+              >
+                Create User
+              </Button>
             </div>
-          </div>
-        )}
+          </form>
+        </Dialog>
 
-        {/* Edit User Modal */}
-        {isEditModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900">
-                    Edit User
-                  </h2>
-                  <button
-                    onClick={() => setIsEditModalOpen(false)}
-                    className="text-notion-gray-500 hover:text-notion-gray-700 dark:text-notion-gray-500 dark:hover:text-notion-gray-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <form onSubmit={handleEditUser} className="space-y-4">
-                  <Input
-                    label="Username"
-                    type="text"
-                    value={editForm.username}
-                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                    placeholder="Enter username"
-                    required
-                  />
-                  
-                  <Select
-                    label="Role"
-                    value={editForm.role}
-                    onChange={(value) => setEditForm({ ...editForm, role: value })}
-                    options={ROLES}
-                  />
-                  
-                  <Input
-                    label="New Password (Optional)"
-                    type="password"
-                    value={editForm.newPassword || ''}
-                    onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
-                    placeholder="Leave empty to keep current password"
-                    helperText="Minimum 8 characters if changing"
-                  />
-                  
-                  <div className="flex items-center justify-end space-x-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setIsEditModalOpen(false)}
-                      disabled={isUpdating}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={isUpdating}
-                      isLoading={isUpdating}
-                    >
-                      Update User
-                    </Button>
-                  </div>
-                </form>
-              </div>
+        {/* Edit User Dialog */}
+        <Dialog
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Edit User"
+          maxWidth="md"
+        >
+          <form onSubmit={handleEditUser} className="space-y-4">
+            <Input
+              label="Username"
+              type="text"
+              value={editForm.username}
+              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              placeholder="Enter username"
+              required
+            />
+            
+            <Select
+              label="Role"
+              value={editForm.role}
+              onChange={(value) => setEditForm({ ...editForm, role: value })}
+              options={ROLES}
+            />
+            
+            <Input
+              label="New Password (Optional)"
+              type="password"
+              value={editForm.newPassword || ''}
+              onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+              placeholder="Leave empty to keep current password"
+              helperText="Minimum 8 characters if changing"
+            />
+            
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isUpdating}
+                isLoading={isUpdating}
+              >
+                Update User
+              </Button>
             </div>
-          </div>
-        )}
+          </form>
+        </Dialog>
 
-        {/* Delete User Modal */}
-        {isDeleteModalOpen && userToDelete && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-surface shadow-lg dark:shadow-notion max-w-md w-full border border-border">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-notion-gray-900">
-                    Delete User
-                  </h2>
-                  <button
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    className="text-notion-gray-500 hover:text-notion-gray-700 dark:text-notion-gray-500 dark:hover:text-notion-gray-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className="mb-6">
-                  <div className="flex items-center space-x-3 p-4 bg-notion-red-light dark:bg-notion-red-light rounded-lg border border-notion-red/20">
-                    <svg className="w-6 h-6 text-notion-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <h3 className="text-sm font-medium text-notion-red">
-                        Are you sure you want to delete this user?
-                      </h3>
-                      <p className="text-sm text-notion-red/80 mt-1">
-                        User: <strong>{userToDelete.username}</strong>
-                      </p>
-                      <p className="text-sm text-notion-red/80">
-                        This action cannot be undone.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-end space-x-3">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    onClick={handleDeleteUser}
-                    disabled={isDeleting}
-                    isLoading={isDeleting}
-                  >
-                    Delete User
-                  </Button>
-                </div>
+        {/* Delete User Dialog */}
+        <Dialog
+          isOpen={isDeleteModalOpen && !!userToDelete}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Delete User"
+          maxWidth="md"
+        >
+          <div className="mb-6">
+            <div className="flex items-start space-x-3 p-4 bg-destructive/10 dark:bg-destructive/20 rounded-lg border border-destructive/20">
+              <svg className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-medium text-destructive">
+                  Are you sure you want to delete this user?
+                </h3>
+                <p className="text-sm text-destructive/80 mt-1">
+                  User: <strong>{userToDelete?.username}</strong>
+                </p>
+                <p className="text-sm text-destructive/80">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
           </div>
-        )}
+          
+          <div className="flex items-center justify-end space-x-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              isLoading={isDeleting}
+            >
+              Delete User
+            </Button>
+          </div>
+        </Dialog>
       </div>
     </div>
   );

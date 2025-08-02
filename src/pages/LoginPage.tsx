@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden transition-colors duration-300">
       {/* Title bar */}
       <TitleBar />
 
