@@ -6,6 +6,8 @@ import Input from '../components/ui/Input';
 import Table from '../components/ui/Table';
 import Select from '../components/ui/Select';
 import Dialog from '../components/ui/Dialog';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserEdit, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface User {
   id: string;
@@ -222,28 +224,28 @@ export const UsersPage: React.FC = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-notion-red-light text-notion-red border-notion-red/20';
+        return 'bg-muted text-muted-foreground border-muted/20';
       case 'performance':
-        return 'bg-notion-purple-light text-notion-purple border-notion-purple/20';
+        return 'bg-primary text-primary-foreground border-primary/20';
       case 'site01':
       case 'site02':
-        return 'bg-notion-blue-light text-notion-blue border-notion-blue/20';
+        return 'bg-secondary text-secondary-foreground border-secondary/20';
       case 'client':
-        return 'bg-notion-blue-light text-notion-blue border-notion-blue/20';
+        return 'bg-popover text-popover-foreground border-popover/20';
       case 'consommateur':
-        return 'bg-notion-orange-light text-notion-orange border-notion-orange/20';
+        return 'bg-accent text-accent-foreground border-accent/20';
       default:
-        return 'bg-notion-gray-200 text-notion-gray-700 border-notion-gray-300';
+        return 'bg-ring text-input border-ring/20';
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-notion-gray-100 dark:bg-notion-gray-100 p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-notion-blue"></div>
-            <span className="ml-3 text-notion-gray-600 dark:text-notion-gray-600">Loading users...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-primary">Loading users...</span>
           </div>
         </div>
       </div>
@@ -257,10 +259,10 @@ export const UsersPage: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-notion-gray-900 mb-2">
+              <h1 className="text-2xl font-bold text-foreground mb-2">
                 User Management
               </h1>
-              <p className="text-notion-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Manage users, roles, and permissions
               </p>
             </div>
@@ -278,7 +280,7 @@ export const UsersPage: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-notion-red-light dark:bg-notion-red-light text-notion-red rounded-lg border border-notion-red/20">
+          <div className="mb-6 p-4 bg-destructive text-destructive-foreground rounded-lg border border-destructive/20">
             <div className="flex items-center space-x-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -296,16 +298,16 @@ export const UsersPage: React.FC = () => {
               header: 'User',
               render: (value, user) => (
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-notion-purple rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-sm font-bold">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary-foreground text-sm font-bold">
                       {user.username.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-notion-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {user.username}
                     </div>
-                    <div className="text-sm text-notion-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       ID: {user.id.slice(0, 8)}...
                     </div>
                   </div>
@@ -335,27 +337,29 @@ export const UsersPage: React.FC = () => {
               key: 'actions',
               header: 'Actions',
               render: (_, user) => (
-                <div className="flex items-center justify-end space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditModal(user)}
-                    className="text-notion-blue hover:text-notion-blue/80"
+                <div className="flex items-center justify-end space-x-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(user);
+                    }}
+                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors duration-200"
+                    title="Edit user"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openDeleteModal(user)}
-                    className="text-notion-red hover:text-notion-red/80"
+                    <FontAwesomeIcon icon={faUserEdit} className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDeleteModal(user);
+                    }}
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors duration-200"
+                    title="Delete user"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </Button>
+                    <FontAwesomeIcon icon={faUserTimes} className="w-4 h-4" />
+                  </button>
                 </div>
               )
             }
