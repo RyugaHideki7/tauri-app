@@ -40,6 +40,7 @@ const Input: React.FC<InputProps> = ({
             ${showPasswordToggle ? 'pr-10' : ''}
             ${className}
           `}
+          {...(propType === 'password' ? { 'data-password-input': 'true' } : {})}
           {...props}
         />
         {showPasswordToggle && (
