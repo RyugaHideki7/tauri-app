@@ -150,7 +150,7 @@ const ProductsPage: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-notion-gray-900 dark:text-notion-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Products Management
         </h1>
         <div className="flex space-x-2">
@@ -240,13 +240,13 @@ const ProductsPage: React.FC = () => {
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-notion-gray-200 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-background rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">
               {editingProduct ? "Edit Product" : "Create New Product"}
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-notion-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Designation
                 </label>
                 <input
@@ -255,12 +255,12 @@ const ProductsPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, designation: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
+                  className="w-full px-3 py-2 border border-accent-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-foreground"
                   placeholder="Product designation"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-notion-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Code
                 </label>
                 <input
@@ -269,7 +269,7 @@ const ProductsPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, code: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
+                  className="w-full px-3 py-2 border border-accent-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-foreground"
                   placeholder="Product code"
                 />
               </div>
@@ -301,19 +301,19 @@ const ProductsPage: React.FC = () => {
       {/* Bulk Create Modal */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-notion-gray-200 rounded-lg p-6 w-full max-w-2xl">
+          <div className="bg-background rounded-lg p-6 w-full max-w-2xl">
             <h2 className="text-xl font-bold mb-4">Bulk Create Products</h2>
             <div className="mb-4">
-              <p className="text-sm text-notion-gray-600 mb-2">
+              <p className="text-sm text-foreground mb-2">
                 Enter one product per row. Format: Designation | Code
               </p>
-              <p className="text-xs text-notion-gray-500 mb-4">
+              <p className="text-xs text-muted-foreground mb-4">
                 Example: Product A | PA001
               </p>
               <textarea
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
-                className="w-full px-3 py-2 border border-notion-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-notion-blue"
+                className="w-full px-3 py-2 border border-accent-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-foreground"
                 placeholder="Product A | PA001&#10;Product B | PB002"
                 rows={10}
               />

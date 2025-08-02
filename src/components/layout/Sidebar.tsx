@@ -2,7 +2,8 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAuth } from "../../contexts/AuthContext";
-import { NAVIGATION_ITEMS, NAVIGATION_ICONS } from "../../constants/navigation";
+import { NAVIGATION_ICONS, getFilteredNavItems } from "../../constants/navigation";
+import { UserRole } from "../../types/auth";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -19,7 +20,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
     navigate("/login", { replace: true });
   };
 
-  const menuItems = NAVIGATION_ITEMS;
+  // Filter menu items based on user role
+  const menuItems = user?.role ? getFilteredNavItems(user.role as UserRole) : [];
 
   return (
     <div

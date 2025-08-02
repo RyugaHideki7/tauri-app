@@ -1,62 +1,113 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Layout } from "./components/layout";
-import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import LinesPage from './pages/LinesPage';
 import ProductsPage from './pages/ProductsPage';
 import UsersPage from './pages/UsersPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import { ROLES } from './types/auth';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-};
 
 // Main App Component
 function App() {
   return (
     <Routes>
+      {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route 
-        path="/*" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/lines" element={<LinesPage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route 
-                  path="/settings" 
-                  element={
-                    <div className="p-8">
-                      <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-                      <p className="text-muted-foreground mt-2">Application settings will be here.</p>
-                    </div>
-                  } 
-                />
-              </Routes>
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      
+      {/* Protected routes */}
+      <Route element={
+        <ProtectedRoute allowedRoles={Object.values(ROLES)}>
+          <Layout>
+            <Outlet />
+          </Layout>
+        </ProtectedRoute>
+      }>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        
+        {/* Dashboard - Accessible to all authenticated users */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={[
+              ROLES.ADMIN, 
+              ROLES.SITE01, 
+              ROLES.SITE02, 
+              ROLES.PERFORMANCE, 
+              ROLES.CONSOMMATEUR
+            ]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Profile - Accessible to all authenticated users */}
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute allowedRoles={Object.values(ROLES)}>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Lines - Accessible to site staff and above */}
+        <Route 
+          path="/lines" 
+          element={
+            <ProtectedRoute allowedRoles={[
+              ROLES.ADMIN, 
+              ROLES.SITE01, 
+              ROLES.SITE02, 
+              ROLES.PERFORMANCE
+            ]}>
+              <LinesPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Products - Accessible to site staff and above */}
+        <Route 
+          path="/products" 
+          element={
+            <ProtectedRoute allowedRoles={[
+              ROLES.ADMIN, 
+              ROLES.SITE01, 
+              ROLES.SITE02, 
+              ROLES.PERFORMANCE
+            ]}>
+              <ProductsPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Users - Admin only */}
+        <Route 
+          path="/users" 
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <UsersPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Settings - Admin and Performance team */}
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.PERFORMANCE]}>
+              <div className="p-8">
+                <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+                <p className="text-muted-foreground mt-2">Application settings will be here.</p>
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+      </Route>
     </Routes>
   );
 }
