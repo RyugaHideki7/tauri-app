@@ -24,17 +24,17 @@ export interface NavigationItem {
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
   {
-    icon: faUser,
-    label: "Profile",
-    path: "/profile",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
-    showInNav: true,
-  },
-  {
     icon: faTachometerAlt,
     label: "Dashboard",
     path: "/dashboard",
     allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR],
+    showInNav: true,
+  },
+  {
+    icon: faUser,
+    label: "Profile",
+    path: "/profile",
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
     showInNav: true,
   },
   {

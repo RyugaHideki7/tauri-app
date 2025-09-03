@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Dialog from '../components/ui/Dialog';
+import { SearchBar } from '../components/ui/SearchBar';
 
 interface ProductionLine {
   id: string;
@@ -26,6 +27,17 @@ const LinesPage: React.FC = () => {
   const [showBulkModal, setBulkModal] = useState(false);
   const [editingLine, setEditingLine] = useState<ProductionLine | null>(null);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [lineToDelete, setLineToDelete] = useState<ProductionLine | null>(null);
+
+  // Filter lines based on search term
+  const filteredLines = lines.filter(
+    (line) =>
+      line.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (line.description && line.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   // Form states
   const [formData, setFormData] = useState<CreateLineRequest>({
@@ -39,7 +51,7 @@ const LinesPage: React.FC = () => {
     loadLines();
   }, []);
 
-  const loadLines = async () => {
+  const loadLines = async (): Promise<void> => {
     try {
       setLoading(true);
       const result = await invoke<ProductionLine[]>('get_lines');
@@ -51,7 +63,7 @@ const LinesPage: React.FC = () => {
     }
   };
 
-  const handleCreateLine = async () => {
+  const handleCreateLine = async (): Promise<void> => {
     try {
       if (editingLine) {
         await invoke('update_line', {
@@ -67,13 +79,13 @@ const LinesPage: React.FC = () => {
       setShowCreateModal(false);
       setEditingLine(null);
       setFormData({ name: '', description: '', is_active: true });
-      loadLines();
+      await loadLines();
     } catch (error) {
       console.error('Error creating/updating line:', error);
     }
   };
 
-  const handleBulkCreate = async () => {
+  const handleBulkCreate = async (): Promise<void> => {
     try {
       const lines = bulkText
         .split('\n')
@@ -92,37 +104,34 @@ const LinesPage: React.FC = () => {
         await invoke('bulk_create_lines', { request: { lines } });
         setBulkModal(false);
         setBulkText('');
-        loadLines();
+        await loadLines();
       }
     } catch (error) {
       console.error('Error bulk creating lines:', error);
     }
   };
 
-  const handleDeleteLine = async (lineId: string) => {
-    if (confirm('Are you sure you want to delete this line?')) {
-      try {
-        await invoke('delete_line', { lineId });
-        loadLines();
-      } catch (error) {
-        console.error('Error deleting line:', error);
-      }
+  const handleDeleteLine = async (lineId: string): Promise<void> => {
+    try {
+      await invoke('delete_line', { lineId });
+      await loadLines();
+    } catch (error) {
+      console.error('Error deleting line:', error);
     }
   };
 
-  const handleDeleteSelected = async () => {
-    if (selectedLines.length > 0 && confirm(`Delete ${selectedLines.length} selected lines?`)) {
-      try {
-        await invoke('delete_multiple_lines', { lineIds: selectedLines });
-        setSelectedLines([]);
-        loadLines();
-      } catch (error) {
-        console.error('Error deleting lines:', error);
-      }
+  const handleDeleteSelected = async (): Promise<void> => {
+    if (selectedLines.length === 0) return;
+    try {
+      await invoke('delete_multiple_lines', { lineIds: selectedLines });
+      setSelectedLines([]);
+      await loadLines();
+    } catch (error) {
+      console.error('Error deleting lines:', error);
     }
   };
 
-  const openEditModal = (line: ProductionLine) => {
+  const openEditModal = (line: ProductionLine): void => {
     setEditingLine(line);
     setFormData({
       name: line.name,
@@ -132,7 +141,7 @@ const LinesPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const toggleLineSelection = (lineId: string) => {
+  const toggleLineSelection = (lineId: string): void => {
     setSelectedLines(prev =>
       prev.includes(lineId)
         ? prev.filter(id => id !== lineId)
@@ -151,30 +160,38 @@ const LinesPage: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-notion-gray-900 dark:text-notion-gray-900">
-          Production Lines Management
+        <h1 className="text-2xl font-bold text-foreground">
+          Lignes de Production
         </h1>
-        <div className="flex space-x-2">
-          {selectedLines.length > 0 && (
+        <div className="flex items-center gap-4">
+          <SearchBar
+            placeholder="Search lines..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+            className="w-64"
+          />
+          <div className="flex space-x-2">
+            {selectedLines.length > 0 && (
+              <Button
+                onClick={() => setShowBulkDeleteModal(true)}
+                variant="danger"
+              >
+                Delete Selected ({selectedLines.length})
+              </Button>
+            )}
             <Button
-              onClick={handleDeleteSelected}
-              variant="danger"
+              onClick={() => setBulkModal(true)}
+              variant="secondary"
             >
-              Delete Selected ({selectedLines.length})
+              Bulk Create
             </Button>
-          )}
-          <Button
-            onClick={() => setBulkModal(true)}
-            variant="secondary"
-          >
-            Bulk Create
-          </Button>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            variant="primary"
-          >
-            Add Line
-          </Button>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              variant="primary"
+            >
+              Add Line
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -186,24 +203,29 @@ const LinesPage: React.FC = () => {
             header: (
               <input
                 type="checkbox"
-                onChange={(e) => {
+                checked={selectedLines.length > 0 && selectedLines.length === filteredLines.length}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   if (e.target.checked) {
-                    setSelectedLines(lines.map(line => line.id));
+                    setSelectedLines(filteredLines.map((line) => line.id));
                   } else {
                     setSelectedLines([]);
                   }
                 }}
-                checked={selectedLines.length === lines.length && lines.length > 0}
-              />
-            ) as any,
-            width: '50px',
-            render: (_, line) => (
-              <input
-                type="checkbox"
-                checked={selectedLines.includes(line.id)}
-                onChange={() => toggleLineSelection(line.id)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             ),
+            width: '50px',
+            render: (value, line: ProductionLine) => {
+              void value;
+              return (
+                <input
+                  type="checkbox"
+                  checked={selectedLines.includes(line.id)}
+                  onChange={() => toggleLineSelection(line.id)}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+              );
+            },
           },
           {
             key: 'name',
@@ -236,25 +258,35 @@ const LinesPage: React.FC = () => {
           {
             key: 'actions',
             header: 'Actions',
-            render: (_, line) => (
-              <div className="space-x-2">
-                <button
-                  onClick={() => openEditModal(line)}
-                  className="text-notion-blue hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteLine(line.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            ),
+            render: (value, line: ProductionLine) => {
+              void value;
+              return (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => openEditModal(line)}
+                    size="sm"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => {
+                      setLineToDelete(line);
+                      setShowDeleteModal(true);
+                    }}
+                    size="sm"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              );
+            },
           },
         ]}
-        data={lines}
+        data={filteredLines}
         hoverable={true}
       />
 
@@ -277,7 +309,7 @@ const LinesPage: React.FC = () => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
               placeholder="e.g., Assembly Line 1"
             />
@@ -288,7 +320,7 @@ const LinesPage: React.FC = () => {
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 min-h-[100px]"
               placeholder="Optional description of the production line"
             />
@@ -298,7 +330,7 @@ const LinesPage: React.FC = () => {
               type="checkbox"
               id="is_active"
               checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, is_active: e.target.checked })}
               className="h-4 w-4 rounded border-border/50 dark:border-border/30 focus:ring-primary/50 text-primary"
             />
             <label htmlFor="is_active" className="ml-2 block text-sm font-medium text-foreground">
@@ -347,7 +379,7 @@ const LinesPage: React.FC = () => {
           </p>
           <textarea
             value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBulkText(e.target.value)}
             className="w-full px-4 py-3 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 font-mono text-sm"
             placeholder="Assembly Line 1 | Main production line | true&#10;Packaging Line | Final packaging station | true"
             rows={10}
@@ -371,6 +403,95 @@ const LinesPage: React.FC = () => {
             disabled={!bulkText.trim()}
           >
             Create Lines
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* Delete Line Dialog */}
+      <Dialog
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setLineToDelete(null);
+        }}
+        title="Delete Line"
+        maxWidth="md"
+      >
+        <div className="mb-4">
+          <p className="text-sm text-foreground mb-2">
+            Are you sure you want to delete this line?
+          </p>
+          {lineToDelete && (
+            <div className="text-sm text-muted-foreground">
+              <div>
+                <span className="font-medium text-foreground">Name:</span> {lineToDelete.name}
+              </div>
+              {lineToDelete.description && (
+                <div>
+                  <span className="font-medium text-foreground">Description:</span> {lineToDelete.description}
+                </div>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-3">This action cannot be undone.</p>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setShowDeleteModal(false);
+              setLineToDelete(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={async () => {
+              if (lineToDelete) {
+                await handleDeleteLine(lineToDelete.id);
+                setShowDeleteModal(false);
+                setLineToDelete(null);
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* Bulk Delete Lines Dialog */}
+      <Dialog
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="Delete Selected Lines"
+        maxWidth="md"
+      >
+        <div className="mb-4">
+          <p className="text-sm text-foreground mb-2">
+            Delete {selectedLines.length} selected {selectedLines.length === 1 ? 'line' : 'lines'}?
+          </p>
+          <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setShowBulkDeleteModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={async () => {
+              await handleDeleteSelected();
+              setShowBulkDeleteModal(false);
+            }}
+          >
+            Delete Selected
           </Button>
         </div>
       </Dialog>

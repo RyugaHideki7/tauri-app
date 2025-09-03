@@ -296,23 +296,26 @@ export const UsersPage: React.FC = () => {
             {
               key: 'username',
               header: 'User',
-              render: (_, user) => (
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary-foreground text-sm font-bold">
-                      {user.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm font-medium text-foreground">
-                      {user.username}
+              render: (value, user) => {
+                void value;
+                return (
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-foreground text-sm font-bold">
+                        {user.username.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      ID: {user.id.slice(0, 8)}...
+                    <div className="ml-3">
+                      <div className="text-sm font-medium text-foreground">
+                        {user.username}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        ID: {user.id.slice(0, 8)}...
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
+                );
+              }
             },
             {
               key: 'role',
@@ -336,32 +339,35 @@ export const UsersPage: React.FC = () => {
             {
               key: 'actions',
               header: 'Actions',
-              render: (_, user) => (
-                <div className="flex items-center justify-end space-x-1">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditModal(user);
-                    }}
-                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors duration-200"
-                    title="Edit user"
-                  >
-                    <FontAwesomeIcon icon={faUserEdit} className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openDeleteModal(user);
-                    }}
-                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors duration-200"
-                    title="Delete user"
-                  >
-                    <FontAwesomeIcon icon={faUserTimes} className="w-4 h-4" />
-                  </button>
-                </div>
-              )
+              render: (value, user) => {
+                void value;
+                return (
+                  <div className="flex items-center justify-end space-x-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(user);
+                      }}
+                      className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors duration-200"
+                      title="Edit user"
+                    >
+                      <FontAwesomeIcon icon={faUserEdit} className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteModal(user);
+                      }}
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors duration-200"
+                      title="Delete user"
+                    >
+                      <FontAwesomeIcon icon={faUserTimes} className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              }
             }
           ]}
           data={users}
