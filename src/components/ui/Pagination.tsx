@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from './Button';
+import Select from './Select';
 
 interface PaginationProps {
   currentPage: number;
@@ -63,16 +64,19 @@ const Pagination: React.FC<PaginationProps> = ({
         {showItemsPerPage && onItemsPerPageChange && (
           <div className="flex items-center space-x-2">
             <span className="text-sm text-muted-foreground">Items per page:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors hover:border-primary/50"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+            <div className="min-w-[90px]">
+              <Select
+                value={String(itemsPerPage)}
+                onChange={(val) => onItemsPerPageChange(Number(val))}
+                options={[
+                  { value: '10', label: '10' },
+                  { value: '25', label: '25' },
+                  { value: '50', label: '50' },
+                  { value: '100', label: '100' },
+                ]}
+                size="sm"
+              />
+            </div>
           </div>
         )}
       </div>

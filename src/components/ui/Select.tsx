@@ -32,7 +32,12 @@ const Select: React.FC<SelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    openBelow: true
+  });
   const selectRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +60,9 @@ const Select: React.FC<SelectProps> = ({
     const handleScroll = () => {
       if (isOpen) {
         updateDropdownPosition();
+      } else {
+        // Close dropdown if scrolled while closed
+        setIsOpen(false);
       }
     };
 
@@ -70,14 +78,37 @@ const Select: React.FC<SelectProps> = ({
   }, [isOpen]);
 
   const updateDropdownPosition = () => {
-    if (selectRef.current) {
-      const rect = selectRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
+    if (!selectRef.current) return;
+    
+    const rect = selectRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = Math.min(240, options.length * 36 + 8); // Max 240px or content height
+    
+    // Calculate available space below and above
+    const spaceBelow = viewportHeight - rect.bottom - 8; // 8px gap
+    const spaceAbove = rect.top - 8; // 8px gap
+    
+    // Determine if dropdown should open above or below
+    const openBelow = spaceBelow >= dropdownHeight || spaceBelow > spaceAbove;
+    
+    // Calculate position
+    let top = openBelow 
+      ? rect.bottom + window.scrollY + 4 // 4px gap
+      : Math.max(8, rect.top + window.scrollY - dropdownHeight - 4); // 4px gap, min 8px from top
+    
+    // Ensure dropdown stays within viewport width
+    const left = Math.max(8, Math.min(
+      rect.left + window.scrollX,
+      viewportWidth + window.scrollX - rect.width - 8 // 8px gap from right
+    ));
+    
+    setDropdownPosition({
+      top,
+      left,
+      width: rect.width,
+      openBelow
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -195,7 +226,9 @@ const Select: React.FC<SelectProps> = ({
               width: dropdownPosition.width,
               zIndex: 9999
             }}
-            className="bg-popover border border-border rounded-md shadow-md max-h-60 overflow-auto"
+            className={`bg-popover border border-border rounded-md shadow-md max-h-60 overflow-auto ${
+              !dropdownPosition.openBelow ? 'origin-top' : 'origin-bottom'
+            } animate-in fade-in-0 zoom-in-95`}
           >
             {options.map((option, index) => (
               <div
