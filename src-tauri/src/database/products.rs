@@ -7,6 +7,24 @@ use serde::{Deserialize, Serialize};
 use super::models::Product;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PaginationParams {
+    pub page: i64,
+    pub limit: i64,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PaginatedResponse<T> {
+    pub data: Vec<T>,
+    pub total: i64,
+    pub page: i64,
+    pub limit: i64,
+    pub total_pages: i64,
+    pub has_next: bool,
+    pub has_prev: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateProductRequest {
     pub designation: String,
     pub code: String,
@@ -41,6 +59,44 @@ impl ProductsService {
         .await?;
 
         Ok(products)
+    }
+
+    pub async fn get_paginated_products(&self, params: PaginationParams) -> Result<PaginatedResponse<Product>> {
+        let offset = (params.page - 1) * params.limit;
+        
+        let mut query = "SELECT id, designation, code, created_at, updated_at FROM products".to_string();
+        let mut count_query = "SELECT COUNT(*) as count FROM products".to_string();
+        
+        if let Some(search) = &params.search {
+            let search_condition = format!(" WHERE designation ILIKE '%{}%' OR code ILIKE '%{}%'", 
+                search.replace("'", "''"), search.replace("'", "''"));
+            query.push_str(&search_condition);
+            count_query.push_str(&search_condition);
+        }
+        
+        query.push_str(" ORDER BY designation ASC LIMIT $1 OFFSET $2");
+        
+        let products = sqlx::query_as::<_, Product>(&query)
+            .bind(params.limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let total: (i64,) = sqlx::query_as(&count_query)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        let total_pages = (total.0 + params.limit - 1) / params.limit;
+        
+        Ok(PaginatedResponse {
+            data: products,
+            total: total.0,
+            page: params.page,
+            limit: params.limit,
+            total_pages,
+            has_next: params.page < total_pages,
+            has_prev: params.page > 1,
+        })
     }
 
     pub async fn get_product_by_id(&self, product_id: &Uuid) -> Result<Option<Product>> {

@@ -7,6 +7,24 @@ use serde::{Deserialize, Serialize};
 use super::models::ProductionLine;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PaginationParams {
+    pub page: i64,
+    pub limit: i64,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PaginatedResponse<T> {
+    pub data: Vec<T>,
+    pub total: i64,
+    pub page: i64,
+    pub limit: i64,
+    pub total_pages: i64,
+    pub has_next: bool,
+    pub has_prev: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateLineRequest {
     pub name: String,
     pub description: Option<String>,
@@ -43,6 +61,44 @@ impl LinesService {
         .await?;
 
         Ok(lines)
+    }
+
+    pub async fn get_paginated_lines(&self, params: PaginationParams) -> Result<PaginatedResponse<ProductionLine>> {
+        let offset = (params.page - 1) * params.limit;
+        
+        let mut query = "SELECT id, name, description, is_active, created_at, updated_at FROM production_lines".to_string();
+        let mut count_query = "SELECT COUNT(*) as count FROM production_lines".to_string();
+        
+        if let Some(search) = &params.search {
+            let search_condition = format!(" WHERE name ILIKE '%{}%' OR description ILIKE '%{}%'", 
+                search.replace("'", "''"), search.replace("'", "''"));
+            query.push_str(&search_condition);
+            count_query.push_str(&search_condition);
+        }
+        
+        query.push_str(" ORDER BY name ASC LIMIT $1 OFFSET $2");
+        
+        let lines = sqlx::query_as::<_, ProductionLine>(&query)
+            .bind(params.limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let total: (i64,) = sqlx::query_as(&count_query)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        let total_pages = (total.0 + params.limit - 1) / params.limit;
+        
+        Ok(PaginatedResponse {
+            data: lines,
+            total: total.0,
+            page: params.page,
+            limit: params.limit,
+            total_pages,
+            has_next: params.page < total_pages,
+            has_prev: params.page > 1,
+        })
     }
 
     pub async fn get_line_by_id(&self, line_id: &Uuid) -> Result<Option<ProductionLine>> {

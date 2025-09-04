@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Dialog from '../components/ui/Dialog';
 import { SearchBar } from '../components/ui/SearchBar';
+import { PaginatedResponse } from '../types/pagination';
 
 interface ProductionLine {
   id: string;
@@ -23,21 +24,30 @@ interface CreateLineRequest {
 const LinesPage: React.FC = () => {
   const [lines, setLines] = useState<ProductionLine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0
+  });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBulkModal, setBulkModal] = useState(false);
   const [editingLine, setEditingLine] = useState<ProductionLine | null>(null);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [lineToDelete, setLineToDelete] = useState<ProductionLine | null>(null);
 
-  // Filter lines based on search term
-  const filteredLines = lines.filter(
-    (line) =>
-      line.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (line.description && line.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Form states
   const [formData, setFormData] = useState<CreateLineRequest>({
@@ -49,19 +59,30 @@ const LinesPage: React.FC = () => {
 
   useEffect(() => {
     loadLines();
-  }, []);
+  }, [pagination.currentPage, pagination.itemsPerPage, debouncedSearchTerm]);
 
-  const loadLines = async (): Promise<void> => {
+  const loadLines = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      const result = await invoke<ProductionLine[]>('get_lines');
-      setLines(result);
+      const result = await invoke<PaginatedResponse<ProductionLine>>('get_lines_paginated', {
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: debouncedSearchTerm || null
+      });
+      setLines(result.data || []);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: result.total,
+        totalPages: result.total_pages
+      }));
     } catch (error) {
       console.error('Error loading lines:', error);
+      setLines([]);
+      setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.currentPage, pagination.itemsPerPage, debouncedSearchTerm]);
 
   const handleCreateLine = async (): Promise<void> => {
     try {
@@ -149,6 +170,22 @@ const LinesPage: React.FC = () => {
     );
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedLines(lines.map(line => line.id));
+    } else {
+      setSelectedLines([]);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
+
+  const handleItemsPerPageChange = (itemsPerPage: number) => {
+    setPagination(prev => ({ ...prev, itemsPerPage, currentPage: 1 }));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -203,14 +240,8 @@ const LinesPage: React.FC = () => {
             header: (
               <input
                 type="checkbox"
-                checked={selectedLines.length > 0 && selectedLines.length === filteredLines.length}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (e.target.checked) {
-                    setSelectedLines(filteredLines.map((line) => line.id));
-                  } else {
-                    setSelectedLines([]);
-                  }
-                }}
+                checked={selectedLines.length > 0 && selectedLines.length === lines.length}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSelectAll(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             ),
@@ -286,8 +317,17 @@ const LinesPage: React.FC = () => {
             },
           },
         ]}
-        data={filteredLines}
+        data={lines}
         hoverable={true}
+        pagination={{
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          totalItems: pagination.totalItems,
+          itemsPerPage: pagination.itemsPerPage,
+          onPageChange: handlePageChange,
+          onItemsPerPageChange: handleItemsPerPageChange,
+          showItemsPerPage: true
+        }}
       />
 
       {/* Create/Edit Dialog */}

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import Table from "../components/ui/Table";
 import Button from "../components/ui/Button";
 import Dialog from "../components/ui/Dialog";
+import { PaginatedResponse } from "../types/pagination";
 
 // Simple icon components - exported for use in the component
 export const PlusIcon = () => <span>+</span>;
@@ -25,6 +26,12 @@ interface CreateProductRequest {
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0
+  });
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -33,34 +40,56 @@ const ProductsPage: React.FC = () => {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState<boolean>(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [bulkText, setBulkText] = useState<string>("");
   const [formData, setFormData] = useState<CreateProductRequest>({
     designation: "",
     code: "",
   });
 
-  const filteredProducts = products.filter(
-    (product: Product) =>
-      product.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const loadProducts = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      const result = await invoke<Product[]>("get_products");
-      setProducts(result || []);
+      const result = await invoke<PaginatedResponse<Product>>("get_products_paginated", {
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: debouncedSearchTerm || null
+      });
+      setProducts(result.data || []);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: result.total,
+        totalPages: result.total_pages
+      }));
     } catch (error) {
       console.error("Error loading products:", error);
       setProducts([]);
+      setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.currentPage, pagination.itemsPerPage, debouncedSearchTerm]);
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
+
+  const handleItemsPerPageChange = (itemsPerPage: number) => {
+    setPagination(prev => ({ ...prev, itemsPerPage, currentPage: 1 }));
+  };
 
   const handleCreateProduct = async (): Promise<void> => {
     try {
@@ -148,6 +177,14 @@ const ProductsPage: React.FC = () => {
     );
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(products.map(p => p.id));
+    } else {
+      setSelectedProducts([]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -192,14 +229,8 @@ const ProductsPage: React.FC = () => {
             header: (
               <input
                 type="checkbox"
-                checked={selectedProducts.length > 0 && selectedProducts.length === filteredProducts.length}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedProducts(filteredProducts.map(p => p.id));
-                  } else {
-                    setSelectedProducts([]);
-                  }
-                }}
+                checked={selectedProducts.length > 0 && selectedProducts.length === products.length}
+                onChange={(e) => handleSelectAll(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             ),
@@ -256,7 +287,16 @@ const ProductsPage: React.FC = () => {
             },
           },
         ]}
-        data={filteredProducts}
+        data={products}
+        pagination={{
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          totalItems: pagination.totalItems,
+          itemsPerPage: pagination.itemsPerPage,
+          onPageChange: handlePageChange,
+          onItemsPerPageChange: handleItemsPerPageChange,
+          showItemsPerPage: true
+        }}
       />
 
       {/* Create Product Dialog */}

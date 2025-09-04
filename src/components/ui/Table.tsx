@@ -1,4 +1,5 @@
 import React from 'react';
+import Pagination from './Pagination';
 
 interface Column {
   key: string;
@@ -13,6 +14,16 @@ interface TableProps {
   className?: string;
   striped?: boolean;
   hoverable?: boolean;
+  // Pagination props
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+    onItemsPerPageChange?: (itemsPerPage: number) => void;
+    showItemsPerPage?: boolean;
+  };
 }
 
 const Table: React.FC<TableProps> = ({ 
@@ -20,7 +31,8 @@ const Table: React.FC<TableProps> = ({
   data, 
   className = '',
   striped = false,
-  hoverable = true
+  hoverable = true,
+  pagination
 }) => {
   return (
     <div className={`overflow-hidden border border-border rounded-2xl shadow-sm ${className}`}>
@@ -80,6 +92,18 @@ const Table: React.FC<TableProps> = ({
             <p className="text-xs mt-1 text-muted-foreground/60">There are no items to display in this table.</p>
           </div>
         </div>
+      )}
+      
+      {pagination && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.itemsPerPage}
+          onPageChange={pagination.onPageChange}
+          onItemsPerPageChange={pagination.onItemsPerPageChange}
+          showItemsPerPage={pagination.showItemsPerPage}
+        />
       )}
     </div>
   );

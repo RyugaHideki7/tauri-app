@@ -1,17 +1,11 @@
 mod database;
 
-use database::{
-    auth::{AuthService, LoginRequest, LoginResponse, UserInfo},
-    lines::{BulkCreateLinesRequest, CreateLineRequest, LinesService, UpdateLineRequest},
-    models::{CreateUser, CreateClient},
-    products::{
-        BulkCreateProductsRequest, CreateProductRequest, ProductsService, UpdateProductRequest,
-    },
-    clients::{
-        BulkCreateClientsRequest, CreateClientRequest, ClientsService, UpdateClientRequest,
-    },
-    Database,
-};
+use database::auth::{AuthService, LoginRequest, LoginResponse, UserInfo, PaginationParams as AuthPaginationParams, PaginatedResponse as AuthPaginatedResponse};
+use database::models::{CreateUser, CreateClient};
+use database::clients::{ClientsService, CreateClientRequest, BulkCreateClientsRequest, UpdateClientRequest, PaginationParams as ClientsPaginationParams, PaginatedResponse as ClientsPaginatedResponse};
+use database::products::{ProductsService, CreateProductRequest, BulkCreateProductsRequest, UpdateProductRequest, PaginationParams as ProductsPaginationParams, PaginatedResponse as ProductsPaginatedResponse};
+use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, UpdateLineRequest, PaginationParams as LinesPaginationParams, PaginatedResponse as LinesPaginatedResponse};
+use database::{Database};
 use std::sync::Arc;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -59,6 +53,23 @@ async fn get_users(
 
     auth_service
         .get_all_users()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_users_paginated(
+    db_state: State<'_, DatabaseState>,
+    page: i64,
+    limit: i64,
+    search: Option<String>,
+) -> Result<AuthPaginatedResponse<database::models::User>, String> {
+    let db = db_state.lock().await;
+    let auth_service = AuthService::new(db.pool.clone());
+    
+    let params = AuthPaginationParams { page, limit, search };
+    auth_service
+        .get_paginated_users(params)
         .await
         .map_err(|e| e.to_string())
 }
@@ -192,6 +203,23 @@ async fn get_lines(
 }
 
 #[tauri::command]
+async fn get_lines_paginated(
+    db_state: State<'_, DatabaseState>,
+    page: i64,
+    limit: i64,
+    search: Option<String>,
+) -> Result<LinesPaginatedResponse<database::models::ProductionLine>, String> {
+    let db = db_state.lock().await;
+    let lines_service = LinesService::new(db.pool.clone());
+    
+    let params = LinesPaginationParams { page, limit, search };
+    lines_service
+        .get_paginated_lines(params)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn create_line(
     db_state: State<'_, DatabaseState>,
     request: CreateLineRequest,
@@ -277,6 +305,23 @@ async fn get_products(
 
     products_service
         .get_all_products()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_products_paginated(
+    db_state: State<'_, DatabaseState>,
+    page: i64,
+    limit: i64,
+    search: Option<String>,
+) -> Result<ProductsPaginatedResponse<database::models::Product>, String> {
+    let db = db_state.lock().await;
+    let products_service = ProductsService::new(db.pool.clone());
+    
+    let params = ProductsPaginationParams { page, limit, search };
+    products_service
+        .get_paginated_products(params)
         .await
         .map_err(|e| e.to_string())
 }
@@ -370,6 +415,23 @@ async fn get_clients(
 
     clients_service
         .get_all()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_clients_paginated(
+    db_state: State<'_, DatabaseState>,
+    page: i64,
+    limit: i64,
+    search: Option<String>,
+) -> Result<ClientsPaginatedResponse<database::models::Client>, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+    
+    let params = ClientsPaginationParams { page, limit, search };
+    clients_service
+        .get_paginated(params)
         .await
         .map_err(|e| e.to_string())
 }
@@ -470,8 +532,10 @@ pub fn run() {
             close_window,
             login,
             get_users,
+            get_users_paginated,
             // Lines management
             get_lines,
+            get_lines_paginated,
             create_line,
             bulk_create_lines,
             update_line,
@@ -479,6 +543,7 @@ pub fn run() {
             delete_multiple_lines,
             // Products management
             get_products,
+            get_products_paginated,
             create_product,
             bulk_create_products,
             update_product,
@@ -486,6 +551,7 @@ pub fn run() {
             delete_multiple_products,
             // Clients management
             get_clients,
+            get_clients_paginated,
             create_client,
             bulk_create_clients,
             update_client,

@@ -9,6 +9,24 @@ use serde::{Deserialize, Serialize};
 use super::models::{User, CreateUser, UserRole};
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PaginationParams {
+    pub page: i64,
+    pub limit: i64,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PaginatedResponse<T> {
+    pub data: Vec<T>,
+    pub total: i64,
+    pub page: i64,
+    pub limit: i64,
+    pub total_pages: i64,
+    pub has_next: bool,
+    pub has_prev: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
@@ -128,6 +146,44 @@ impl AuthService {
         Ok(users)
     }
 
+    pub async fn get_paginated_users(&self, params: PaginationParams) -> Result<PaginatedResponse<User>> {
+        let offset = (params.page - 1) * params.limit;
+        
+        let mut query = "SELECT id, username, password_hash, role, created_at, updated_at FROM users".to_string();
+        let mut count_query = "SELECT COUNT(*) as count FROM users".to_string();
+        
+        if let Some(search) = &params.search {
+            let search_condition = format!(" WHERE username ILIKE '%{}%' OR role ILIKE '%{}%'", 
+                search.replace("'", "''"), search.replace("'", "''"));
+            query.push_str(&search_condition);
+            count_query.push_str(&search_condition);
+        }
+        
+        query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+        
+        let users = sqlx::query_as::<_, User>(&query)
+            .bind(params.limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let total: (i64,) = sqlx::query_as(&count_query)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        let total_pages = (total.0 + params.limit - 1) / params.limit;
+        
+        Ok(PaginatedResponse {
+            data: users,
+            total: total.0,
+            page: params.page,
+            limit: params.limit,
+            total_pages,
+            has_next: params.page < total_pages,
+            has_prev: params.page > 1,
+        })
+    }
+
     pub async fn change_password(
         &self,
         user_id: &Uuid,
@@ -166,7 +222,7 @@ impl AuthService {
         new_role: &str,
     ) -> Result<()> {
         // Validate role using FromStr
-        if let Err(e) = UserRole::from_str(new_role) {
+        if let Err(_) = UserRole::from_str(new_role) {
             return Err(anyhow!("Invalid role specified"));
         }
 

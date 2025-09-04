@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import Table from "../components/ui/Table";
 import Button from "../components/ui/Button";
 import Dialog from "../components/ui/Dialog";
+import { PaginatedResponse } from "../types/pagination";
 
 interface Client {
   id: string;
@@ -18,6 +19,12 @@ interface CreateClientRequest {
 const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0
+  });
 
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
@@ -28,32 +35,56 @@ const ClientsPage: React.FC = () => {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [bulkText, setBulkText] = useState<string>("");
 
   const [formData, setFormData] = useState<CreateClientRequest>({
     name: "",
   });
 
-  const filteredClients = clients.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const loadClients = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      const result = await invoke<Client[]>("get_clients");
-      setClients(result || []);
+      const result = await invoke<PaginatedResponse<Client>>("get_clients_paginated", {
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: debouncedSearchTerm || null
+      });
+      setClients(result.data || []);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: result.total,
+        totalPages: result.total_pages
+      }));
     } catch (error) {
       console.error("Error loading clients:", error);
       setClients([]);
+      setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.currentPage, pagination.itemsPerPage, debouncedSearchTerm]);
 
   useEffect(() => {
     void loadClients();
   }, [loadClients]);
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
+
+  const handleItemsPerPageChange = (itemsPerPage: number) => {
+    setPagination(prev => ({ ...prev, itemsPerPage, currentPage: 1 }));
+  };
 
   const handleCreateClient = async (): Promise<void> => {
     try {
@@ -128,6 +159,14 @@ const ClientsPage: React.FC = () => {
     );
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedClients(clients.map((c) => c.id));
+    } else {
+      setSelectedClients([]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -170,15 +209,9 @@ const ClientsPage: React.FC = () => {
               <input
                 type="checkbox"
                 checked={
-                  selectedClients.length > 0 && selectedClients.length === filteredClients.length
+                  selectedClients.length > 0 && selectedClients.length === clients.length
                 }
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedClients(filteredClients.map((c) => c.id));
-                  } else {
-                    setSelectedClients([]);
-                  }
-                }}
+                onChange={(e) => handleSelectAll(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             ),
@@ -229,7 +262,16 @@ const ClientsPage: React.FC = () => {
             ),
           },
         ]}
-        data={filteredClients}
+        data={clients}
+        pagination={{
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          totalItems: pagination.totalItems,
+          itemsPerPage: pagination.itemsPerPage,
+          onPageChange: handlePageChange,
+          onItemsPerPageChange: handleItemsPerPageChange,
+          showItemsPerPage: true
+        }}
       />
 
       {/* Create/Edit Client Dialog */}
