@@ -5,6 +5,7 @@ import {
   faIndustry,
   faBoxes,
   faUsers,
+  faBuilding,
   faCog,
   faSignOutAlt,
   faChevronLeft,
@@ -49,6 +50,13 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     label: "Products",
     path: "/products",
     allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE],
+    showInNav: true,
+  },
+  {
+    icon: faBuilding,
+    label: "Clients",
+    path: "/clients",
+    allowedRoles: [ADMIN, CLIENT],
     showInNav: true,
   },
   {

@@ -82,6 +82,243 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // Create clients table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS clients (
+            id UUID PRIMARY KEY,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Insert initial client data if table is empty
+    let client_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM clients")
+        .fetch_one(pool)
+        .await?;
+
+    if client_count == 0 {
+        let clients = [
+            "ADRAR MAJIR FOOD",
+            "Livestock",
+            "AICHOUNI MOHAMMED",
+            "AIR ALGERIE CATERING SPA",
+            "AISSANI HACENE",
+            "AISSOU MADJID",
+            "AIT AISSA HOURIA",
+            "ALLAL MOHAND",
+            "ALOUANE AKILA",
+            "AMIRAT MOHAMMED",
+            "APC OUZELLAGUEN",
+            "ASS. SPORTIVE SOUMAM AWZALAGUEN",
+            "AZIZ FAOUZI",
+            "BAHA NADJIA",
+            "BELABED BORHANE EDDINE",
+            "BELABED BORHANE EDDINE _EL TARF",
+            "BENBRAHIM MOURAD KAMATO",
+            "BENKHELLAT SAID",
+            "BENNASROUNE MOURAD",
+            "BIBI SID AHMED",
+            "BOUABDALLAH MOHAMED",
+            "BOUBOU HAKIM",
+            "BOUDJA FAYSSAL",
+            "CAPROS DISTRIBUTION INTERNATIONAL L",
+            "CENTRE NATIONAL DES SPORTS ET DES",
+            "CHEDAD SOFIANE",
+            "CHU CONSTANTINE",
+            "CRF ANP TIPAZA",
+            "DAL MOSTAGANEM",
+            "DEROUICHE BOUBAKER",
+            "DIFALLAH BRAHIM",
+            "DIRECTION DES ŒUVRES UNIVERSITAIRES",
+            "DIVERSES ASSO CULTURELLES SPORTIVES",
+            "DJENIDI TAHA ANISS",
+            "DONATIONS GERANTS",
+            "DONATIONS PERSONNEL ADMINISTRATIF",
+            "EPE SPA ENTREPRISE DE GESTION",
+            "EPE SPA SOCIETE D'INVESTISSEMENT",
+            "EPIC OFFICE DES PARCS-SPORTS-LOISIR",
+            "EURL AISSOU DISTRIBUTION",
+            "EURL BOUCHERA DISTRIBUTION",
+            "EURL CHILYA FOURNITURE",
+            "EURL ELMODJAMAA EL TIDJARI",
+            "EURL INDIGO DISTRIBUTION",
+            "EURL JOY FOOD",
+            "EURL K M BOISSONS",
+            "EURL L'OURS FOR OIL AND GAS SERVICE",
+            "EURL LA VAGUE VENTE ET DISTRIBUTION",
+            "EURL LAMINE EL SAMI LITAGHDIA",
+            "EURL NOOR DISTRIBUTION",
+            "EURL NOOR DISTRIBUTION -AIN AZEL-",
+            "EURL RESTOTRA",
+            "EURL SMATI DISTRIBUTION",
+            "EURL TUVIRETS BOISSONS",
+            "EURL UNODIS",
+            "FERHAT IBRAHIM",
+            "GALOU SAID",
+            "HAMADACHE ALLAOUA",
+            "HERMAS TRADE IN FOODSTUFFS",
+            "HOPITAL CENTRAL DE L'ARMEE",
+            "ICHALAL MANAA",
+            "IFRI EUROPEAN PARTNER",
+            "IKRAM CATERING- HIOUAL NOUARA",
+            "KADDOUR AZEDDINE",
+            "KHELIL AHMED",
+            "KORICHI BELKHIR",
+            "LAAMIDI NOUR EL HILAL",
+            "MAOUCHE BOUSSAAD",
+            "MECHENOUAI MOHAMED LAMINE",
+            "MEHIRA SALAH EDDINE",
+            "MENANI BRAHIM",
+            "MOHAMED TICH TICH ABDERREZAK",
+            "REGAB AMMAR",
+            "SALHI  WALID",
+            "SALHI SAMI",
+            "Sanchez y Sanchez Spa",
+            "SARL ACOSCO",
+            "SARL AGGLOLUX",
+            "SARL AL FURAT SERVICES PUBLICS",
+            "SARL AL MOUDAYNA HOTEL",
+            "SARL ALLAL DISTRIBUTION",
+            "SARL ALMAFRIQUE",
+            "SARL AXEL DISTRIBUTION",
+            "SARL AZ MARKET",
+            "SARL BELSAL",
+            "SARL CESAREE INTERCONTINENTAL",
+            "SARL DIS SAM SUFFIT",
+            "SARL DISTRI SMARTAN",
+            "SARL DJAZAIR BEST FOOD",
+            "SARL DRINK FOR EVER",
+            "SARL EL HAMIZ GRO ALIMENTAIRE",
+            "SARL EL IKHWA DEBABHA WA CHORAKAIH",
+            "SARL EL MIZANIA COMMERCE",
+            "SARL ELIKHWA BENMERBI LITAWZIA",
+            "SARL EURO JAPAN RESIDENCE",
+            "SARL FATH EL ANDALOUS RESTAURANT",
+            "SARL FINEX TRADING",
+            "SARL FOUR WEEKS",
+            "SARL FT DRINK",
+            "SARL GROUPE KAF EL NADHOUR",
+            "SARL GROUPE LAAMIDI WA ABNAIH",
+            "SARL HORECA ALGERIE",
+            "SARL IMAGINE AND DREAM",
+            "SARL JAGEBU SERVICE COMPANY",
+            "SARL KIELIUS DISTRIBUTION",
+            "SARL LA POINTE DISTRIBUTION",
+            "SARL LABEL MEDITERRANEAN CATERING",
+            "SARL LARGE DISTRIBUTION",
+            "SARL LOUDJINE DISTRIBUTION",
+            "SARL M S EL ISRAA",
+            "SARL METROPOLIS DISTRIBUTION",
+            "SARL MOKRANE ALI BOISSON",
+            "SARL MULTI CATERING ALGERIA",
+            "SARL NEWREST REMOTE ALGERIE",
+            "SARL NOMADIS AGRO ALIMENTAIRE",
+            "SARL NOVA TRADE",
+            "SARL RAHMA DISTRIBUTION",
+            "SARL RENOMA FOOD",
+            "SARL SIFAR DISTRIBUTION",
+            "SARL SIFAR DISTRIBUTION_Djelfa",
+            "SARL SOCIETE CIEPTAL CATERING",
+            "SARL SODI FAST",
+            "SARL SUD PRIM",
+            "SARL SUPERETTE ASSILA COMMERCE",
+            "SARL THALLADIS -AIN TEMOUCHENT-",
+            "SARL THALLADIS -TLEMCEN-",
+            "SARL THURTHITS",
+            "SARL UNITED DRINK AND FOOD",
+            "SARL UNIVERSAL CATERING SERVICES",
+            "SARL VICTORIA DISTRIBITION",
+            "SASSI MILOUD",
+            "SAYAGRO.INC",
+            "Seven Seven Co Ltd",
+            "SNC BENKHAOUA DRINK",
+            "SNC IBRAHIM FRERES LA VALLEE DE LA",
+            "SNC IBRAHIM KARIM ET FRERES",
+            "SNC METNA & FRERES",
+            "SNC MOUSSAOUI ET FRERES - TAFRADHA",
+            "SNC TRANSPORT MARCHANDISES IBRAHIM",
+            "SNC WIN WIN COMPANY AMRANE",
+            "SOCIETE HAWA N'DIAYE ET FILS -SARL",
+            "SODEXO ALGERIE",
+            "SOLTANE BILAL",
+            "SOLTANE DERRADJI",
+            "SOUMIA HADRI",
+            "SPA /EPE STE NATIONALE DES TRAVAUX",
+            "SPA AL SHARIKA EL DJAZAIRIA",
+            "SPA ALGERIE LIGABUE CATERING ALC",
+            "SPA BAYAT CATRING",
+            "SPA COSIDER CANALISATIONS",
+            "SPA E G T G",
+            "SPA EGT ANNABA",
+            "SPA ENTREPRISE DE GESTION HOTELIERE",
+            "SPA H.D.A HYPER DISTRIBUTION ALGERI",
+            "SPA HORES HEBERGEMENT RESTAURATION",
+            "SPA RAIL SERVICES",
+            "SPA RHEINMETALL ALGERIE",
+            "SPA SHIFABE",
+            "SPA SOCIETE D'INFRASTRUCTURES AQUA",
+            "SPA TASSILI AIRLINES",
+            "SPA TOSYALI IRONSTEEL INDUSTRY",
+            "SPA TRUST REAL ESTATE",
+            "SPA UNODIS",
+            "SURETE W BBA",
+            "TOUATI SOUFIANE",
+            "WERLINEZ LTD",
+            "WILAYA DE KHENCHELA",
+            "YAHIAOUI YASSINE",
+            "YAHIAOUI YASSINE -Adrar",
+            "YAHIAOUI YASSINE -ILLIZI-",
+            "YAHIAOUI YASSINE -Tizi ouzou-",
+            "YAHIAOUI YASSINE_Ouargla",
+            "ZIDANI OUKIL"
+        ];
+
+        for client in &clients {
+            sqlx::query(
+                "INSERT INTO clients (id, name) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING"
+            )
+            .bind(Uuid::new_v4())
+            .bind(client.trim())
+            .execute(pool)
+            .await?;
+        }
+        println!("Inserted initial client data");
+    }
+
+    // Create nc_des table for description types
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS nc_des (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) UNIQUE NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Insert default description types if they don't exist
+    let description_types = ["Physique", "Chimique", "Biologique", "Process"];
+    
+    for desc_type in &description_types {
+        sqlx::query(
+            r#"
+            INSERT INTO nc_des (name)
+            VALUES ($1)
+            ON CONFLICT (name) DO NOTHING
+            "#,
+        )
+        .bind(desc_type)
+        .execute(pool)
+        .await?;
+    }
+
     // Create indexes
     let index_queries = [
         "CREATE INDEX IF NOT EXISTS idx_non_conformity_reports_report_number ON non_conformity_reports (report_number)",
@@ -142,9 +379,11 @@ async fn create_initial_admin_user(pool: &PgPool) -> Result<()> {
         .bind(now)
         .execute(pool)
         .await?;
-    }
 
-    println!("Created initial admin user: username=admin, password=admin123");
+        println!("Created initial admin user: username=admin, password=admin123");
+    } else {
+        println!("Admin user already exists, skipping creation");
+    }
 
     Ok(())
 }

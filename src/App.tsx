@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import LinesPage from './pages/LinesPage';
 import ProductsPage from './pages/ProductsPage';
+import ClientsPage from './pages/ClientsPage';
 import UsersPage from './pages/UsersPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { ROLES } from './types/auth';
@@ -81,6 +82,16 @@ function App() {
               ROLES.PERFORMANCE
             ]}>
               <ProductsPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Clients - Accessible to Admin and Client roles */}
+        <Route 
+          path="/clients" 
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.CLIENT]}>
+              <ClientsPage />
             </ProtectedRoute>
           } 
         />

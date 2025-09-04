@@ -3,6 +3,7 @@ pub mod auth;
 pub mod migrations;
 pub mod lines;
 pub mod products;
+pub mod clients;
 
 use sqlx::{postgres::{PgPool, PgPoolOptions}};
 use anyhow::Result;
@@ -35,18 +36,29 @@ impl Database {
         
         let db = Database { pool };
         
-        // Check if the users table exists to determine if we need to run migrations
-        let needs_migration = sqlx::query_scalar::<_, bool>(
-            "SELECT NOT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'users'
-            )"
-        )
-        .fetch_one(&db.pool)
-        .await?;
+        // Check if any required tables are missing
+        let required_tables = ["users", "production_lines", "products", "non_conformity_reports", "nc_des", "clients"];
+        let mut missing_tables = Vec::new();
         
-        if needs_migration {
+        for table in &required_tables {
+            let exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = $1
+                )"
+            )
+            .bind(table)
+            .fetch_one(&db.pool)
+            .await?;
+            
+            if !exists {
+                missing_tables.push(*table);
+            }
+        }
+        
+        if !missing_tables.is_empty() {
+            println!("Missing tables: {:?}", missing_tables);
             println!("Running database migrations...");
             if let Err(e) = db.run_migrations().await {
                 eprintln!("Migration failed: {}", e);
@@ -54,7 +66,7 @@ impl Database {
             }
             println!("Database migrations completed successfully");
         } else {
-            println!("Database is up to date, skipping migrations");
+            println!("All required tables exist, skipping migrations");
         }
         
         Ok(db)

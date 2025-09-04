@@ -3,9 +3,12 @@ mod database;
 use database::{
     auth::{AuthService, LoginRequest, LoginResponse, UserInfo},
     lines::{BulkCreateLinesRequest, CreateLineRequest, LinesService, UpdateLineRequest},
-    models::CreateUser,
+    models::{CreateUser, CreateClient},
     products::{
         BulkCreateProductsRequest, CreateProductRequest, ProductsService, UpdateProductRequest,
+    },
+    clients::{
+        BulkCreateClientsRequest, CreateClientRequest, ClientsService, UpdateClientRequest,
     },
     Database,
 };
@@ -357,6 +360,95 @@ async fn delete_multiple_products(
         .map_err(|e| e.to_string())
 }
 
+// Clients management commands
+#[tauri::command]
+async fn get_clients(
+    db_state: State<'_, DatabaseState>,
+) -> Result<Vec<database::models::Client>, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    clients_service
+        .get_all()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn create_client(
+    db_state: State<'_, DatabaseState>,
+    request: CreateClientRequest,
+) -> Result<database::models::Client, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    clients_service
+        .create(CreateClient { name: request.name })
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn bulk_create_clients(
+    db_state: State<'_, DatabaseState>,
+    request: BulkCreateClientsRequest,
+) -> Result<Vec<database::models::Client>, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    clients_service
+        .bulk_create_clients(request)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn update_client(
+    db_state: State<'_, DatabaseState>,
+    request: UpdateClientRequest,
+) -> Result<database::models::Client, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    clients_service
+        .update(request.id, request.name)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn delete_client(
+    db_state: State<'_, DatabaseState>,
+    client_id: String,
+) -> Result<bool, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    let uuid = uuid::Uuid::parse_str(&client_id).map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    clients_service
+        .delete(uuid)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn delete_multiple_clients(
+    db_state: State<'_, DatabaseState>,
+    client_ids: Vec<String>,
+) -> Result<u64, String> {
+    let db = db_state.lock().await;
+    let clients_service = ClientsService::new(db.pool.clone());
+
+    let uuids: Result<Vec<uuid::Uuid>, _> = client_ids.iter().map(|id| uuid::Uuid::parse_str(id)).collect();
+    let uuids = uuids.map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    clients_service
+        .delete_multiple_clients(uuids)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Create a simple runtime for database initialization
@@ -392,6 +484,13 @@ pub fn run() {
             update_product,
             delete_product,
             delete_multiple_products,
+            // Clients management
+            get_clients,
+            create_client,
+            bulk_create_clients,
+            update_client,
+            delete_client,
+            delete_multiple_clients,
             // User management
             change_password,
             update_user_role,
