@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import DatePicker from '../components/ui/DatePicker';
+import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 
 interface ProductionLine {
   id: string;
@@ -216,22 +217,14 @@ export const NewReportPage: React.FC = () => {
             </div>
 
             {/* Time */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Time *
-              </label>
-              <input
-                type="time"
+            <div>
+              <IntuitiveTimePicker
+                label="Time *"
                 value={formData.time}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('time', e.target.value)}
-                className={`
-                  flex h-10 w-full rounded-md border bg-background transition-colors duration-200 px-4 text-sm
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2
-                  hover:border-primary/50 cursor-pointer text-foreground
-                  ${errors.time ? 'border-destructive focus-visible:ring-destructive/50' : 'border-input'}
-                `}
+                onChange={(value) => handleInputChange('time', value)}
+                error={errors.time}
+                format="24"
               />
-              {errors.time && <p className="text-sm font-medium text-destructive mt-1">{errors.time}</p>}
             </div>
 
             {/* Team */}
