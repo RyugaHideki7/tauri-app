@@ -10,6 +10,8 @@ import {
   faSignOutAlt,
   faChevronLeft,
   faChevronRight,
+  faExclamationTriangle,
+  faClipboardList,
 } from "@fortawesome/free-solid-svg-icons";
 import { ROLES, UserRole } from "../types/auth";
 
@@ -50,6 +52,20 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     label: "Products",
     path: "/products",
     allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE],
+    showInNav: true,
+  },
+  {
+    icon: faClipboardList,
+    label: "Reports",
+    path: "/reports",
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
+    showInNav: true,
+  },
+  {
+    icon: faExclamationTriangle,
+    label: "New Report",
+    path: "/reports/new",
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
     showInNav: true,
   },
   {

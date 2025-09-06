@@ -69,6 +69,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             quantity INTEGER NOT NULL,
             claim_origin VARCHAR(50) NOT NULL CHECK (claim_origin IN ('client', 'site01', 'site02', 'Consommateur')),
             valuation DECIMAL(10, 2) NOT NULL,
+            performance TEXT,
             status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
             reported_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL,
@@ -77,6 +78,16 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
             FOREIGN KEY (reported_by) REFERENCES users (id) ON DELETE CASCADE
         )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Add performance column to existing non_conformity_reports table if it doesn't exist
+    sqlx::query(
+        r#"
+        ALTER TABLE non_conformity_reports 
+        ADD COLUMN IF NOT EXISTS performance TEXT
         "#,
     )
     .execute(pool)

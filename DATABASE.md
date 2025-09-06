@@ -55,6 +55,7 @@ Main table for tracking non-conformity incidents.
 | quantity | Integer | Quantity affected (in bottles) |
 | claim_origin | String |Enum 'client', 'site01', 'site02','Consommateur'|
 | valuation | Decimal | Monetary valuation of the issue |
+| performance | Text | Performance-related notes or metrics (optional) |
 | status | Enum | Current status: 'open', 'in_progress', 'resolved', 'closed' |
 | reported_by | UUID (FK) | User who created the report |
 | created_at | Timestamp | Creation timestamp |

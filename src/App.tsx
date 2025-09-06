@@ -7,6 +7,8 @@ import LinesPage from './pages/LinesPage';
 import ProductsPage from './pages/ProductsPage';
 import ClientsPage from './pages/ClientsPage';
 import UsersPage from './pages/UsersPage';
+import { NewReportPage } from './pages/NewReportPage';
+import { ReportsPage } from './pages/ReportsPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { ROLES } from './types/auth';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -102,6 +104,26 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <UsersPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Reports List - Accessible to all authenticated users */}
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute allowedRoles={Object.values(ROLES)}>
+              <ReportsPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* New Report - Accessible to all authenticated users */}
+        <Route 
+          path="/reports/new" 
+          element={
+            <ProtectedRoute allowedRoles={Object.values(ROLES)}>
+              <NewReportPage />
             </ProtectedRoute>
           } 
         />

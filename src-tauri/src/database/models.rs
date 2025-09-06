@@ -3,6 +3,7 @@ use sqlx::FromRow;
 use chrono::{DateTime, Utc, NaiveDate, NaiveTime};
 use std::str::FromStr;
 use uuid::Uuid;
+use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Client {
@@ -74,9 +75,10 @@ pub struct NonConformityReport {
     pub description_details: String,
     pub quantity: i32,
     pub claim_origin: String, // client, site01, site02, Consommateur
-    pub valuation: f64,
+    pub valuation: Decimal,
+    pub performance: Option<String>,
     pub status: String, // open, in_progress, resolved, closed
-    pub reported_by: String,
+    pub reported_by: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

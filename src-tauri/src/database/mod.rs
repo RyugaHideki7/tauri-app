@@ -4,6 +4,7 @@ pub mod migrations;
 pub mod lines;
 pub mod products;
 pub mod clients;
+pub mod reports;
 
 use sqlx::{postgres::{PgPool, PgPoolOptions}};
 use anyhow::Result;

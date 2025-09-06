@@ -5,6 +5,7 @@ use database::models::{CreateUser, CreateClient};
 use database::clients::{ClientsService, CreateClientRequest, BulkCreateClientsRequest, UpdateClientRequest, PaginationParams as ClientsPaginationParams, PaginatedResponse as ClientsPaginatedResponse};
 use database::products::{ProductsService, CreateProductRequest, BulkCreateProductsRequest, UpdateProductRequest, PaginationParams as ProductsPaginationParams, PaginatedResponse as ProductsPaginatedResponse};
 use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, UpdateLineRequest, PaginationParams as LinesPaginationParams, PaginatedResponse as LinesPaginatedResponse};
+use database::reports::{ReportsService, CreateReportRequest, PaginationParams as ReportsPaginationParams, PaginatedResponse as ReportsPaginatedResponse};
 use database::{Database};
 use std::sync::Arc;
 use tauri::State;
@@ -511,6 +512,103 @@ async fn delete_multiple_clients(
         .map_err(|e| e.to_string())
 }
 
+// Reports management commands
+#[tauri::command]
+async fn create_report(
+    db_state: State<'_, DatabaseState>,
+    request: CreateReportRequest,
+    reported_by: String,
+) -> Result<database::models::NonConformityReport, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    let user_uuid = uuid::Uuid::parse_str(&reported_by)
+        .map_err(|e| format!("Invalid user ID: {}", e))?;
+
+    reports_service
+        .create_report(request, user_uuid)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_reports(
+    db_state: State<'_, DatabaseState>,
+) -> Result<Vec<database::models::NonConformityReport>, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    reports_service
+        .get_all_reports()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_reports_paginated(
+    db_state: State<'_, DatabaseState>,
+    page: i64,
+    limit: i64,
+    search: Option<String>,
+) -> Result<ReportsPaginatedResponse<database::models::NonConformityReport>, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+    
+    let params = ReportsPaginationParams { page, limit, search };
+    reports_service
+        .get_paginated_reports(params)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_description_types(
+    db_state: State<'_, DatabaseState>,
+) -> Result<Vec<database::models::NcDes>, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    reports_service
+        .get_description_types()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn update_report_status(
+    db_state: State<'_, DatabaseState>,
+    report_id: String,
+    status: String,
+) -> Result<database::models::NonConformityReport, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    let uuid = uuid::Uuid::parse_str(&report_id)
+        .map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    reports_service
+        .update_report_status(uuid, status)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn delete_report(
+    db_state: State<'_, DatabaseState>,
+    report_id: String,
+) -> Result<bool, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    let uuid = uuid::Uuid::parse_str(&report_id)
+        .map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    reports_service
+        .delete_report(uuid)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Create a simple runtime for database initialization
@@ -564,6 +662,13 @@ pub fn run() {
             update_username,
             delete_user,
             update_user_password,
+            // Reports management
+            create_report,
+            get_reports,
+            get_reports_paginated,
+            get_description_types,
+            update_report_status,
+            delete_report,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

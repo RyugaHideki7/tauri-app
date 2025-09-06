@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -13,13 +13,13 @@ const Input: React.FC<InputProps> = ({
   label,
   error,
   helperText,
-  className = '',
-  type: propType = 'text',
-  showPasswordToggle = propType === 'password',
+  className = "",
+  type: propType = "text",
+  showPasswordToggle = propType === "password",
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const type = showPasswordToggle && showPassword ? 'text' : propType;
+  const type = showPasswordToggle && showPassword ? "text" : propType;
 
   return (
     <div className="space-y-2">
@@ -36,11 +36,13 @@ const Input: React.FC<InputProps> = ({
             file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground 
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
             disabled:cursor-not-allowed disabled:opacity-50
-            ${error ? 'border-destructive' : ''}
-            ${showPasswordToggle ? 'pr-10' : ''}
+            ${error ? "border-destructive" : ""}
+            ${showPasswordToggle ? "pr-10" : ""}
             ${className}
           `}
-          {...(propType === 'password' ? { 'data-password-input': 'true' } : {})}
+          {...(propType === "password"
+            ? { "data-password-input": "true" }
+            : {})}
           {...props}
         />
         {showPasswordToggle && (
@@ -53,20 +55,18 @@ const Input: React.FC<InputProps> = ({
             }}
             tabIndex={-1}
           >
-            <FontAwesomeIcon 
-              icon={showPassword ? faEyeSlash : faEye} 
+            <FontAwesomeIcon
+              icon={showPassword ? faEyeSlash : faEye}
               className="h-4 w-4"
               aria-hidden="true"
             />
             <span className="sr-only">
-              {showPassword ? 'Hide password' : 'Show password'}
+              {showPassword ? "Hide password" : "Show password"}
             </span>
           </button>
         )}
       </div>
-      {error && (
-        <p className="text-sm font-medium text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
       {helperText && !error && (
         <p className="text-sm text-muted-foreground">{helperText}</p>
       )}
