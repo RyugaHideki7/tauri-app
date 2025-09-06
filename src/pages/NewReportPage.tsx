@@ -3,6 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
+import DatePicker from '../components/ui/DatePicker';
 
 interface ProductionLine {
   id: string;
@@ -167,54 +169,49 @@ export const NewReportPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Production Line */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Production Line *
-              </label>
-              <select
+              <Select
+                label="Production Line *"
                 value={formData.line_id}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('line_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a production line</option>
-                {lines.map((line) => (
-                  <option key={line.id} value={line.id}>
-                    {line.name}
-                  </option>
-                ))}
-              </select>
-              {errors.line_id && <p className="text-red-500 text-sm mt-1">{errors.line_id}</p>}
+                onChange={(value) => handleInputChange('line_id', value)}
+                options={[
+                  { value: '', label: 'Select a production line' },
+                  ...lines.map((line) => ({
+                    value: line.id,
+                    label: line.name
+                  }))
+                ]}
+                error={errors.line_id}
+                placeholder="Select a production line"
+              />
             </div>
 
             {/* Product */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product *
-              </label>
-              <select
+              <Select
+                label="Product *"
                 value={formData.product_id}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('product_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a product</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.designation} ({product.code})
-                  </option>
-                ))}
-              </select>
-              {errors.product_id && <p className="text-red-500 text-sm mt-1">{errors.product_id}</p>}
+                onChange={(value) => handleInputChange('product_id', value)}
+                options={[
+                  { value: '', label: 'Select a product' },
+                  ...products.map((product) => ({
+                    value: product.id,
+                    label: `${product.designation} (${product.code})`
+                  }))
+                ]}
+                error={errors.product_id}
+                placeholder="Select a product"
+              />
             </div>
 
             {/* Production Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Production Date *
-              </label>
-              <Input
-                type="date"
+              <DatePicker
+                label="Production Date *"
                 value={formData.production_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('production_date', e.target.value)}
+                onChange={(value) => handleInputChange('production_date', value)}
                 error={errors.production_date}
+                placeholder="Select production date"
+                maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
               />
             </div>
 
@@ -233,39 +230,36 @@ export const NewReportPage: React.FC = () => {
 
             {/* Team */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Team *
-              </label>
-              <select
+              <Select
+                label="Team *"
                 value={formData.team}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('team', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="A">Team A</option>
-                <option value="B">Team B</option>
-                <option value="C">Team C</option>
-              </select>
-              {errors.team && <p className="text-red-500 text-sm mt-1">{errors.team}</p>}
+                onChange={(value) => handleInputChange('team', value)}
+                options={[
+                  { value: 'A', label: 'Team A' },
+                  { value: 'B', label: 'Team B' },
+                  { value: 'C', label: 'Team C' }
+                ]}
+                error={errors.team}
+                placeholder="Select team"
+              />
             </div>
 
             {/* Description Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description Type *
-              </label>
-              <select
+              <Select
+                label="Description Type *"
                 value={formData.description_type}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('description_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select description type</option>
-                {descriptionTypes.map((type) => (
-                  <option key={type.id} value={type.name}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-              {errors.description_type && <p className="text-red-500 text-sm mt-1">{errors.description_type}</p>}
+                onChange={(value) => handleInputChange('description_type', value)}
+                options={[
+                  { value: '', label: 'Select description type' },
+                  ...descriptionTypes.map((type) => ({
+                    value: type.name,
+                    label: type.name
+                  }))
+                ]}
+                error={errors.description_type}
+                placeholder="Select description type"
+              />
             </div>
 
             {/* Quantity */}
@@ -284,20 +278,19 @@ export const NewReportPage: React.FC = () => {
 
             {/* Claim Origin */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Claim Origin *
-              </label>
-              <select
+              <Select
+                label="Claim Origin *"
                 value={formData.claim_origin}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('claim_origin', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="client">Client</option>
-                <option value="site01">Site 01</option>
-                <option value="site02">Site 02</option>
-                <option value="Consommateur">Consommateur</option>
-              </select>
-              {errors.claim_origin && <p className="text-red-500 text-sm mt-1">{errors.claim_origin}</p>}
+                onChange={(value) => handleInputChange('claim_origin', value)}
+                options={[
+                  { value: 'client', label: 'Client' },
+                  { value: 'site01', label: 'Site 01' },
+                  { value: 'site02', label: 'Site 02' },
+                  { value: 'Consommateur', label: 'Consommateur' }
+                ]}
+                error={errors.claim_origin}
+                placeholder="Select claim origin"
+              />
             </div>
 
             {/* Valuation */}
