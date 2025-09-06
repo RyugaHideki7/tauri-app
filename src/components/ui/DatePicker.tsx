@@ -92,7 +92,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+      if (
+        datePickerRef.current && 
+        !datePickerRef.current.contains(event.target as Node) &&
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -180,18 +185,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
           onClick={() => handleDateClick(day)}
           disabled={isDisabled}
           className={`
-            w-8 h-8 text-sm rounded-md transition-colors duration-150 hover:bg-accent hover:text-accent-foreground
+            w-8 h-8 text-sm rounded-md transition-colors duration-150
             ${isSelected 
               ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-              : ''
+              : 'hover:bg-accent hover:text-accent-foreground'
             }
             ${isToday && !isSelected 
-              ? 'bg-accent text-accent-foreground font-semibold' 
+              ? 'bg-accent/50 text-accent-foreground font-semibold' 
               : ''
             }
             ${isDisabled 
               ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-current' 
-              : 'cursor-pointer'
+              : 'cursor-pointer text-popover-foreground'
             }
           `}
         >
@@ -214,7 +219,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             </svg>
           </button>
           
-          <h3 className="text-sm font-semibold">
+          <h3 className="text-sm font-semibold text-popover-foreground">
             {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h3>
           

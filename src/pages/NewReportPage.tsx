@@ -216,16 +216,22 @@ export const NewReportPage: React.FC = () => {
             </div>
 
             {/* Time */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Time *
               </label>
-              <Input
+              <input
                 type="time"
                 value={formData.time}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('time', e.target.value)}
-                error={errors.time}
+                className={`
+                  flex h-10 w-full rounded-md border bg-background transition-colors duration-200 px-4 text-sm
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2
+                  hover:border-primary/50 cursor-pointer text-foreground
+                  ${errors.time ? 'border-destructive focus-visible:ring-destructive/50' : 'border-input'}
+                `}
               />
+              {errors.time && <p className="text-sm font-medium text-destructive mt-1">{errors.time}</p>}
             </div>
 
             {/* Team */}
