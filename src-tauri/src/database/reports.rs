@@ -105,7 +105,12 @@ impl ReportsService {
 
     pub async fn get_all_reports(&self) -> Result<Vec<NonConformityReport>> {
         let reports = sqlx::query_as::<_, NonConformityReport>(
-            "SELECT * FROM non_conformity_reports ORDER BY created_at DESC"
+            r#"
+            SELECT ncr.*, p.designation as product_name
+            FROM non_conformity_reports ncr
+            LEFT JOIN products p ON ncr.product_id = p.id
+            ORDER BY ncr.created_at DESC
+            "#
         )
         .fetch_all(&self.pool)
         .await?;
@@ -117,16 +122,17 @@ impl ReportsService {
         let offset = (params.page - 1) * params.limit;
         
         let mut query = String::from(
-            "SELECT * FROM non_conformity_reports WHERE 1=1"
+            "SELECT ncr.*, p.designation as product_name FROM non_conformity_reports ncr LEFT JOIN products p ON ncr.product_id = p.id WHERE 1=1"
         );
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM non_conformity_reports WHERE 1=1"
+            "SELECT COUNT(*) FROM non_conformity_reports ncr WHERE 1=1"
         );
 
         if let Some(search) = &params.search {
             if !search.trim().is_empty() {
                 let search_condition = format!(
-                    " AND (report_number ILIKE '%{}%' OR description_details ILIKE '%{}%')",
+                    " AND (ncr.report_number ILIKE '%{}%' OR ncr.description_details ILIKE '%{}%' OR p.designation ILIKE '%{}%')",
+                    search.replace('\'', "''"),
                     search.replace('\'', "''"),
                     search.replace('\'', "''")
                 );
@@ -135,7 +141,7 @@ impl ReportsService {
             }
         }
 
-        query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+        query.push_str(" ORDER BY ncr.created_at DESC LIMIT $1 OFFSET $2");
 
         let reports = sqlx::query_as::<_, NonConformityReport>(&query)
             .bind(params.limit)

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Table from '../components/ui/Table';
 
 interface NonConformityReport {
   id: string;
@@ -84,15 +85,15 @@ export const ReportsPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       case 'resolved':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
       case 'closed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400';
     }
   };
 
@@ -101,7 +102,7 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Non-Conformity Reports</h1>
+        <h1 className="text-2xl font-bold text-foreground">Non-Conformity Reports</h1>
         <Button
           onClick={() => navigate('/reports/new')}
           className="bg-blue-600 hover:bg-blue-700"
@@ -122,171 +123,87 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Reports Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Report Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Team
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Origin
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Valuation
-                </th>
-                {canViewPerformance && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Performance
-                  </th>
-                )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={canViewPerformance ? 10 : 9} className="px-6 py-4 text-center">
-                    Loading reports...
-                  </td>
-                </tr>
-              ) : reports.length === 0 ? (
-                <tr>
-                  <td colSpan={canViewPerformance ? 10 : 9} className="px-6 py-4 text-center text-gray-500">
-                    No reports found
-                  </td>
-                </tr>
-              ) : (
-                reports.map((report) => (
-                  <tr key={report.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {report.report_number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(report.production_date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {report.description_type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Team {report.team}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {report.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {report.claim_origin}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {parseFloat(report.valuation).toFixed(2)} DZD
-                    </td>
-                    {canViewPerformance && (
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                        {report.performance || '-'}
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(report.status)}`}>
-                        {report.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateTime(report.created_at)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <Button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                variant="outline"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(page * limit, total)}
-                  </span>{' '}
-                  of <span className="font-medium">{total}</span> results
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <Button
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                    variant="outline"
-                    className="rounded-l-md"
-                  >
-                    Previous
-                  </Button>
-                  
-                  {/* Page numbers */}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
-                    return (
-                      <Button
-                        key={pageNum}
-                        onClick={() => setPage(pageNum)}
-                        variant={page === pageNum ? "primary" : "outline"}
-                        className="rounded-none"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                  
-                  <Button
-                    onClick={() => setPage(page + 1)}
-                    disabled={page === totalPages}
-                    variant="outline"
-                    className="rounded-r-md"
-                  >
-                    Next
-                  </Button>
-                </nav>
-              </div>
-            </div>
+      <Table
+        columns={[
+          {
+            key: 'report_number',
+            header: 'Report Number',
+            render: (value) => <span className="font-medium">{value}</span>
+          },
+          {
+            key: 'production_date',
+            header: 'Date',
+            render: (value) => formatDate(value)
+          },
+          {
+            key: 'product_name',
+            header: 'Product',
+            render: (value) => value || 'Unknown Product'
+          },
+          {
+            key: 'description_type',
+            header: 'Type'
+          },
+          {
+            key: 'team',
+            header: 'Team',
+            render: (value) => `Team ${value}`
+          },
+          {
+            key: 'quantity',
+            header: 'Quantity'
+          },
+          {
+            key: 'claim_origin',
+            header: 'Origin'
+          },
+          {
+            key: 'valuation',
+            header: 'Valuation',
+            render: (value) => `${parseFloat(value).toFixed(2)} DZD`
+          },
+          ...(canViewPerformance ? [{
+            key: 'performance',
+            header: 'Performance',
+            render: (value: string) => (
+              <span className="max-w-xs truncate block">
+                {value || '-'}
+              </span>
+            )
+          }] : []),
+          {
+            key: 'status',
+            header: 'Status',
+            render: (value) => (
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(value)}`}>
+                {value.replace('_', ' ')}
+              </span>
+            )
+          },
+          {
+            key: 'created_at',
+            header: 'Created',
+            render: (value) => formatDateTime(value)
+          }
+        ]}
+        data={loading ? [] : reports}
+        pagination={{
+          currentPage: page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limit,
+          onPageChange: setPage,
+          showItemsPerPage: false
+        }}
+      />
+      
+      {loading && (
+        <div className="text-center py-16">
+          <div className="text-muted-foreground">
+            <p className="text-sm font-medium">Loading reports...</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -164,9 +164,9 @@ export const NewReportPage: React.FC = () => {
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Non-Conformity Report</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Create New Non-Conformity Report</h1>
         
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg shadow-md border border-border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Production Line */}
             <div>
@@ -196,7 +196,7 @@ export const NewReportPage: React.FC = () => {
                   { value: '', label: 'Select a product' },
                   ...products.map((product) => ({
                     value: product.id,
-                    label: `${product.designation} (${product.code})`
+                    label: product.code ? `${product.designation} (${product.code})` : product.designation
                   }))
                 ]}
                 error={errors.product_id}
@@ -263,7 +263,7 @@ export const NewReportPage: React.FC = () => {
 
             {/* Quantity */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Quantity (bottles) *
               </label>
               <Input
@@ -294,7 +294,7 @@ export const NewReportPage: React.FC = () => {
 
             {/* Valuation */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Valuation (DZD)
               </label>
               <Input
@@ -310,30 +310,30 @@ export const NewReportPage: React.FC = () => {
 
           {/* Description Details */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Description Details *
             </label>
             <textarea
               value={formData.description_details}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
               placeholder="Provide detailed description of the non-conformity..."
             />
-            {errors.description_details && <p className="text-red-500 text-sm mt-1">{errors.description_details}</p>}
+            {errors.description_details && <p className="text-destructive text-sm mt-1">{errors.description_details}</p>}
           </div>
 
           {/* Performance Field - Only visible to performance and admin roles */}
           {canViewPerformance && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Performance Notes
               </label>
               <textarea
                 value={formData.performance}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('performance', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
                 placeholder="Add performance-related notes or metrics..."
               />
             </div>

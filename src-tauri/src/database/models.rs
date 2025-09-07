@@ -81,6 +81,7 @@ pub struct NonConformityReport {
     pub reported_by: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub product_name: Option<String>, // Joined from products table
 }
 
 // Enums for validation
