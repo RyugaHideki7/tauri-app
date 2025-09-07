@@ -162,8 +162,8 @@ export const NewReportPage: React.FC = () => {
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="p-4 lg:p-6 w-full">
+      <div className="w-full max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold text-foreground mb-6">Create New Non-Conformity Report</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg shadow-md border border-border">

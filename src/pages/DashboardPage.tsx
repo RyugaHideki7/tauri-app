@@ -4,7 +4,7 @@ const DashboardPage: React.FC = () => {
   const username = localStorage.getItem('username') || 'User';
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 lg:p-6 w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Welcome back, {username}!

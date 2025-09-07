@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }}
           />
           <div className="h-full overflow-y-auto custom-scrollbar">
-            <div className="max-w-6xl mx-auto py-6 px-8">
+            <div className="w-full">
               {children}
             </div>
           </div>

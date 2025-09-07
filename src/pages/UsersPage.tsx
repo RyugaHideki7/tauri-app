@@ -290,8 +290,8 @@ export const UsersPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-4 lg:p-6 w-full">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

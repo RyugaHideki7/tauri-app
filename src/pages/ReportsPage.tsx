@@ -100,12 +100,12 @@ export const ReportsPage: React.FC = () => {
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 lg:p-6 w-full">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-foreground">Non-Conformity Reports</h1>
         <Button
           onClick={() => navigate('/reports/new')}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
         >
           Create New Report
         </Button>
@@ -118,7 +118,7 @@ export const ReportsPage: React.FC = () => {
           placeholder="Search reports by number or description..."
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
-          className="max-w-md"
+          className="w-full sm:max-w-md"
         />
       </div>
 

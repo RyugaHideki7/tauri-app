@@ -35,9 +35,9 @@ const Table: React.FC<TableProps> = ({
   pagination
 }) => {
   return (
-    <div className={`overflow-hidden border border-border rounded-2xl shadow-sm ${className}`}>
+    <div className={`w-full overflow-hidden border border-border rounded-2xl shadow-sm ${className}`}>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
+        <table className="w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
               {columns.map((column, index) => (
