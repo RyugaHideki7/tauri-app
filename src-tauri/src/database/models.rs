@@ -62,12 +62,21 @@ pub struct Product {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Format {
+    pub id: i32,
+    pub format_index: i32,
+    pub format_unit: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct NonConformityReport {
     pub id: Uuid,
     pub report_number: String,
     pub report_date: DateTime<Utc>,
     pub line_id: Uuid,
     pub product_id: Uuid,
+    pub format_id: Option<i32>,
     pub production_date: NaiveDate,
     pub team: String, // A, B, or C
     pub time: NaiveTime,
@@ -82,6 +91,7 @@ pub struct NonConformityReport {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub product_name: Option<String>, // Joined from products table
+    pub format_display: Option<String>, // Joined from formats table (format_index + format_unit)
 }
 
 // Enums for validation

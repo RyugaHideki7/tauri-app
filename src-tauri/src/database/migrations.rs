@@ -52,6 +52,51 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // Create formats table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS formats (
+            id SERIAL PRIMARY KEY,
+            format_index INTEGER UNIQUE NOT NULL,
+            format_unit VARCHAR(10) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Insert initial format data if table is empty
+    let format_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM formats")
+        .fetch_one(pool)
+        .await?;
+
+    if format_count == 0 {
+        let formats = [
+            (500, "ML"),
+            (750, "ML"),
+            (1000, "ML"),
+            (2000, "ML"),
+            (200, "ML"),
+            (300, "ML"),
+            (240, "ML"),
+            (250, "ML"),
+            (330, "ML"),
+            (1250, "ML"),
+        ];
+
+        for (format_index, format_unit) in &formats {
+            sqlx::query(
+                "INSERT INTO formats (format_index, format_unit) VALUES ($1, $2)"
+            )
+            .bind(format_index)
+            .bind(format_unit)
+            .execute(pool)
+            .await?;
+        }
+        println!("Inserted initial format data");
+    }
+
     // Create non_conformity_reports table
     sqlx::query(
         r#"
@@ -61,6 +106,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             report_date TIMESTAMPTZ NOT NULL,
             line_id UUID NOT NULL,
             product_id UUID NOT NULL,
+            format_id INTEGER,
             production_date DATE NOT NULL,
             team VARCHAR(1) NOT NULL CHECK (team IN ('A', 'B', 'C')),
             time TIME NOT NULL,
@@ -76,6 +122,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             updated_at TIMESTAMPTZ NOT NULL,
             FOREIGN KEY (line_id) REFERENCES production_lines (id) ON DELETE CASCADE,
             FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+            FOREIGN KEY (format_id) REFERENCES formats (id) ON DELETE SET NULL,
             FOREIGN KEY (reported_by) REFERENCES users (id) ON DELETE CASCADE
         )
         "#,
@@ -92,6 +139,8 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    // Remove the separate ALTER TABLE for format_id since it's now in the main CREATE TABLE
 
     // Create clients table
     sqlx::query(

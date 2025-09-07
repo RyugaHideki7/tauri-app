@@ -5,12 +5,13 @@ use chrono::{Utc, NaiveDate, NaiveTime};
 use serde::{Deserialize, Serialize};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
-use crate::database::models::{NonConformityReport, NcDes};
+use crate::database::models::{NonConformityReport, NcDes, Format};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateReportRequest {
     pub line_id: String,
     pub product_id: String,
+    pub format_id: Option<i32>,
     pub production_date: String, // Will be parsed to NaiveDate
     pub team: String,
     pub time: String, // Will be parsed to NaiveTime
@@ -72,11 +73,11 @@ impl ReportsService {
         sqlx::query(
             r#"
             INSERT INTO non_conformity_reports (
-                id, report_number, report_date, line_id, product_id, 
+                id, report_number, report_date, line_id, product_id, format_id,
                 production_date, team, time, description_type, description_details,
                 quantity, claim_origin, valuation, performance, status, reported_by,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             "#,
         )
         .bind(id)
@@ -84,6 +85,7 @@ impl ReportsService {
         .bind(now)
         .bind(line_id)
         .bind(product_id)
+        .bind(request.format_id)
         .bind(production_date)
         .bind(&request.team)
         .bind(time)
@@ -100,12 +102,18 @@ impl ReportsService {
         .execute(&self.pool)
         .await?;
 
-        // Then fetch the report with product name via JOIN
+        // Then fetch the report with product name and format info via JOIN
         let report = sqlx::query_as::<_, NonConformityReport>(
             r#"
-            SELECT ncr.*, p.designation as product_name
+            SELECT ncr.*, 
+                   p.designation as product_name,
+                   CASE 
+                       WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
+                       ELSE NULL 
+                   END as format_display
             FROM non_conformity_reports ncr
             LEFT JOIN products p ON ncr.product_id = p.id
+            LEFT JOIN formats f ON ncr.format_id = f.id
             WHERE ncr.id = $1
             "#,
         )
@@ -119,9 +127,15 @@ impl ReportsService {
     pub async fn get_all_reports(&self) -> Result<Vec<NonConformityReport>> {
         let reports = sqlx::query_as::<_, NonConformityReport>(
             r#"
-            SELECT ncr.*, p.designation as product_name
+            SELECT ncr.*, 
+                   p.designation as product_name,
+                   CASE 
+                       WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
+                       ELSE NULL 
+                   END as format_display
             FROM non_conformity_reports ncr
             LEFT JOIN products p ON ncr.product_id = p.id
+            LEFT JOIN formats f ON ncr.format_id = f.id
             ORDER BY ncr.created_at DESC
             "#
         )
@@ -135,7 +149,7 @@ impl ReportsService {
         let offset = (params.page - 1) * params.limit;
         
         let mut query = String::from(
-            "SELECT ncr.*, p.designation as product_name FROM non_conformity_reports ncr LEFT JOIN products p ON ncr.product_id = p.id WHERE 1=1"
+            "SELECT ncr.*, p.designation as product_name, CASE WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit) ELSE NULL END as format_display FROM non_conformity_reports ncr LEFT JOIN products p ON ncr.product_id = p.id LEFT JOIN formats f ON ncr.format_id = f.id WHERE 1=1"
         );
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM non_conformity_reports ncr WHERE 1=1"
@@ -185,6 +199,16 @@ impl ReportsService {
         .await?;
 
         Ok(types)
+    }
+
+    pub async fn get_formats(&self) -> Result<Vec<Format>> {
+        let formats = sqlx::query_as::<_, Format>(
+            "SELECT * FROM formats ORDER BY format_index"
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(formats)
     }
 
     async fn generate_report_number(&self) -> Result<String> {
