@@ -29,6 +29,9 @@ pub struct PaginationParams {
     pub page: i64,
     pub limit: i64,
     pub search: Option<String>,
+    pub product_id: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,45 +153,159 @@ impl ReportsService {
     }
 
     pub async fn get_paginated_reports(&self, params: PaginationParams) -> Result<PaginatedResponse<NonConformityReport>> {
+        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, start_date={:?}, end_date={:?}", 
+                 params.page, params.limit, params.search, params.product_id, params.start_date, params.end_date);
+        
         let offset = (params.page - 1) * params.limit;
         
         let mut query = String::from(
-            "SELECT ncr.*, p.designation as product_name, CASE WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit) ELSE NULL END as format_display FROM non_conformity_reports ncr LEFT JOIN products p ON ncr.product_id = p.id LEFT JOIN formats f ON ncr.format_id = f.id WHERE 1=1"
+            r#"
+            SELECT ncr.*, 
+                   p.designation as product_name,
+                   CASE 
+                     WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
+                     ELSE NULL 
+                   END as format_display
+            FROM non_conformity_reports ncr
+            LEFT JOIN products p ON ncr.product_id = p.id
+            LEFT JOIN formats f ON ncr.format_id = f.id
+            WHERE 1=1
+            "#
         );
+        
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM non_conformity_reports ncr WHERE 1=1"
         );
-
+        
+        let mut conditions = Vec::new();
+        let mut bind_values = Vec::new();
+        
+        // Collect all filter conditions and their values
         if let Some(search) = &params.search {
+            println!("[REPORTS_SERVICE] Processing search: '{}'", search);
             if !search.trim().is_empty() {
-                let search_condition = format!(
-                    " AND (ncr.report_number ILIKE '%{}%' OR ncr.description_details ILIKE '%{}%' OR p.designation ILIKE '%{}%')",
-                    search.replace('\'', "''"),
-                    search.replace('\'', "''"),
-                    search.replace('\'', "''")
-                );
-                query.push_str(&search_condition);
-                count_query.push_str(&search_condition);
+                println!("[REPORTS_SERVICE] Adding search condition");
+                conditions.push("(ncr.report_number ILIKE $PLACEHOLDER OR ncr.description_details ILIKE $PLACEHOLDER)");
+                bind_values.push(format!("%{}%", search));
+            } else {
+                println!("[REPORTS_SERVICE] Search is empty, skipping");
             }
+        } else {
+            println!("[REPORTS_SERVICE] Search is None");
         }
 
-        query.push_str(" ORDER BY ncr.created_at DESC LIMIT $1 OFFSET $2");
+        if let Some(product_id) = &params.product_id {
+            println!("[REPORTS_SERVICE] Processing product_id: '{}'", product_id);
+            if !product_id.trim().is_empty() {
+                println!("[REPORTS_SERVICE] Adding product_id condition");
+                let product_uuid = uuid::Uuid::parse_str(product_id)
+                    .map_err(|e| anyhow::anyhow!("Invalid product UUID: {}", e))?;
+                conditions.push("ncr.product_id = $PLACEHOLDER");
+                bind_values.push(product_uuid.to_string());
+            } else {
+                println!("[REPORTS_SERVICE] Product_id is empty, skipping");
+            }
+        } else {
+            println!("[REPORTS_SERVICE] Product_id is None");
+        }
 
-        let reports = sqlx::query_as::<_, NonConformityReport>(&query)
-            .bind(params.limit)
-            .bind(offset)
-            .fetch_all(&self.pool)
-            .await?;
+        if let Some(start_date) = &params.start_date {
+            println!("[REPORTS_SERVICE] Processing start_date: '{}'", start_date);
+            if !start_date.trim().is_empty() {
+                println!("[REPORTS_SERVICE] Adding start_date condition");
+                let _start_date_parsed = chrono::NaiveDate::parse_from_str(start_date, "%Y-%m-%d")
+                    .map_err(|e| anyhow::anyhow!("Invalid start date format: {}", e))?;
+                conditions.push("ncr.report_date >= $PLACEHOLDER");
+                bind_values.push(start_date.clone());
+            } else {
+                println!("[REPORTS_SERVICE] Start_date is empty, skipping");
+            }
+        } else {
+            println!("[REPORTS_SERVICE] Start_date is None");
+        }
 
-        let total: i64 = sqlx::query_scalar(&count_query)
-            .fetch_one(&self.pool)
-            .await?;
-
-        let total_pages = (total + params.limit - 1) / params.limit;
-
+        if let Some(end_date) = &params.end_date {
+            println!("[REPORTS_SERVICE] Processing end_date: '{}'", end_date);
+            if !end_date.trim().is_empty() {
+                println!("[REPORTS_SERVICE] Adding end_date condition");
+                let _end_date_parsed = chrono::NaiveDate::parse_from_str(end_date, "%Y-%m-%d")
+                    .map_err(|e| anyhow::anyhow!("Invalid end date format: {}", e))?;
+                conditions.push("ncr.report_date <= $PLACEHOLDER");
+                bind_values.push(end_date.clone());
+            } else {
+                println!("[REPORTS_SERVICE] End_date is empty, skipping");
+            }
+        } else {
+            println!("[REPORTS_SERVICE] End_date is None");
+        }
+        
+        println!("[REPORTS_SERVICE] Found {} conditions to apply", conditions.len());
+        
+        // Build the final queries with proper parameter placeholders
+        let mut param_index = 1;
+        for condition in &conditions {
+            let condition_with_params = if condition.contains("ILIKE $PLACEHOLDER OR") {
+                // For search condition that uses the same parameter twice
+                condition.replace("$PLACEHOLDER", &format!("${}", param_index))
+            } else {
+                condition.replace("$PLACEHOLDER", &format!("${}", param_index))
+            };
+            query.push_str(&format!(" AND {}", condition_with_params));
+            count_query.push_str(&format!(" AND {}", condition_with_params));
+            param_index += 1;
+        }
+        
+        query.push_str(" ORDER BY ncr.created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
+        
+        // Replace LIMIT and OFFSET placeholders
+        let final_query = query
+            .replace("$LIMIT", &format!("${}", param_index))
+            .replace("$OFFSET", &format!("${}", param_index + 1));
+        
+        println!("[REPORTS_SERVICE] Final query: {}", final_query);
+        println!("[REPORTS_SERVICE] Count query: {}", count_query);
+        println!("[REPORTS_SERVICE] Bind values: {:?}", bind_values);
+        
+        // Build the queries with proper binding
+        let mut query_builder = sqlx::query_as::<_, NonConformityReport>(&final_query);
+        let mut count_builder = sqlx::query_as::<_, (i64,)>(&count_query);
+        
+        // Bind filter parameters
+        for (i, value) in bind_values.iter().enumerate() {
+            if conditions[i].contains("product_id") {
+                // Bind as UUID
+                let uuid = uuid::Uuid::parse_str(value).unwrap();
+                println!("[REPORTS_SERVICE] Binding UUID: {}", uuid);
+                query_builder = query_builder.bind(uuid);
+                count_builder = count_builder.bind(uuid);
+            } else if conditions[i].contains("report_date") {
+                // Bind as date
+                let date = chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d").unwrap();
+                println!("[REPORTS_SERVICE] Binding date: {}", date);
+                query_builder = query_builder.bind(date);
+                count_builder = count_builder.bind(date);
+            } else {
+                // Bind as string (search pattern)
+                println!("[REPORTS_SERVICE] Binding string: {}", value);
+                query_builder = query_builder.bind(value);
+                count_builder = count_builder.bind(value);
+            }
+        }
+        
+        // Bind limit and offset for main query
+        println!("[REPORTS_SERVICE] Binding limit: {}, offset: {}", params.limit, offset);
+        query_builder = query_builder.bind(params.limit).bind(offset);
+        
+        let reports = query_builder.fetch_all(&self.pool).await?;
+        let total: (i64,) = count_builder.fetch_one(&self.pool).await?;
+        
+        println!("[REPORTS_SERVICE] Query executed successfully, found {} reports, total: {}", reports.len(), total.0);
+        
+        let total_pages = (total.0 as f64 / params.limit as f64).ceil() as i64;
+        
         Ok(PaginatedResponse {
             data: reports,
-            total,
+            total: total.0,
             page: params.page,
             limit: params.limit,
             total_pages,
@@ -242,6 +359,19 @@ impl ReportsService {
         .await?;
 
         Ok(report)
+    }
+
+    pub async fn update_report_performance(&self, report_id: Uuid, performance: String) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE non_conformity_reports SET performance = $1, updated_at = $2 WHERE id = $3"
+        )
+        .bind(&performance)
+        .bind(Utc::now())
+        .bind(report_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     pub async fn delete_report(&self, report_id: Uuid) -> Result<bool> {

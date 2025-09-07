@@ -51,6 +51,19 @@ const DatePicker: React.FC<DatePickerProps> = ({
     lg: 'h-12 px-6 text-base'
   };
 
+  // Keep the month in sync when the external value changes
+  useEffect(() => {
+    if (value) {
+      const [y, m] = value.split('-').map(Number);
+      const target = new Date(y, m - 1, 1);
+      setCurrentMonth(prev => (
+        prev.getFullYear() === target.getFullYear() && prev.getMonth() === target.getMonth()
+          ? prev
+          : target
+      ));
+    }
+  }, [value]);
+
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return '';
     // Parse the date string manually to avoid timezone issues

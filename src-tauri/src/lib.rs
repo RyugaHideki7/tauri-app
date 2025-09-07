@@ -550,11 +550,40 @@ async fn get_reports_paginated(
     page: i64,
     limit: i64,
     search: Option<String>,
+    product_id: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
 ) -> Result<ReportsPaginatedResponse<database::models::NonConformityReport>, String> {
     let db = db_state.lock().await;
     let reports_service = ReportsService::new(db.pool.clone());
     
-    let params = ReportsPaginationParams { page, limit, search };
+    println!(
+        "[TAURI] get_reports_paginated received - page={}, limit={}, search={:?}, product_id={:?}, start_date={:?}, end_date={:?}",
+        page, limit, search, product_id, start_date, end_date
+    );
+    
+    // Additional debug to check for empty strings vs None
+    if let Some(ref s) = search {
+        println!("[TAURI] search string length: {}, content: '{}'", s.len(), s);
+    }
+    if let Some(ref p) = product_id {
+        println!("[TAURI] product_id string length: {}, content: '{}'", p.len(), p);
+    }
+    if let Some(ref sd) = start_date {
+        println!("[TAURI] start_date string length: {}, content: '{}'", sd.len(), sd);
+    }
+    if let Some(ref ed) = end_date {
+        println!("[TAURI] end_date string length: {}, content: '{}'", ed.len(), ed);
+    }
+
+    let params = ReportsPaginationParams { 
+        page, 
+        limit, 
+        search,
+        product_id,
+        start_date,
+        end_date,
+    };
     reports_service
         .get_paginated_reports(params)
         .await
@@ -597,6 +626,24 @@ async fn update_report_status(
 
     reports_service
         .update_report_status(uuid, status)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn update_report_performance(
+    db_state: State<'_, DatabaseState>,
+    report_id: String,
+    performance: String,
+) -> Result<bool, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    let uuid = uuid::Uuid::parse_str(&report_id)
+        .map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    reports_service
+        .update_report_performance(uuid, performance)
         .await
         .map_err(|e| e.to_string())
 }
@@ -678,6 +725,7 @@ pub fn run() {
             get_description_types,
             get_formats,
             update_report_status,
+            update_report_performance,
             delete_report,
         ])
         .run(tauri::generate_context!())
