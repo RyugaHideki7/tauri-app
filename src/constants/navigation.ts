@@ -30,7 +30,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: faTachometerAlt,
     label: "Dashboard",
     path: "/dashboard",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR],
+    allowedRoles: [ADMIN],
     showInNav: true,
   },
   {
@@ -44,14 +44,14 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: faIndustry,
     label: "Lines",
     path: "/lines",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE],
+    allowedRoles: [ADMIN],
     showInNav: true,
   },
   {
     icon: faBoxes,
     label: "Products",
     path: "/products",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE],
+    allowedRoles: [ADMIN],
     showInNav: true,
   },
   {

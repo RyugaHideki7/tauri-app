@@ -154,6 +154,11 @@ export const ReportsPage: React.FC = () => {
             render: (value) => value || '-'
           },
           {
+            key: 'time',
+            header: 'Time',
+            render: (value) => value || '-'
+          },
+          {
             key: 'description_type',
             header: 'Type'
           },

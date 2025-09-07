@@ -13,16 +13,16 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Stable navigate function to prevent infinite re-renders
-  const navigateToDashboard = useCallback(() => {
-    navigate("/dashboard", { replace: true });
+  const navigateToReports = useCallback(() => {
+    navigate("/reports", { replace: true });
   }, [navigate]);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigateToDashboard();
+      navigateToReports();
     }
-  }, [isAuthenticated, navigateToDashboard]);
+  }, [isAuthenticated, navigateToReports]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
 
     const result = await login(username, password);
     if (result.success) {
-      navigate("/dashboard");
+      navigate("/reports");
     } else {
       setError(result.error || "Login failed");
     }

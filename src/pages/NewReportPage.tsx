@@ -113,8 +113,9 @@ export const NewReportPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.line_id) newErrors.line_id = 'Production line is required';
+    if (!formData.line_id) newErrors.line_id = 'Line is required';
     if (!formData.product_id) newErrors.product_id = 'Product is required';
+    if (!formData.format_id) newErrors.format_id = 'Format is required';
     if (!formData.report_date) newErrors.report_date = 'Report date is required';
     if (!formData.production_date) newErrors.production_date = 'Production date is required';
     if (!formData.team) newErrors.team = 'Team is required';
@@ -223,16 +224,17 @@ export const NewReportPage: React.FC = () => {
             {/* Format */}
             <div>
               <Select
-                label="Format"
+                label="Format *"
                 value={formData.format_id?.toString() || ''}
                 onChange={(value) => handleInputChange('format_id', value ? parseInt(value) : undefined)}
                 options={[
-                  { value: '', label: 'Select a format (optional)' },
+                  { value: '', label: 'Select a format' },
                   ...formats.map((format) => ({
                     value: format.id.toString(),
                     label: `${format.format_index} ${format.format_unit}`
                   }))
                 ]}
+                error={errors.format_id}
                 placeholder="Select a format"
               />
             </div>
