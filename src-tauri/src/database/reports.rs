@@ -68,7 +68,8 @@ impl ReportsService {
         let product_id = Uuid::parse_str(&request.product_id)
             .map_err(|e| anyhow::anyhow!("Invalid product ID: {}", e))?;
 
-        let report = sqlx::query_as::<_, NonConformityReport>(
+        // First insert the report
+        sqlx::query(
             r#"
             INSERT INTO non_conformity_reports (
                 id, report_number, report_date, line_id, product_id, 
@@ -76,7 +77,6 @@ impl ReportsService {
                 quantity, claim_origin, valuation, performance, status, reported_by,
                 created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-            RETURNING *
             "#,
         )
         .bind(id)
@@ -97,6 +97,19 @@ impl ReportsService {
         .bind(reported_by)
         .bind(now)
         .bind(now)
+        .execute(&self.pool)
+        .await?;
+
+        // Then fetch the report with product name via JOIN
+        let report = sqlx::query_as::<_, NonConformityReport>(
+            r#"
+            SELECT ncr.*, p.designation as product_name
+            FROM non_conformity_reports ncr
+            LEFT JOIN products p ON ncr.product_id = p.id
+            WHERE ncr.id = $1
+            "#,
+        )
+        .bind(id)
         .fetch_one(&self.pool)
         .await?;
 

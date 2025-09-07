@@ -216,7 +216,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
         <button
           type="button"
           onClick={() => incrementValue(field)}
-          className="p-1 rounded-full hover:bg-accent transition-colors duration-200 text-muted-foreground hover:text-accent-foreground"
+          className="p-1 rounded-full hover:bg-accent transition-colors duration-200 text-foreground hover:text-accent-foreground"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -228,7 +228,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
             value={isPeriod ? value : value.toString().padStart(2, '0')}
             onChange={(e) => !isPeriod && handleInputChange(field as 'hours' | 'minutes', e.target.value)}
             onFocus={() => setInputFocus(field)}
-            className={`text-center text-lg font-bold border-2 rounded-lg transition-all duration-200 ${
+            className={`text-center text-lg font-bold border-2 rounded-lg transition-all duration-200 bg-background text-foreground ${
               inputFocus === field 
                 ? 'border-primary bg-primary/10' 
                 : 'border-border hover:border-primary/50'
@@ -240,7 +240,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
         <button
           type="button"
           onClick={() => decrementValue(field)}
-          className="p-1 rounded-full hover:bg-accent transition-colors duration-200 text-muted-foreground hover:text-accent-foreground"
+          className="p-1 rounded-full hover:bg-accent transition-colors duration-200 text-foreground hover:text-accent-foreground"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -257,7 +257,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
         onChange(timeStateToString(timeState));
         setIsOpen(false);
       }}
-      className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary/50 hover:bg-accent transition-colors duration-200 text-popover-foreground hover:text-accent-foreground"
+      className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary/50 hover:bg-accent transition-colors duration-200 text-foreground hover:text-accent-foreground"
     >
       {label}
     </button>
@@ -329,7 +329,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
                   value={selectedTime.hours} 
                   field="hours"
                 />
-                <div className="text-2xl font-bold text-muted-foreground mt-8">:</div>
+                <div className="text-2xl font-bold text-foreground mt-8">:</div>
                 <TimeColumn 
                   label="Minutes" 
                   value={selectedTime.minutes} 

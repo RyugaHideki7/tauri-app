@@ -89,6 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
             <li key={item.path}>
               <NavLink
                 to={item.path}
+                end={!item.path.includes('/reports/new')} // Add end prop for exact matching
                 className={({ isActive }) =>
                   `flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                     isActive

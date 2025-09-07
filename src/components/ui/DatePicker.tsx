@@ -29,8 +29,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
-      const date = new Date(value);
-      return new Date(date.getFullYear(), date.getMonth(), 1);
+      // Parse the date string manually to avoid timezone issues
+      const [year, month] = value.split('-').map(Number);
+      return new Date(year, month - 1, 1);
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   });
@@ -52,7 +53,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
+    // Parse the date string manually to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -128,7 +131,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const isDateDisabled = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    // Format date manually to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    
     if (minDate && dateString < minDate) return true;
     if (maxDate && dateString > maxDate) return true;
     return false;
@@ -138,7 +146,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     if (isDateDisabled(selectedDate)) return;
     
-    const dateString = selectedDate.toISOString().split('T')[0];
+    // Format date manually to avoid timezone issues
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(selectedDate.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${dayStr}`;
+    
     onChange(dateString);
     setIsOpen(false);
   };
@@ -195,8 +208,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
               : ''
             }
             ${isDisabled 
-              ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-current' 
-              : 'cursor-pointer text-popover-foreground'
+              ? 'text-muted-foreground/40 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground/40' 
+              : 'cursor-pointer text-foreground hover:text-accent-foreground'
             }
           `}
         >
@@ -212,21 +225,21 @@ const DatePicker: React.FC<DatePickerProps> = ({
           <button
             type="button"
             onClick={() => navigateMonth('prev')}
-            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors text-foreground"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           
-          <h3 className="text-sm font-semibold text-popover-foreground">
+          <h3 className="text-sm font-semibold text-foreground">
             {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h3>
           
           <button
             type="button"
             onClick={() => navigateMonth('next')}
-            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors text-foreground"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
