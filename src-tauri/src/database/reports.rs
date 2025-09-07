@@ -12,6 +12,7 @@ pub struct CreateReportRequest {
     pub line_id: String,
     pub product_id: String,
     pub format_id: Option<i32>,
+    pub report_date: String, // Will be parsed to NaiveDate
     pub production_date: String, // Will be parsed to NaiveDate
     pub team: String,
     pub time: String, // Will be parsed to NaiveTime
@@ -56,6 +57,9 @@ impl ReportsService {
         let report_number = self.generate_report_number().await?;
         
         // Parse dates and times
+        let report_date = NaiveDate::parse_from_str(&request.report_date, "%Y-%m-%d")
+            .map_err(|e| anyhow::anyhow!("Invalid report date format: {}", e))?;
+            
         let production_date = NaiveDate::parse_from_str(&request.production_date, "%Y-%m-%d")
             .map_err(|e| anyhow::anyhow!("Invalid production date format: {}", e))?;
         
@@ -82,7 +86,7 @@ impl ReportsService {
         )
         .bind(id)
         .bind(&report_number)
-        .bind(now)
+        .bind(report_date)
         .bind(line_id)
         .bind(product_id)
         .bind(request.format_id)

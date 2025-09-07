@@ -171,7 +171,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
     const firstDay = getFirstDayOfMonth(currentMonth);
-    const selectedDate = value ? new Date(value) : null;
+    const selectedDate = value ? (() => {
+      // Parse date string manually to avoid timezone issues
+      const [year, month, day] = value.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    })() : null;
     
     const days = [];
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

@@ -12,6 +12,7 @@ interface NonConformityReport {
   report_date: string;
   line_id: string;
   product_id: string;
+  format_id?: number;
   production_date: string;
   team: string;
   time: string;
@@ -25,6 +26,8 @@ interface NonConformityReport {
   reported_by: string;
   created_at: string;
   updated_at: string;
+  product_name?: string;
+  format_display?: string;
 }
 
 interface PaginatedResponse {
@@ -131,14 +134,24 @@ export const ReportsPage: React.FC = () => {
             render: (value) => <span className="font-medium">{value}</span>
           },
           {
+            key: 'report_date',
+            header: 'Report Date',
+            render: (value) => formatDate(value)
+          },
+          {
             key: 'production_date',
-            header: 'Date',
+            header: 'Production Date',
             render: (value) => formatDate(value)
           },
           {
             key: 'product_name',
             header: 'Product',
             render: (value) => value || 'Unknown Product'
+          },
+          {
+            key: 'format_display',
+            header: 'Format',
+            render: (value) => value || '-'
           },
           {
             key: 'description_type',

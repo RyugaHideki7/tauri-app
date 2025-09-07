@@ -1,7 +1,7 @@
 mod database;
 
 use database::auth::{AuthService, LoginRequest, LoginResponse, UserInfo, PaginationParams as AuthPaginationParams, PaginatedResponse as AuthPaginatedResponse};
-use database::models::{CreateUser, CreateClient};
+use database::models::{CreateUser, CreateClient, NcDes, Format};
 use database::clients::{ClientsService, CreateClientRequest, BulkCreateClientsRequest, UpdateClientRequest, PaginationParams as ClientsPaginationParams, PaginatedResponse as ClientsPaginatedResponse};
 use database::products::{ProductsService, CreateProductRequest, BulkCreateProductsRequest, UpdateProductRequest, PaginationParams as ProductsPaginationParams, PaginatedResponse as ProductsPaginatedResponse};
 use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, UpdateLineRequest, PaginationParams as LinesPaginationParams, PaginatedResponse as LinesPaginatedResponse};
@@ -562,14 +562,23 @@ async fn get_reports_paginated(
 }
 
 #[tauri::command]
-async fn get_description_types(
-    db_state: State<'_, DatabaseState>,
-) -> Result<Vec<database::models::NcDes>, String> {
+async fn get_description_types(db_state: tauri::State<'_, DatabaseState>) -> Result<Vec<NcDes>, String> {
     let db = db_state.lock().await;
     let reports_service = ReportsService::new(db.pool.clone());
 
     reports_service
         .get_description_types()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_formats(db_state: tauri::State<'_, DatabaseState>) -> Result<Vec<Format>, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    reports_service
+        .get_formats()
         .await
         .map_err(|e| e.to_string())
 }
@@ -667,6 +676,7 @@ pub fn run() {
             get_reports,
             get_reports_paginated,
             get_description_types,
+            get_formats,
             update_report_status,
             delete_report,
         ])

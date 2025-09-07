@@ -20,6 +20,12 @@ interface Product {
   code: string;
 }
 
+interface Format {
+  id: number;
+  format_index: number;
+  format_unit: string;
+}
+
 interface DescriptionType {
   id: number;
   name: string;
@@ -28,6 +34,8 @@ interface DescriptionType {
 interface CreateReportRequest {
   line_id: string;
   product_id: string;
+  format_id?: number;
+  report_date: string;
   production_date: string;
   team: string;
   time: string;
@@ -44,11 +52,14 @@ export const NewReportPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [lines, setLines] = useState<ProductionLine[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [formats, setFormats] = useState<Format[]>([]);
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
   
   const [formData, setFormData] = useState<CreateReportRequest>({
     line_id: '',
     product_id: '',
+    format_id: undefined,
+    report_date: new Date().toISOString().split('T')[0],
     production_date: new Date().toISOString().split('T')[0],
     team: 'A',
     time: new Date().toTimeString().slice(0, 5),
@@ -68,21 +79,23 @@ export const NewReportPage: React.FC = () => {
 
   const loadInitialData = async () => {
     try {
-      const [linesData, productsData, typesData] = await Promise.all([
+      const [linesData, productsData, formatsData, typesData] = await Promise.all([
         invoke<ProductionLine[]>('get_lines'),
         invoke<Product[]>('get_products'),
+        invoke<Format[]>('get_formats'),
         invoke<DescriptionType[]>('get_description_types'),
       ]);
       
       setLines(linesData.filter(line => line.is_active));
       setProducts(productsData);
+      setFormats(formatsData);
       setDescriptionTypes(typesData);
     } catch (error) {
       console.error('Failed to load initial data:', error);
     }
   };
 
-  const handleInputChange = (field: keyof CreateReportRequest, value: string | number) => {
+  const handleInputChange = (field: keyof CreateReportRequest, value: string | number | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -102,6 +115,7 @@ export const NewReportPage: React.FC = () => {
 
     if (!formData.line_id) newErrors.line_id = 'Production line is required';
     if (!formData.product_id) newErrors.product_id = 'Product is required';
+    if (!formData.report_date) newErrors.report_date = 'Report date is required';
     if (!formData.production_date) newErrors.production_date = 'Production date is required';
     if (!formData.team) newErrors.team = 'Team is required';
     if (!formData.time) newErrors.time = 'Time is required';
@@ -139,6 +153,8 @@ export const NewReportPage: React.FC = () => {
       setFormData({
         line_id: '',
         product_id: '',
+        format_id: undefined,
+        report_date: new Date().toISOString().split('T')[0],
         production_date: new Date().toISOString().split('T')[0],
         team: 'A',
         time: new Date().toTimeString().slice(0, 5),
@@ -201,6 +217,35 @@ export const NewReportPage: React.FC = () => {
                 ]}
                 error={errors.product_id}
                 placeholder="Select a product"
+              />
+            </div>
+
+            {/* Format */}
+            <div>
+              <Select
+                label="Format"
+                value={formData.format_id?.toString() || ''}
+                onChange={(value) => handleInputChange('format_id', value ? parseInt(value) : undefined)}
+                options={[
+                  { value: '', label: 'Select a format (optional)' },
+                  ...formats.map((format) => ({
+                    value: format.id.toString(),
+                    label: `${format.format_index} ${format.format_unit}`
+                  }))
+                ]}
+                placeholder="Select a format"
+              />
+            </div>
+
+            {/* Report Date */}
+            <div>
+              <DatePicker
+                label="Report Date *"
+                value={formData.report_date}
+                onChange={(value) => handleInputChange('report_date', value)}
+                error={errors.report_date}
+                placeholder="Select report date"
+                maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
               />
             </div>
 
