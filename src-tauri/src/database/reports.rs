@@ -162,6 +162,7 @@ impl ReportsService {
             r#"
             SELECT ncr.*, 
                    p.designation as product_name,
+                   pl.name as line_name,
                    CASE 
                      WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
                      ELSE NULL 
@@ -169,6 +170,7 @@ impl ReportsService {
             FROM non_conformity_reports ncr
             LEFT JOIN products p ON ncr.product_id = p.id
             LEFT JOIN formats f ON ncr.format_id = f.id
+            LEFT JOIN production_lines pl ON ncr.line_id = pl.id
             WHERE 1=1
             "#
         );

@@ -16,6 +16,7 @@ interface NonConformityReport {
   report_number: string;
   report_date: string;
   line_id: string;
+  line_name?: string;
   product_id: string;
   format_id?: number;
   production_date: string;
@@ -374,6 +375,11 @@ export const ReportsPage: React.FC = () => {
             key: 'production_date',
             header: 'Production Date',
             render: (value) => formatDate(value)
+          },
+          {
+            key: 'line_name',
+            header: 'Line',
+            render: (value) => value || 'Unknown Line'
           },
           {
             key: 'product_name',

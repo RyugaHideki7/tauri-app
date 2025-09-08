@@ -91,6 +91,7 @@ pub struct NonConformityReport {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub product_name: Option<String>, // Joined from products table
+    pub line_name: Option<String>,    // Joined from production_lines table
     pub format_display: Option<String>, // Joined from formats table (format_index + format_unit)
 }
 
