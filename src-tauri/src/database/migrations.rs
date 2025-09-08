@@ -12,7 +12,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             id UUID PRIMARY KEY,
             username VARCHAR(255) UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'site01', 'site02', 'performance', 'admin', 'Consommateur')),
+            role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'site01', 'site02', 'performance', 'admin', 'consommateur')),
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL
         )
