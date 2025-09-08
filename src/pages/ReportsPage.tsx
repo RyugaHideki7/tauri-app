@@ -224,20 +224,25 @@ export const ReportsPage: React.FC = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'resolved':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'closed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400';
-    }
-  };
+  // ============================================
+  // KEPT FOR REFERENCE - NOT CURRENTLY USED
+  // Status color mapping function for report status indicators
+  // Uncomment if status column is re-added to the table
+  // ============================================
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'open':
+  //       return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+  //     case 'in_progress':
+  //       return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+  //     case 'resolved':
+  //       return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+  //     case 'closed':
+  //       return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+  //     default:
+  //       return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400';
+  //   }
+  // };
 
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
   const canEditPerformance = user?.role === 'performance' || user?.role === 'admin';
@@ -372,11 +377,6 @@ export const ReportsPage: React.FC = () => {
             render: (value) => formatDate(value)
           },
           {
-            key: 'production_date',
-            header: 'Production Date',
-            render: (value) => formatDate(value)
-          },
-          {
             key: 'line_name',
             header: 'Line',
             render: (value) => value || 'Unknown Line'
@@ -387,9 +387,19 @@ export const ReportsPage: React.FC = () => {
             render: (value) => value || 'Unknown Product'
           },
           {
+            key: 'production_date',
+            header: 'Production Date',
+            render: (value) => formatDate(value)
+          },
+          {
             key: 'format_display',
             header: 'Format',
             render: (value) => value || '-'
+          },
+          {
+            key: 'team',
+            header: 'Team',
+            render: (value) => `Team ${value}`
           },
           {
             key: 'time',
@@ -408,11 +418,6 @@ export const ReportsPage: React.FC = () => {
                 {value || '-'}
               </span>
             )
-          },
-          {
-            key: 'team',
-            header: 'Team',
-            render: (value) => `Team ${value}`
           },
           {
             key: 'quantity',
@@ -447,21 +452,7 @@ export const ReportsPage: React.FC = () => {
                 )}
               </div>
             )
-          }] : []),
-          {
-            key: 'status',
-            header: 'Status',
-            render: (value) => (
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(value)}`}>
-                {value.replace('_', ' ')}
-              </span>
-            )
-          },
-          {
-            key: 'created_at',
-            header: 'Created',
-            render: (value) => formatDateTime(value)
-          }
+          }] : [])
         ]}
         data={loading ? [] : reports}
         pagination={{

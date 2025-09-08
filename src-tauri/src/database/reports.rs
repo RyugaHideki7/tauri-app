@@ -109,17 +109,19 @@ impl ReportsService {
         .execute(&self.pool)
         .await?;
 
-        // Then fetch the report with product name and format info via JOIN
+        // Then fetch the report with product name, line name, and format info via JOIN
         let report = sqlx::query_as::<_, NonConformityReport>(
             r#"
             SELECT ncr.*, 
                    p.designation as product_name,
+                   pl.name as line_name,
                    CASE 
                        WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
                        ELSE NULL 
                    END as format_display
             FROM non_conformity_reports ncr
             LEFT JOIN products p ON ncr.product_id = p.id
+            LEFT JOIN production_lines pl ON ncr.line_id = pl.id
             LEFT JOIN formats f ON ncr.format_id = f.id
             WHERE ncr.id = $1
             "#,

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 
@@ -31,6 +32,13 @@ interface DescriptionType {
   name: string;
 }
 
+interface Client {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface CreateReportRequest {
   line_id: string;
   product_id: string;
@@ -47,6 +55,11 @@ interface CreateReportRequest {
   performance?: string;
 }
 
+interface FormData extends CreateReportRequest {
+  claim_origin_client_id: string;
+  claim_origin_manual: string;
+}
+
 export const NewReportPage: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -54,8 +67,9 @@ export const NewReportPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [formats, setFormats] = useState<Format[]>([]);
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   
-  const [formData, setFormData] = useState<CreateReportRequest>({
+  const [formData, setFormData] = useState<FormData>({
     line_id: '',
     product_id: '',
     format_id: undefined,
@@ -66,7 +80,9 @@ export const NewReportPage: React.FC = () => {
     description_type: '',
     description_details: '',
     quantity: 0,
-    claim_origin: 'client',
+    claim_origin: '',
+    claim_origin_client_id: '',
+    claim_origin_manual: '',
     valuation: 0,
     performance: '',
   });
@@ -77,25 +93,58 @@ export const NewReportPage: React.FC = () => {
     loadInitialData();
   }, []);
 
+  // Initialize claim origin based on user role
+  useEffect(() => {
+    if (user?.role) {
+      let initialClaimOrigin = '';
+      
+      switch (user.role.toLowerCase()) {
+        case 'site01':
+        case 'site 01':
+          initialClaimOrigin = 'site01';
+          break;
+        case 'site02':
+        case 'site 02':
+          initialClaimOrigin = 'site02';
+          break;
+        case 'client':
+          initialClaimOrigin = 'client';
+          break;
+        case 'consommateur':
+          initialClaimOrigin = 'consommateur';
+          break;
+        default:
+          initialClaimOrigin = 'client';
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        claim_origin: initialClaimOrigin
+      }));
+    }
+  }, [user?.role]);
+
   const loadInitialData = async () => {
     try {
-      const [linesData, productsData, formatsData, typesData] = await Promise.all([
+      const [linesData, productsData, formatsData, typesData, clientsData] = await Promise.all([
         invoke<ProductionLine[]>('get_lines'),
         invoke<Product[]>('get_products'),
         invoke<Format[]>('get_formats'),
         invoke<DescriptionType[]>('get_description_types'),
+        invoke<Client[]>('get_clients'),
       ]);
       
       setLines(linesData.filter(line => line.is_active));
       setProducts(productsData);
       setFormats(formatsData);
       setDescriptionTypes(typesData);
+      setClients(clientsData);
     } catch (error) {
       console.error('Failed to load initial data:', error);
     }
   };
 
-  const handleInputChange = (field: keyof CreateReportRequest, value: string | number | undefined) => {
+  const handleInputChange = (field: keyof FormData, value: string | number | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -112,6 +161,7 @@ export const NewReportPage: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+    const role = user?.role?.toLowerCase();
 
     if (!formData.line_id) newErrors.line_id = 'Line is required';
     if (!formData.product_id) newErrors.product_id = 'Product is required';
@@ -123,8 +173,23 @@ export const NewReportPage: React.FC = () => {
     if (!formData.description_type) newErrors.description_type = 'Description type is required';
     if (!formData.description_details.trim()) newErrors.description_details = 'Description details are required';
     if (formData.quantity <= 0) newErrors.quantity = 'Quantity must be greater than 0';
-    if (!formData.claim_origin) newErrors.claim_origin = 'Claim origin is required';
     if (formData.valuation < 0) newErrors.valuation = 'Valuation cannot be negative';
+
+    // Validate claim origin based on user role
+    if (role === 'client') {
+      if (!formData.claim_origin_client_id) {
+        newErrors.claim_origin_client_id = 'Please select a client';
+      }
+    } else if (role === 'consommateur') {
+      if (!formData.claim_origin_manual?.trim()) {
+        newErrors.claim_origin_manual = 'Please enter claim origin';
+      }
+    } else {
+      // For site01, site02, and other roles
+      if (!formData.claim_origin) {
+        newErrors.claim_origin = 'Claim origin is required';
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -139,8 +204,20 @@ export const NewReportPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const reportData = {
-        ...formData,
+      // Prepare report data based on user role and claim origin type
+      const reportData: CreateReportRequest = {
+        line_id: formData.line_id,
+        product_id: formData.product_id,
+        format_id: formData.format_id,
+        report_date: formData.report_date,
+        production_date: formData.production_date,
+        team: formData.team,
+        time: formData.time,
+        description_type: formData.description_type,
+        description_details: formData.description_details,
+        quantity: formData.quantity,
+        claim_origin: formData.claim_origin,
+        valuation: formData.valuation,
         // Only include performance field if user has permission
         performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined
       };
@@ -162,7 +239,9 @@ export const NewReportPage: React.FC = () => {
         description_type: '',
         description_details: '',
         quantity: 0,
-        claim_origin: 'client',
+        claim_origin: '',
+        claim_origin_client_id: '',
+        claim_origin_manual: '',
         valuation: 0,
         performance: '',
       });
@@ -177,6 +256,93 @@ export const NewReportPage: React.FC = () => {
   };
 
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
+
+
+  // Render claim origin field based on user role
+  const renderClaimOriginField = () => {
+    const role = user?.role?.toLowerCase();
+    
+    // For site01 and site02 roles - show disabled select with pre-selected value
+    if (role === 'site01' || role === 'site 01' || role === 'site02' || role === 'site 02') {
+      return (
+        <Select
+          label="Claim Origin *"
+          value={formData.claim_origin}
+          onChange={() => {}} // No-op since it's disabled
+          options={[
+            { value: 'site01', label: 'Site 01' },
+            { value: 'site02', label: 'Site 02' }
+          ]}
+          error={errors.claim_origin}
+          disabled={true}
+          placeholder="Claim origin (auto-selected)"
+        />
+      );
+    }
+    
+    // For client role - show searchable dropdown of clients
+    if (role === 'client') {
+      return (
+        <SearchableSelect
+          label="Claim Origin *"
+          value={formData.claim_origin_client_id}
+          onChange={(value) => {
+            handleInputChange('claim_origin_client_id', value);
+            // Also update the main claim_origin field for backend
+            const selectedClient = clients.find(c => c.id === value);
+            if (selectedClient) {
+              handleInputChange('claim_origin', `Client: ${selectedClient.name}`);
+            }
+          }}
+          options={clients.map(client => ({
+            value: client.id,
+            label: `Client: ${client.name}`
+          }))}
+          error={errors.claim_origin_client_id || errors.claim_origin}
+          placeholder="Search and select a client..."
+          searchPlaceholder="Search clients..."
+        />
+      );
+    }
+    
+    // For consommateur role - show manual input
+    if (role === 'consommateur') {
+      return (
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Claim Origin *
+          </label>
+          <Input
+            type="text"
+            value={formData.claim_origin_manual}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              handleInputChange('claim_origin_manual', e.target.value);
+              handleInputChange('claim_origin', e.target.value);
+            }}
+            error={errors.claim_origin_manual || errors.claim_origin}
+            placeholder="Enter claim origin manually..."
+          />
+        </div>
+      );
+    }
+    
+    // Default fallback - regular select
+    return (
+      <Select
+        label="Claim Origin *"
+        value={formData.claim_origin}
+        onChange={(value) => handleInputChange('claim_origin', value)}
+        options={[
+          { value: 'client', label: 'Client' },
+          { value: 'site01', label: 'Site 01' },
+          { value: 'site02', label: 'Site 02' },
+          { value: 'consommateur', label: 'Consommateur' }
+        ]}
+        error={errors.claim_origin}
+        placeholder="Select claim origin"
+      />
+    );
+  };
 
   return (
     <div className="p-4 lg:p-6 w-full">
@@ -322,21 +488,9 @@ export const NewReportPage: React.FC = () => {
               />
             </div>
 
-            {/* Claim Origin */}
+            {/* Claim Origin - Dynamic based on user role */}
             <div>
-              <Select
-                label="Claim Origin *"
-                value={formData.claim_origin}
-                onChange={(value) => handleInputChange('claim_origin', value)}
-                options={[
-                  { value: 'client', label: 'Client' },
-                  { value: 'site01', label: 'Site 01' },
-                  { value: 'site02', label: 'Site 02' },
-                  { value: 'Consommateur', label: 'Consommateur' }
-                ]}
-                error={errors.claim_origin}
-                placeholder="Select claim origin"
-              />
+              {renderClaimOriginField()}
             </div>
 
             {/* Valuation */}

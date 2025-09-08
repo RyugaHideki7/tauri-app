@@ -47,9 +47,8 @@ const Pagination: React.FC<PaginationProps> = ({
     return rangeWithDots;
   };
 
-  if (totalPages <= 1) {
-    return null;
-  }
+  // Always show pagination controls, but hide page navigation when there's only one page
+  const showPageNavigation = totalPages > 1;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -81,52 +80,54 @@ const Pagination: React.FC<PaginationProps> = ({
         )}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-        >
-          Previous
-        </Button>
+      {showPageNavigation && (
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            Previous
+          </Button>
 
-        <div className="flex items-center space-x-1">
-          {getVisiblePages().map((page, index) => {
-            if (page === '...') {
+          <div className="flex items-center space-x-1">
+            {getVisiblePages().map((page, index) => {
+              if (page === '...') {
+                return (
+                  <span key={`dots-${index}`} className="px-2 py-1 text-muted-foreground">
+                    ...
+                  </span>
+                );
+              }
+
+              const pageNum = page as number;
               return (
-                <span key={`dots-${index}`} className="px-2 py-1 text-muted-foreground">
-                  ...
-                </span>
+                <button
+                  key={pageNum}
+                  onClick={() => onPageChange(pageNum)}
+                  className={`px-3 py-1 text-sm rounded transition-colors ${
+                    pageNum === currentPage
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {pageNum}
+                </button>
               );
-            }
+            })}
+          </div>
 
-            const pageNum = page as number;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => onPageChange(pageNum)}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  pageNum === currentPage
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            Next
+          </Button>
         </div>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-        >
-          Next
-        </Button>
-      </div>
+      )}
     </div>
   );
 };
