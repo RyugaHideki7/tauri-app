@@ -9,7 +9,6 @@ import DatePicker from '../components/ui/DatePicker';
 import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
-import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 
 interface NonConformityReport {
@@ -287,10 +286,6 @@ export const ReportsPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
   };
 
   // ============================================
