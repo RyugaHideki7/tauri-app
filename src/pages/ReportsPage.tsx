@@ -10,6 +10,7 @@ import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 
 interface NonConformityReport {
   id: string;
@@ -91,7 +92,7 @@ export const ReportsPage: React.FC = () => {
       const productsData = await invoke<Product[]>('get_products');
       setProducts(productsData);
     } catch (error) {
-      console.error('Failed to load products:', error);
+      console.error('Échec du chargement des produits :', error);
     }
   };
 
@@ -135,7 +136,7 @@ export const ReportsPage: React.FC = () => {
       setTotalPages(response.total_pages);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to load reports:', error);
+      console.error('Échec du chargement des rapports :', error);
     } finally {
       setLoading(false);
     }
@@ -158,29 +159,97 @@ export const ReportsPage: React.FC = () => {
     setPage(1);
   };
 
-  const exportToExcel = () => {
-    const exportData = reports.map(report => ({
-      'Report Number': report.report_number,
-      'Report Date': formatDate(report.report_date),
-      'Production Date': formatDate(report.production_date),
-      'Product': report.product_name || 'Unknown Product',
-      'Format': report.format_display || '-',
-      'Time': report.time || '-',
-      'Description Type': report.description_type,
-      'Description Details': report.description_details,
-      'Team': `Team ${report.team}`,
-      'Quantity': report.quantity,
-      'Claim Origin': report.claim_origin,
-      'Valuation': `${parseFloat(report.valuation).toFixed(2)} DZD`,
-      ...(canViewPerformance && { 'Performance': report.performance || '-' }),
-      'Status': report.status.replace('_', ' '),
-      'Created': formatDateTime(report.created_at)
-    }));
+  const exportToExcel = async () => {
+    // Create a new workbook using ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Rapports');
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Reports');
-    XLSX.writeFile(wb, `reports_${new Date().toISOString().split('T')[0]}.xlsx`);
+    // Define column headers
+    const headers = [
+      'N° de rapport',
+      'Date de la réclamation',
+      'Ligne',
+      'Produit',
+      'Date de production',
+      'Format',
+      'Heure',
+      'Type',
+      'Détails de la description',
+      'Équipe',
+      'Quantité',
+      'Origine de réclamation',
+      'Valorisation',
+      ...(canViewPerformance ? ['Performance'] : [])
+    ];
+
+    // Add headers to the worksheet
+    worksheet.addRow(headers);
+
+    // Style the header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: '000000' }, size: 11 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'D9EAD3' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+    headerRow.height = 25;
+
+    // Add data rows
+    reports.forEach(report => {
+      const rowData = [
+        report.report_number,
+        formatDate(report.report_date),
+        report.line_name || 'Ligne inconnue',
+        report.product_name || 'Produit inconnu',
+        formatDate(report.production_date),
+        report.format_display || '-',
+        report.time || '-',
+        report.description_type,
+        report.description_details,
+        `Équipe ${report.team}`,
+        report.quantity,
+        report.claim_origin,
+        `${parseFloat(report.valuation).toFixed(2).replace('.', ',')} DZD`,
+        ...(canViewPerformance ? [report.performance || '-'] : [])
+      ];
+      worksheet.addRow(rowData);
+    });
+
+    // Set column widths
+    const columnWidths = [15, 18, 15, 25, 12, 10, 8, 15, 30, 10, 8, 20, 12];
+    if (canViewPerformance) columnWidths.push(15);
+    
+    worksheet.columns.forEach((column, index) => {
+      if (columnWidths[index]) {
+        column.width = columnWidths[index];
+      }
+    });
+
+    // Generate filename with current date
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `rapports_${today}.xlsx`;
+
+    // Write the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleEditPerformance = (report: NonConformityReport) => {
@@ -210,7 +279,7 @@ export const ReportsPage: React.FC = () => {
       setEditingReport(null);
       setEditPerformance('');
     } catch (error) {
-      console.error('Failed to update performance:', error);
+      console.error('Échec de la mise à jour des performances :', error);
     } finally {
       setEditLoading(false);
     }
@@ -250,20 +319,20 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="p-4 lg:p-6 w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Non-Conformity Reports</h1>
+        <h1 className="text-2xl font-bold text-foreground">Rapports de non-conformité</h1>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
             onClick={exportToExcel}
             variant="outline"
             className="w-full sm:w-auto"
           >
-            Export to Excel
+            Exporter vers Excel
           </Button>
           <Button
             onClick={() => navigate('/reports/new')}
             className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
           >
-            Create New Report
+            Nouveau rapport
           </Button>
         </div>
       </div>
@@ -272,14 +341,14 @@ export const ReportsPage: React.FC = () => {
       <div className="mb-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <Input
-            label="Search"
+            label="Rechercher"
             type="text"
-            placeholder="Search reports..."
+            placeholder="Rechercher des rapports..."
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
           />
           <Select
-            label="Filter by Product"
+            label="Filtrer par produit"
             value={selectedProduct}
             onChange={(value) => {
               console.debug('[Reports] product selected:', value, 'type:', typeof value);
@@ -288,7 +357,7 @@ export const ReportsPage: React.FC = () => {
               handleFilterChange();
             }}
             options={[
-              { value: '', label: 'All Products' },
+              { value: '', label: 'Tous les produits' },
               ...products.map((product) => ({
                 value: product.id,
                 label: product.code ? `${product.designation} (${product.code})` : product.designation
@@ -296,14 +365,14 @@ export const ReportsPage: React.FC = () => {
             ]}
           />
           <DatePicker
-            label="Start Date"
+            label="Date de début"
             value={startDate}
             onChange={(value) => {
               console.debug('[Reports] start date selected:', value, 'type:', typeof value);
               const hasEnd = !!endDate;
               if (hasEnd && value && value > endDate) {
                 // Keep the selected start date; adjust end date to match
-                addToast('Adjusted end date to keep a valid range.', 'warning', 3000);
+                addToast('Date de fin ajustée pour maintenir une plage valide.', 'warning', 3000);
                 setStartDate(value);
                 setEndDate(value);
               } else {
@@ -312,18 +381,18 @@ export const ReportsPage: React.FC = () => {
               console.debug('[Reports] startDate state after set:', startDate);
               handleFilterChange();
             }}
-            placeholder="Select start date"
+            placeholder="Sélectionner une date de début"
             maxDate={endDate && endDate < todayStr ? endDate : todayStr}
           />
           <DatePicker
-            label="End Date"
+            label="Date de fin"
             value={endDate}
             onChange={(value) => {
               console.debug('[Reports] end date selected:', value, 'type:', typeof value);
               const hasStart = !!startDate;
               if (hasStart && value && value < startDate) {
                 // Keep the selected end date; adjust start date to match
-                addToast('Adjusted start date to keep a valid range.', 'warning', 3000);
+                addToast('Date de début ajustée pour maintenir une plage valide.', 'warning', 3000);
                 setStartDate(value);
                 setEndDate(value);
               } else {
@@ -332,7 +401,7 @@ export const ReportsPage: React.FC = () => {
               console.debug('[Reports] endDate state after set:', endDate);
               handleFilterChange();
             }}
-            placeholder="Select end date"
+            placeholder="Sélectionner une date de fin"
             minDate={startDate || undefined}
             maxDate={todayStr}
           />
@@ -343,7 +412,7 @@ export const ReportsPage: React.FC = () => {
             variant="outline"
             size="sm"
           >
-            Clear Filters
+            Réinitialiser les filtres
           </Button>
         </div>
       </div>
@@ -355,11 +424,11 @@ export const ReportsPage: React.FC = () => {
             <svg className="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p className="text-lg font-medium">No reports found</p>
+            <p className="text-lg font-medium">Aucun rapport trouvé</p>
             <p className="text-sm">
               {selectedProduct || startDate || endDate || search 
-                ? "Try adjusting your filters or search terms" 
-                : "No reports have been created yet"}
+                ? "Essayez d'ajuster vos filtres ou termes de recherche" 
+                : "Aucun rapport n'a été créé pour le moment"}
             </p>
           </div>
         </div>
@@ -368,27 +437,27 @@ export const ReportsPage: React.FC = () => {
           columns={[
           {
             key: 'report_number',
-            header: 'Report Number',
+            header: 'N° de rapport',
             render: (value) => <span className="font-medium">{value}</span>
           },
           {
             key: 'report_date',
-            header: 'Report Date',
+            header: 'Date de la réclamation',
             render: (value) => formatDate(value)
           },
           {
             key: 'line_name',
-            header: 'Line',
-            render: (value) => value || 'Unknown Line'
+            header: 'Ligne',
+            render: (value) => value || 'Ligne inconnue'
           },
           {
             key: 'product_name',
-            header: 'Product',
-            render: (value) => value || 'Unknown Product'
+            header: 'Produit',
+            render: (value) => value || 'Produit inconnu'
           },
           {
             key: 'production_date',
-            header: 'Production Date',
+            header: 'Date de production',
             render: (value) => formatDate(value)
           },
           {
@@ -398,12 +467,12 @@ export const ReportsPage: React.FC = () => {
           },
           {
             key: 'team',
-            header: 'Team',
+            header: 'Équipe',
             render: (value) => `Team ${value}`
           },
           {
             key: 'time',
-            header: 'Time',
+            header: 'Heure',
             render: (value) => value || '-'
           },
           {
@@ -412,7 +481,7 @@ export const ReportsPage: React.FC = () => {
           },
           {
             key: 'description_details',
-            header: 'Description Details',
+            header: 'Détails de la description',
             render: (value) => (
               <span className="max-w-xs truncate block" title={value}>
                 {value || '-'}
@@ -421,15 +490,15 @@ export const ReportsPage: React.FC = () => {
           },
           {
             key: 'quantity',
-            header: 'Quantity'
+            header: 'Quantité'
           },
           {
             key: 'claim_origin',
-            header: 'Origin'
+            header: 'Origine'
           },
           {
             key: 'valuation',
-            header: 'Valuation',
+            header: 'Évaluation',
             render: (value) => `${parseFloat(value).toFixed(2)} DZD`
           },
           ...(canViewPerformance ? [{
@@ -447,7 +516,7 @@ export const ReportsPage: React.FC = () => {
                     onClick={() => handleEditPerformance(row)}
                     className="h-6 px-2 text-xs"
                   >
-                    Edit
+                    Modifier
                   </Button>
                 )}
               </div>
@@ -470,7 +539,7 @@ export const ReportsPage: React.FC = () => {
       {loading && (
         <div className="text-center py-16">
           <div className="text-muted-foreground">
-            <p className="text-sm font-medium">Loading reports...</p>
+            <p className="text-sm font-medium">Chargement des rapports...</p>
           </div>
         </div>
       )}
@@ -479,17 +548,17 @@ export const ReportsPage: React.FC = () => {
       <Modal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        title="Edit Performance"
+        title="Modifier la performance"
       >
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Report: {editingReport?.report_number}
+              Rapport : {editingReport?.report_number}
             </label>
             <textarea
               value={editPerformance}
               onChange={(e) => setEditPerformance(e.target.value)}
-              placeholder="Enter performance details..."
+              placeholder="Saisissez les détails de performance..."
               className="w-full h-32 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
@@ -499,14 +568,14 @@ export const ReportsPage: React.FC = () => {
               onClick={() => setEditModalOpen(false)}
               disabled={editLoading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               onClick={handleSavePerformance}
               disabled={editLoading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {editLoading ? 'Saving...' : 'Save'}
+              {editLoading ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </div>
         </div>

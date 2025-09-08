@@ -76,7 +76,7 @@ const LinesPage: React.FC = () => {
         totalPages: result.total_pages
       }));
     } catch (error) {
-      console.error('Error loading lines:', error);
+      console.error('Erreur lors du chargement des lignes :', error);
       setLines([]);
       setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
@@ -102,7 +102,7 @@ const LinesPage: React.FC = () => {
       setFormData({ name: '', description: '', is_active: true });
       await loadLines();
     } catch (error) {
-      console.error('Error creating/updating line:', error);
+      console.error('Erreur lors de la création/mise à jour de la ligne :', error);
     }
   };
 
@@ -128,7 +128,7 @@ const LinesPage: React.FC = () => {
         await loadLines();
       }
     } catch (error) {
-      console.error('Error bulk creating lines:', error);
+      console.error('Erreur lors de la création groupée des lignes :', error);
     }
   };
 
@@ -137,7 +137,7 @@ const LinesPage: React.FC = () => {
       await invoke('delete_line', { lineId });
       await loadLines();
     } catch (error) {
-      console.error('Error deleting line:', error);
+      console.error('Erreur lors de la suppression de la ligne :', error);
     }
   };
 
@@ -148,7 +148,7 @@ const LinesPage: React.FC = () => {
       setSelectedLines([]);
       await loadLines();
     } catch (error) {
-      console.error('Error deleting lines:', error);
+      console.error('Erreur lors de la suppression des lignes :', error);
     }
   };
 
@@ -189,7 +189,7 @@ const LinesPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading lines...</div>
+        <div className="text-lg">Chargement des lignes...</div>
       </div>
     );
   }
@@ -202,7 +202,7 @@ const LinesPage: React.FC = () => {
         </h1>
         <div className="flex items-center gap-4">
           <SearchBar
-            placeholder="Search lines..."
+            placeholder="Rechercher des lignes..."
             value={searchTerm}
             onChange={setSearchTerm}
             className="w-64"
@@ -213,20 +213,20 @@ const LinesPage: React.FC = () => {
                 onClick={() => setShowBulkDeleteModal(true)}
                 variant="danger"
               >
-                Delete Selected ({selectedLines.length})
+                Supprimer la sélection ({selectedLines.length})
               </Button>
             )}
             <Button
               onClick={() => setBulkModal(true)}
               variant="secondary"
             >
-              Bulk Create
+Création groupée
             </Button>
             <Button
               onClick={() => setShowCreateModal(true)}
               variant="primary"
             >
-              Add Line
+Ajouter une ligne
             </Button>
           </div>
         </div>
@@ -260,7 +260,7 @@ const LinesPage: React.FC = () => {
           },
           {
             key: 'name',
-            header: 'Name',
+            header: 'Nom',
             render: (value) => <span className="font-medium">{value}</span>,
           },
           {
@@ -270,20 +270,20 @@ const LinesPage: React.FC = () => {
           },
           {
             key: 'is_active',
-            header: 'Status',
+            header: 'Statut',
             render: (value) => (
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                 value 
                   ? 'bg-notion-blue-light text-notion-blue' 
                   : 'bg-notion-red-light text-notion-red'
               }`}>
-                {value ? 'Active' : 'Inactive'}
+                {value ? 'Actif' : 'Inactif'}
               </span>
             ),
           },
           {
             key: 'created_at',
-            header: 'Created',
+            header: 'Créé le',
             render: (value) => new Date(value).toLocaleDateString(),
           },
           {
@@ -299,7 +299,7 @@ const LinesPage: React.FC = () => {
                     onClick={() => openEditModal(line)}
                     size="sm"
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     type="button"
@@ -310,7 +310,7 @@ const LinesPage: React.FC = () => {
                     }}
                     size="sm"
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </div>
               );
@@ -338,20 +338,20 @@ const LinesPage: React.FC = () => {
           setEditingLine(null);
           setFormData({ name: '', description: '', is_active: true });
         }}
-        title={editingLine ? 'Edit Line' : 'Create New Line'}
+        title={editingLine ? 'Modifier la ligne' : 'Nouvelle ligne de production'}
         maxWidth="md"
       >
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Name
+              Nom
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
-              placeholder="e.g., Assembly Line 1"
+              placeholder="Ex: Ligne d'assemblage 1"
             />
           </div>
           <div>
@@ -362,7 +362,7 @@ const LinesPage: React.FC = () => {
               value={formData.description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 min-h-[100px]"
-              placeholder="Optional description of the production line"
+              placeholder="Description optionnelle de la ligne de production"
             />
           </div>
           <div className="flex items-center">
@@ -374,7 +374,7 @@ const LinesPage: React.FC = () => {
               className="h-4 w-4 rounded border-border/50 dark:border-border/30 focus:ring-primary/50 text-primary"
             />
             <label htmlFor="is_active" className="ml-2 block text-sm font-medium text-foreground">
-              Active
+              Actif
             </label>
           </div>
         </div>
@@ -388,14 +388,14 @@ const LinesPage: React.FC = () => {
               setFormData({ name: '', description: '', is_active: true });
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
             variant="primary"
             onClick={handleCreateLine}
           >
-            {editingLine ? 'Update' : 'Create'}
+            {editingLine ? 'Mettre à jour' : 'Créer'}
           </Button>
         </div>
       </Dialog>
@@ -407,21 +407,21 @@ const LinesPage: React.FC = () => {
           setBulkModal(false);
           setBulkText('');
         }}
-        title="Bulk Create Lines"
+        title="Création groupée de lignes"
         maxWidth="2xl"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Enter one line per row. Format: Name | Description | Active (true/false)
+            Saisissez une ligne par entrée. Format : Nom | Description | Actif (true/false)
           </p>
           <p className="text-xs text-muted-foreground mb-4">
-            Example: Assembly Line 1 | Main production line for electronics | true
+            Exemple : Ligne d'assemblage 1 | Ligne principale pour l'électronique | true
           </p>
           <textarea
             value={bulkText}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBulkText(e.target.value)}
             className="w-full px-4 py-3 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 font-mono text-sm"
-            placeholder="Assembly Line 1 | Main production line | true&#10;Packaging Line | Final packaging station | true"
+            placeholder="Ligne d'assemblage 1 | Ligne principale | true&#10;Ligne d'emballage | Poste d'emballage final | true"
             rows={10}
           />
         </div>
@@ -434,7 +434,7 @@ const LinesPage: React.FC = () => {
               setBulkText('');
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -442,7 +442,7 @@ const LinesPage: React.FC = () => {
             onClick={handleBulkCreate}
             disabled={!bulkText.trim()}
           >
-            Create Lines
+            Créer les lignes
           </Button>
         </div>
       </Dialog>
@@ -454,26 +454,26 @@ const LinesPage: React.FC = () => {
           setShowDeleteModal(false);
           setLineToDelete(null);
         }}
-        title="Delete Line"
+        title="Supprimer la ligne"
         maxWidth="md"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Are you sure you want to delete this line?
+            Êtes-vous sûr de vouloir supprimer cette ligne ?
           </p>
           {lineToDelete && (
             <div className="text-sm text-muted-foreground">
               <div>
-                <span className="font-medium text-foreground">Name:</span> {lineToDelete.name}
+                <span className="font-medium text-foreground">Nom :</span> {lineToDelete.name}
               </div>
               {lineToDelete.description && (
                 <div>
-                  <span className="font-medium text-foreground">Description:</span> {lineToDelete.description}
+                  <span className="font-medium text-foreground">Description :</span> {lineToDelete.description}
                 </div>
               )}
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-3">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground mt-3">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button
@@ -484,7 +484,7 @@ const LinesPage: React.FC = () => {
               setLineToDelete(null);
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -506,14 +506,14 @@ const LinesPage: React.FC = () => {
       <Dialog
         isOpen={showBulkDeleteModal}
         onClose={() => setShowBulkDeleteModal(false)}
-        title="Delete Selected Lines"
+        title="Supprimer les lignes sélectionnées"
         maxWidth="md"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Delete {selectedLines.length} selected {selectedLines.length === 1 ? 'line' : 'lines'}?
+            Supprimer {selectedLines.length} ligne{selectedLines.length > 1 ? 's' : ''} sélectionnée{selectedLines.length > 1 ? 's' : ''} ?
           </p>
-          <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button
@@ -521,7 +521,7 @@ const LinesPage: React.FC = () => {
             variant="secondary"
             onClick={() => setShowBulkDeleteModal(false)}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"

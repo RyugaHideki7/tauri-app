@@ -71,7 +71,7 @@ const ProductsPage: React.FC = () => {
         totalPages: result.total_pages
       }));
     } catch (error) {
-      console.error("Error loading products:", error);
+      console.error("Erreur lors du chargement des produits :", error);
       setProducts([]);
       setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
@@ -109,7 +109,7 @@ const ProductsPage: React.FC = () => {
       setFormData({ designation: "", code: "" });
       await loadProducts();
     } catch (error) {
-      console.error("Error creating/updating product:", error);
+      console.error("Erreur lors de la création/mise à jour du produit :", error);
     }
   };
 
@@ -134,7 +134,7 @@ const ProductsPage: React.FC = () => {
         await loadProducts();
       }
     } catch (error) {
-      console.error("Error bulk creating products:", error);
+      console.error("Erreur lors de la création groupée des produits :", error);
     }
   }, [bulkText, loadProducts]);
 
@@ -143,7 +143,7 @@ const ProductsPage: React.FC = () => {
       await invoke("delete_product", { productId });
       await loadProducts();
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("Erreur lors de la suppression du produit :", error);
     }
   };
 
@@ -156,7 +156,7 @@ const ProductsPage: React.FC = () => {
       setSelectedProducts([]);
       await loadProducts();
     } catch (error: any) {
-      console.error("Error deleting products:", error);
+      console.error("Erreur lors de la suppression des produits :", error);
     }
   };
 
@@ -188,7 +188,7 @@ const ProductsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading products...</div>
+        <div className="text-lg">Chargement des produits...</div>
       </div>
     );
   }
@@ -204,19 +204,19 @@ const ProductsPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search products..."
+            placeholder="Rechercher des produits..."
             className="w-64 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {selectedProducts.length > 0 && (
             <Button onClick={() => setShowBulkDeleteModal(true)} variant="danger">
-              Delete Selected ({selectedProducts.length})
+              Supprimer la sélection ({selectedProducts.length})
             </Button>
           )}
           <Button onClick={() => setShowBulkModal(true)} variant="secondary">
-            Bulk Create
+            Création groupée
           </Button>
           <Button onClick={() => setShowCreateModal(true)}>
-            Add Product
+            Ajouter un produit
           </Button>
         </div>
       </div>
@@ -248,7 +248,7 @@ const ProductsPage: React.FC = () => {
           },
           {
             key: "designation",
-            header: "Designation",
+            header: "Désignation",
             render: (value: string) => value,
           },
           {
@@ -269,7 +269,7 @@ const ProductsPage: React.FC = () => {
                     onClick={() => openEditModal(product)}
                     size="sm"
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     type="button"
@@ -280,7 +280,7 @@ const ProductsPage: React.FC = () => {
                     }}
                     size="sm"
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </div>
               );
@@ -307,13 +307,13 @@ const ProductsPage: React.FC = () => {
           setEditingProduct(null);
           setFormData({ designation: "", code: "" });
         }}
-        title={editingProduct ? "Edit Product" : "Create New Product"}
+        title={editingProduct ? "Modifier le produit" : "Nouveau produit"}
         maxWidth="md"
       >
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Designation
+              Désignation
             </label>
             <input
               type="text"
@@ -322,7 +322,7 @@ const ProductsPage: React.FC = () => {
                 setFormData({ ...formData, designation: e.target.value })
               }
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
-              placeholder="Product designation"
+              placeholder="Désignation du produit"
             />
           </div>
           <div>
@@ -336,7 +336,7 @@ const ProductsPage: React.FC = () => {
                 setFormData({ ...formData, code: e.target.value })
               }
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
-              placeholder="Product code"
+              placeholder="Code du produit"
             />
           </div>
         </div>
@@ -350,14 +350,14 @@ const ProductsPage: React.FC = () => {
               setFormData({ designation: "", code: "" });
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
             variant="primary"
             onClick={handleCreateProduct}
           >
-            {editingProduct ? "Update" : "Create"}
+            {editingProduct ? "Mettre à jour" : "Créer"}
           </Button>
         </div>
       </Dialog>
@@ -366,21 +366,21 @@ const ProductsPage: React.FC = () => {
       <Dialog
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
-        title="Bulk Create Products"
+        title="Création groupée de produits"
         maxWidth="2xl"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Enter one product per line. Format: Designation | Code
+            Saisissez un produit par ligne. Format : Désignation | Code
           </p>
           <p className="text-xs text-muted-foreground mb-4">
-            Example: Product 1 | P001
+            Exemple : Produit 1 | P001
           </p>
           <textarea
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
             className="w-full px-4 py-3 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50 font-mono text-sm"
-            placeholder="Product 1 | P001\nProduct 2 | P002"
+            placeholder="Produit 1 | P001\nProduit 2 | P002"
             rows={10}
           />
         </div>
@@ -390,14 +390,14 @@ const ProductsPage: React.FC = () => {
             variant="secondary"
             onClick={() => setShowBulkModal(false)}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
             variant="primary"
             onClick={handleBulkCreate}
           >
-            Create Products
+            Créer les produits
           </Button>
         </div>
       </Dialog>
@@ -409,24 +409,24 @@ const ProductsPage: React.FC = () => {
           setShowDeleteModal(false);
           setProductToDelete(null);
         }}
-        title="Delete Product"
+        title="Supprimer le produit"
         maxWidth="md"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Are you sure you want to delete this product?
+            Êtes-vous sûr de vouloir supprimer ce produit ?
           </p>
           {productToDelete && (
             <div className="text-sm text-muted-foreground">
               <div>
-                <span className="font-medium text-foreground">Designation:</span> {productToDelete.designation}
+                <span className="font-medium text-foreground">Désignation :</span> {productToDelete.designation}
               </div>
               <div>
-                <span className="font-medium text-foreground">Code:</span> {productToDelete.code}
+                <span className="font-medium text-foreground">Code :</span> {productToDelete.code}
               </div>
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-3">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground mt-3">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button
@@ -437,7 +437,7 @@ const ProductsPage: React.FC = () => {
               setProductToDelete(null);
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -450,7 +450,7 @@ const ProductsPage: React.FC = () => {
               }
             }}
           >
-            Delete
+            Supprimer
           </Button>
         </div>
       </Dialog>
@@ -459,14 +459,14 @@ const ProductsPage: React.FC = () => {
       <Dialog
         isOpen={showBulkDeleteModal}
         onClose={() => setShowBulkDeleteModal(false)}
-        title="Delete Selected Products"
+        title="Supprimer les produits sélectionnés"
         maxWidth="md"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Delete {selectedProducts.length} selected {selectedProducts.length === 1 ? 'product' : 'products'}?
+            Supprimer {selectedProducts.length} produit{selectedProducts.length > 1 ? 's' : ''} sélectionné{selectedProducts.length > 1 ? 's' : ''}?
           </p>
-          <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button
@@ -474,7 +474,7 @@ const ProductsPage: React.FC = () => {
             variant="secondary"
             onClick={() => setShowBulkDeleteModal(false)}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -484,7 +484,7 @@ const ProductsPage: React.FC = () => {
               setShowBulkDeleteModal(false);
             }}
           >
-            Delete Selected
+            Supprimer Selected
           </Button>
         </div>
       </Dialog>

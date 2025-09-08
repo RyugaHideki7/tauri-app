@@ -35,12 +35,12 @@ export const ProfilePage: React.FC = () => {
     setProfileError('');
     
     if (!username.trim()) {
-      setProfileError('Username is required');
+      setProfileError('Le nom d\'utilisateur est requis');
       return;
     }
     
     if (username.trim().length < 3) {
-      setProfileError('Username must be at least 3 characters long');
+      setProfileError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
       return;
     }
     
@@ -55,10 +55,10 @@ export const ProfilePage: React.FC = () => {
       // Update the user context and localStorage
       updateUser({ username: username.trim() });
       
-      addToast('Username updated successfully', 'success');
+      addToast('Nom d\'utilisateur mis à jour avec succès', 'success');
     } catch (error) {
-      console.error('Error updating username:', error);
-      setProfileError(error instanceof Error ? error.message : 'Failed to update username');
+      console.error("Erreur lors de la mise à jour du nom d'utilisateur :", error);
+      setProfileError(error instanceof Error ? error.message : "Échec de la mise à jour du nom d'utilisateur");
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -70,17 +70,17 @@ export const ProfilePage: React.FC = () => {
     
     // Validate form
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError('All fields are required');
+      setPasswordError('Tous les champs sont obligatoires');
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match');
+      setPasswordError('Les nouveaux mots de passe ne correspondent pas');
       return;
     }
     
     if (newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters long');
+      setPasswordError('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
     
@@ -93,13 +93,13 @@ export const ProfilePage: React.FC = () => {
         newPassword,
       });
       
-      addToast('Password updated successfully', 'success');
+      addToast('Mot de passe mis à jour avec succès', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      console.error('Error changing password:', error);
-      setPasswordError(error instanceof Error ? error.message : 'Failed to update password');
+      console.error('Erreur lors du changement de mot de passe :', error);
+      setPasswordError(error instanceof Error ? error.message : 'Échec de la mise à jour du mot de passe');
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -111,10 +111,10 @@ export const ProfilePage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Profile Settings
+            Paramètres du Profil
           </h1>
           <p className="text-muted-foreground">
-            Manage your account settings and preferences
+            Gérez vos paramètres et préférences de compte
           </p>
         </div>
 
@@ -130,10 +130,10 @@ export const ProfilePage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-foreground">
-                  {username || user?.username || 'User'}
+                  {username || user?.username || 'Utilisateur'}
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  {user?.role || 'Member'}
+                  {user?.role || 'Membre'}
                 </p>
               </div>
             </div>
@@ -154,7 +154,7 @@ export const ProfilePage: React.FC = () => {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  <span>Profile Info</span>
+                  <span>Informations du Profil</span>
                 </div>
               </button>
               <button
@@ -169,7 +169,7 @@ export const ProfilePage: React.FC = () => {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2m0 0V7a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <span>Security</span>
+                  <span>Sécurité</span>
                 </div>
               </button>
             </nav>
@@ -181,7 +181,7 @@ export const ProfilePage: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-4">
-                    Personal Information
+                    Informations Personnelles
                   </h3>
                   
                   {profileError && (
@@ -198,21 +198,21 @@ export const ProfilePage: React.FC = () => {
                   <form onSubmit={handleProfileSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <Input
-                        label="Username"
+                        label="Nom d'utilisateur"
                         type="text"
                         value={username}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-                        placeholder="Enter your username"
+                        placeholder="Entrez votre nom d'utilisateur"
                         required
-                        helperText="This will be displayed throughout the application"
+                        helperText="Ceci sera affiché dans toute l'application"
                       />
                       
                       <Input
-                        label="Role"
+                        label="Rôle"
                         type="text"
-                        value={user?.role || 'Member'}
+                        value={user?.role || 'Membre'}
                         disabled
-                        helperText="Contact an administrator to change your role"
+                        helperText="Contactez un administrateur pour modifier votre rôle"
                       />
                     </div>
                     
@@ -223,7 +223,7 @@ export const ProfilePage: React.FC = () => {
                         onClick={() => setUsername(user?.username || '')}
                         disabled={isUpdatingProfile}
                       >
-                        Reset
+                        Réinitialiser
                       </Button>
                       <Button 
                         type="submit" 
@@ -231,7 +231,7 @@ export const ProfilePage: React.FC = () => {
                         disabled={isUpdatingProfile || username === user?.username}
                         isLoading={isUpdatingProfile}
                       >
-                        Update Profile
+                        Mettre à jour le profil
                       </Button>
                     </div>
                   </form>
@@ -243,10 +243,10 @@ export const ProfilePage: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-4">
-                    Change Password
+                    Changer le mot de passe
                   </h3>
                   <p className="text-muted-foreground text-sm mb-6">
-                    Ensure your account is using a long, random password to stay secure.
+                    Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé.
                   </p>
                   
                   {passwordError && (
@@ -262,31 +262,31 @@ export const ProfilePage: React.FC = () => {
                   
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <Input
-                      label="Current Password"
+                      label="Mot de passe actuel"
                       type="password"
                       value={currentPassword}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter your current password"
+                      placeholder="Entrez votre mot de passe actuel"
                       required
                     />
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <Input
-                        label="New Password"
+                        label="Nouveau mot de passe"
                         type="password"
                         value={newPassword}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                        placeholder="Enter new password"
+                        placeholder="Entrez un nouveau mot de passe"
                         required
-                        helperText="Minimum 8 characters"
+                        helperText="Minimum 8 caractères"
                       />
                       
                       <Input
-                        label="Confirm New Password"
+                        label="Confirmer le nouveau mot de passe"
                         type="password"
                         value={confirmPassword}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirm new password"
+                        placeholder="Confirmer le nouveau mot de passe"
                         required
                       />
                     </div>
@@ -303,7 +303,7 @@ export const ProfilePage: React.FC = () => {
                         }}
                         disabled={isUpdatingPassword}
                       >
-                        Clear
+                        Effacer
                       </Button>
                       <Button 
                         type="submit" 
@@ -311,7 +311,7 @@ export const ProfilePage: React.FC = () => {
                         disabled={isUpdatingPassword}
                         isLoading={isUpdatingPassword}
                       >
-                        Update Password
+                        Mettre à jour le mot de passe
                       </Button>
                     </div>
                   </form>
