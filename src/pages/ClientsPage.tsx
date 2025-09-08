@@ -66,7 +66,7 @@ const ClientsPage: React.FC = () => {
         totalPages: result.total_pages
       }));
     } catch (error) {
-      console.error("Error loading clients:", error);
+      console.error("Erreur lors du chargement des clients :", error);
       setClients([]);
       setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
     } finally {
@@ -104,7 +104,7 @@ const ClientsPage: React.FC = () => {
       setFormData({ name: "" });
       await loadClients();
     } catch (error) {
-      console.error("Error creating/updating client:", error);
+      console.error("Erreur lors de la création/mise à jour du client :", error);
     }
   };
 
@@ -123,7 +123,7 @@ const ClientsPage: React.FC = () => {
         await loadClients();
       }
     } catch (error) {
-      console.error("Error bulk creating clients:", error);
+      console.error("Erreur lors de la création multiple des clients :", error);
     }
   }, [bulkText, loadClients]);
 
@@ -132,7 +132,7 @@ const ClientsPage: React.FC = () => {
       await invoke("delete_client", { clientId });
       await loadClients();
     } catch (error) {
-      console.error("Error deleting client:", error);
+      console.error("Erreur lors de la suppression du client :", error);
     }
   };
 
@@ -143,7 +143,7 @@ const ClientsPage: React.FC = () => {
       setSelectedClients([]);
       await loadClients();
     } catch (error) {
-      console.error("Error deleting clients:", error);
+      console.error("Erreur lors de la suppression des clients :", error);
     }
   };
 
@@ -170,7 +170,7 @@ const ClientsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading clients...</div>
+        <div className="text-lg">Chargement des clients...</div>
       </div>
     );
   }
@@ -184,19 +184,19 @@ const ClientsPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search clients..."
+            placeholder="Rechercher des clients..."
             className="w-64 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {selectedClients.length > 0 && (
             <Button onClick={() => setShowBulkDeleteModal(true)} variant="danger">
-              Delete Selected ({selectedClients.length})
+              Supprimer la sélection ({selectedClients.length})
             </Button>
           )}
           <Button onClick={() => setShowBulkModal(true)} variant="secondary">
-            Bulk Create
+            Création multiple
           </Button>
           <Button onClick={() => setShowCreateModal(true)}>
-            Add Client
+            Ajouter un client
           </Button>
         </div>
       </div>
@@ -226,17 +226,17 @@ const ClientsPage: React.FC = () => {
           },
           {
             key: "name",
-            header: "Name",
+            header: "Nom",
             render: (value: string) => value,
           },
           {
             key: "created_at",
-            header: "Created",
+            header: "Créé le",
             render: (value: string) => new Date(value).toLocaleDateString(),
           },
           {
             key: "updated_at",
-            header: "Updated",
+            header: "Mis à jour le",
             render: (value: string) => new Date(value).toLocaleDateString(),
           },
           {
@@ -245,7 +245,7 @@ const ClientsPage: React.FC = () => {
             render: (_value: unknown, client: Client) => (
               <div className="flex items-center space-x-2">
                 <Button type="button" variant="secondary" onClick={() => openEditModal(client)} size="sm">
-                  Edit
+                  Modifier
                 </Button>
                 <Button
                   type="button"
@@ -256,7 +256,7 @@ const ClientsPage: React.FC = () => {
                   }}
                   size="sm"
                 >
-                  Delete
+                  Supprimer
                 </Button>
               </div>
             ),
@@ -282,18 +282,18 @@ const ClientsPage: React.FC = () => {
           setEditingClient(null);
           setFormData({ name: "" });
         }}
-        title={editingClient ? "Edit Client" : "Create New Client"}
+        title={editingClient ? "Modifier le client" : "Nouveau client"}
         maxWidth="md"
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Nom</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ name: e.target.value })}
               className="w-full px-4 py-2.5 bg-background/50 dark:bg-background/70 border border-border/50 dark:border-border/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-colors placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
-              placeholder="Client name"
+              placeholder="Nom du client"
             />
           </div>
         </div>
@@ -307,10 +307,10 @@ const ClientsPage: React.FC = () => {
               setFormData({ name: "" });
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button type="button" variant="primary" onClick={handleCreateClient}>
-            {editingClient ? "Update" : "Create"}
+            {editingClient ? "Mettre à jour" : "Créer"}
           </Button>
         </div>
       </Dialog>
@@ -319,12 +319,12 @@ const ClientsPage: React.FC = () => {
       <Dialog
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
-        title="Bulk Create Clients"
+        title="Création multiple de clients"
         maxWidth="2xl"
       >
         <div className="mb-4">
-          <p className="text-sm text-foreground mb-2">Enter one client name per line.</p>
-          <p className="text-xs text-muted-foreground mb-4">Example: Client 1</p>
+          <p className="text-sm text-foreground mb-2">Saisissez un nom de client par ligne.</p>
+          <p className="text-xs text-muted-foreground mb-4">Exemple : Client 1</p>
           <textarea
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
@@ -335,10 +335,10 @@ const ClientsPage: React.FC = () => {
         </div>
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="secondary" onClick={() => setShowBulkModal(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button type="button" variant="primary" onClick={handleBulkCreate}>
-            Create Clients
+            Créer les clients
           </Button>
         </div>
       </Dialog>
@@ -350,19 +350,19 @@ const ClientsPage: React.FC = () => {
           setShowDeleteModal(false);
           setClientToDelete(null);
         }}
-        title="Delete Client"
+        title="Supprimer le client"
         maxWidth="md"
       >
         <div className="mb-4">
-          <p className="text-sm text-foreground mb-2">Are you sure you want to delete this client?</p>
+          <p className="text-sm text-foreground mb-2">Êtes-vous sûr de vouloir supprimer ce client ?</p>
           {clientToDelete && (
             <div className="text-sm text-muted-foreground">
               <div>
-                <span className="font-medium text-foreground">Name:</span> {clientToDelete.name}
+                <span className="font-medium text-foreground">Nom :</span> {clientToDelete.name}
               </div>
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-3">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground mt-3">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button
@@ -373,7 +373,7 @@ const ClientsPage: React.FC = () => {
               setClientToDelete(null);
             }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -395,18 +395,18 @@ const ClientsPage: React.FC = () => {
       <Dialog
         isOpen={showBulkDeleteModal}
         onClose={() => setShowBulkDeleteModal(false)}
-        title="Delete Selected Clients"
+        title="Supprimer les clients sélectionnés"
         maxWidth="md"
       >
         <div className="mb-4">
           <p className="text-sm text-foreground mb-2">
-            Delete {selectedClients.length} selected {selectedClients.length === 1 ? "client" : "clients"}?
+            Supprimer {selectedClients.length} client{selectedClients.length > 1 ? 's' : ''} sélectionné{selectedClients.length > 1 ? 's' : ''} ?
           </p>
-          <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+          <p className="text-xs text-muted-foreground">Cette action est irréversible.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="secondary" onClick={() => setShowBulkDeleteModal(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button
             type="button"
@@ -416,7 +416,7 @@ const ClientsPage: React.FC = () => {
               setShowBulkDeleteModal(false);
             }}
           >
-            Delete Selected
+Supprimer la sélection
           </Button>
         </div>
       </Dialog>

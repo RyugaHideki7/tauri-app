@@ -32,12 +32,12 @@ interface EditUserForm {
 }
 
 const ROLES = [
-  { value: 'admin', label: 'Administrator' },
+  { value: 'admin', label: 'Administrateur' },
   { value: 'client', label: 'Client' },
   { value: 'site01', label: 'Site 01' },
   { value: 'site02', label: 'Site 02' },
   { value: 'performance', label: 'Performance' },
-  { value: 'consommateur', label: 'Consumer' },
+  { value: 'consommateur', label: 'Consommateur' },
 ];
 
 export const UsersPage: React.FC = () => {
@@ -106,11 +106,11 @@ export const UsersPage: React.FC = () => {
         totalPages: result.total_pages
       }));
     } catch (error) {
-      console.error('Error loading users:', error);
-      setError('Failed to load users');
+      console.error('Erreur lors du chargement des utilisateurs :', error);
+      setError('Échec du chargement des utilisateurs');
       setUsers([]);
       setPagination(prev => ({ ...prev, totalItems: 0, totalPages: 0 }));
-      toast.error('Failed to load users');
+      toast.error('Échec du chargement des utilisateurs');
     } finally {
       setIsLoading(false);
     }
@@ -120,12 +120,12 @@ export const UsersPage: React.FC = () => {
     e.preventDefault();
     
     if (!createForm.username.trim() || !createForm.password.trim()) {
-      toast.error('Username and password are required');
+      toast.error('Le nom d\'utilisateur et le mot de passe sont requis');
       return;
     }
     
     if (createForm.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
     
@@ -137,13 +137,13 @@ export const UsersPage: React.FC = () => {
         role: createForm.role
       });
       
-      toast.success('User created successfully');
+      toast.success('Utilisateur créé avec succès');
       setIsCreateModalOpen(false);
       setCreateForm({ username: '', password: '', role: 'client' });
       await loadUsers();
     } catch (error) {
-      console.error('Error creating user:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create user');
+      console.error('Erreur lors de la création de l\'utilisateur :', error);
+      toast.error(error instanceof Error ? error.message : 'Échec de la création de l\'utilisateur');
     } finally {
       setIsCreating(false);
     }
@@ -153,7 +153,7 @@ export const UsersPage: React.FC = () => {
     e.preventDefault();
     
     if (!editForm.username.trim()) {
-      toast.error('Username is required');
+      toast.error('Le nom d\'utilisateur est requis');
       return;
     }
     
@@ -180,7 +180,7 @@ export const UsersPage: React.FC = () => {
       // Update password if provided
       if (editForm.newPassword && editForm.newPassword.trim()) {
         if (editForm.newPassword.length < 8) {
-          toast.error('Password must be at least 8 characters long');
+          toast.error('Le mot de passe doit contenir au moins 8 caractères');
           return;
         }
         await invoke('update_user_password', {
@@ -189,13 +189,13 @@ export const UsersPage: React.FC = () => {
         });
       }
       
-      toast.success('User updated successfully');
+      toast.success('Utilisateur mis à jour avec succès');
       setIsEditModalOpen(false);
       setEditForm({ id: '', username: '', role: '', newPassword: '' });
       await loadUsers();
     } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update user');
+      console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
+      toast.error(error instanceof Error ? error.message : 'Échec de la mise à jour de l\'utilisateur');
     } finally {
       setIsUpdating(false);
     }
@@ -208,13 +208,13 @@ export const UsersPage: React.FC = () => {
       setIsDeleting(true);
       await invoke('delete_user', { userId: userToDelete.id });
       
-      toast.success('User deleted successfully');
+      toast.success('Utilisateur supprimé avec succès');
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
       await loadUsers();
     } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete user');
+      console.error('Erreur lors de la suppression de l\'utilisateur :', error);
+      toast.error(error instanceof Error ? error.message : 'Échec de la suppression de l\'utilisateur');
     } finally {
       setIsDeleting(false);
     }
@@ -236,7 +236,7 @@ export const UsersPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -282,7 +282,7 @@ export const UsersPage: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-3 text-primary">Loading users...</span>
+            <span className="ml-3 text-primary">Chargement des utilisateurs...</span>
           </div>
         </div>
       </div>
@@ -297,10 +297,10 @@ export const UsersPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                User Management
+                Gestion des utilisateurs
               </h1>
               <p className="text-muted-foreground mb-6">
-                Manage users, roles, and permissions
+                Gérez les utilisateurs, rôles et permissions
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -308,7 +308,7 @@ export const UsersPage: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search users..."
+                placeholder="Rechercher des utilisateurs..."
                 className="w-64 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <Button
@@ -319,7 +319,7 @@ export const UsersPage: React.FC = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Add User</span>
+                <span>Ajouter un utilisateur</span>
               </Button>
             </div>
           </div>
@@ -341,7 +341,7 @@ export const UsersPage: React.FC = () => {
           columns={[
             {
               key: 'username',
-              header: 'User',
+              header: 'Utilisateur',
               render: (value, user) => {
                 void value;
                 return (
@@ -365,7 +365,7 @@ export const UsersPage: React.FC = () => {
             },
             {
               key: 'role',
-              header: 'Role',
+              header: 'Rôle',
               render: (value) => (
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(value)}`}>
                   {getRoleLabel(value)}
@@ -374,12 +374,12 @@ export const UsersPage: React.FC = () => {
             },
             {
               key: 'created_at',
-              header: 'Created At',
+              header: 'Créé le',
               render: (value) => formatDate(value)
             },
             {
               key: 'updated_at',
-              header: 'Updated At',
+              header: 'Mis à jour le',
               render: (value) => formatDate(value)
             },
             {
@@ -396,7 +396,7 @@ export const UsersPage: React.FC = () => {
                         openEditModal(user);
                       }}
                       className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors duration-200"
-                      title="Edit user"
+                      title="Modifier l'utilisateur"
                     >
                       <FontAwesomeIcon icon={faUserEdit} className="w-4 h-4" />
                     </button>
@@ -407,7 +407,7 @@ export const UsersPage: React.FC = () => {
                         openDeleteModal(user);
                       }}
                       className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors duration-200"
-                      title="Delete user"
+                      title="Supprimer l'utilisateur"
                     >
                       <FontAwesomeIcon icon={faUserTimes} className="w-4 h-4" />
                     </button>
@@ -433,31 +433,30 @@ export const UsersPage: React.FC = () => {
         <Dialog
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Create New User"
+          title="Nouvel utilisateur"
           maxWidth="md"
         >
           <form onSubmit={handleCreateUser} className="space-y-4">
             <Input
-              label="Username"
+              label="Nom d'utilisateur"
               type="text"
               value={createForm.username}
               onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-              placeholder="Enter username"
+              placeholder="Saisissez un nom d'utilisateur"
               required
             />
             
             <Input
-              label="Password"
+              label="Mot de passe"
               type="password"
               value={createForm.password}
               onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-              placeholder="Enter password"
-              required
-              helperText="Minimum 8 characters"
+              placeholder="Saisissez un mot de passe"
+              helperText="Minimum 8 caractères"
             />
             
             <Select
-              label="Role"
+              label="Rôle"
               value={createForm.role}
               onChange={(value) => setCreateForm({ ...createForm, role: value })}
               options={ROLES}
@@ -470,7 +469,7 @@ export const UsersPage: React.FC = () => {
                 onClick={() => setIsCreateModalOpen(false)}
                 disabled={isCreating}
               >
-                Cancel
+                Annuler
               </Button>
               <Button
                 type="submit"
@@ -478,7 +477,7 @@ export const UsersPage: React.FC = () => {
                 disabled={isCreating}
                 isLoading={isCreating}
               >
-                Create User
+                Créer l'utilisateur
               </Button>
             </div>
           </form>
@@ -488,33 +487,33 @@ export const UsersPage: React.FC = () => {
         <Dialog
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          title="Edit User"
+          title="Modifier l'utilisateur"
           maxWidth="md"
         >
           <form onSubmit={handleEditUser} className="space-y-4">
             <Input
-              label="Username"
+              label="Nom d'utilisateur"
               type="text"
               value={editForm.username}
               onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-              placeholder="Enter username"
+              placeholder="Saisissez un nom d'utilisateur"
               required
             />
             
             <Select
-              label="Role"
+              label="Rôle"
               value={editForm.role}
               onChange={(value) => setEditForm({ ...editForm, role: value })}
               options={ROLES}
             />
             
             <Input
-              label="New Password (Optional)"
+              label="Nouveau mot de passe (Optionnel)"
               type="password"
               value={editForm.newPassword || ''}
               onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
-              placeholder="Leave empty to keep current password"
-              helperText="Minimum 8 characters if changing"
+              placeholder="Laisser vide pour conserver le mot de passe actuel"
+              helperText="Minimum 8 caractères si changement"
             />
             
             <div className="flex items-center justify-end space-x-3 pt-4">
@@ -524,7 +523,7 @@ export const UsersPage: React.FC = () => {
                 onClick={() => setIsEditModalOpen(false)}
                 disabled={isUpdating}
               >
-                Cancel
+                Annuler
               </Button>
               <Button
                 type="submit"
@@ -532,7 +531,7 @@ export const UsersPage: React.FC = () => {
                 disabled={isUpdating}
                 isLoading={isUpdating}
               >
-                Update User
+                Mettre à jour
               </Button>
             </div>
           </form>
@@ -542,7 +541,7 @@ export const UsersPage: React.FC = () => {
         <Dialog
           isOpen={isDeleteModalOpen && !!userToDelete}
           onClose={() => setIsDeleteModalOpen(false)}
-          title="Delete User"
+          title="Supprimer l'utilisateur"
           maxWidth="md"
         >
           <div className="mb-6">
@@ -552,13 +551,13 @@ export const UsersPage: React.FC = () => {
               </svg>
               <div>
                 <h3 className="text-sm font-medium text-destructive">
-                  Are you sure you want to delete this user?
+                  Êtes-vous sûr de vouloir supprimer cet utilisateur ?
                 </h3>
                 <p className="text-sm text-destructive/80 mt-1">
-                  User: <strong>{userToDelete?.username}</strong>
+                  Utilisateur : <strong>{userToDelete?.username}</strong>
                 </p>
                 <p className="text-sm text-destructive/80">
-                  This action cannot be undone.
+                  Cette action est irréversible.
                 </p>
               </div>
             </div>
@@ -571,7 +570,7 @@ export const UsersPage: React.FC = () => {
               onClick={() => setIsDeleteModalOpen(false)}
               disabled={isDeleting}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               type="button"
@@ -580,7 +579,7 @@ export const UsersPage: React.FC = () => {
               disabled={isDeleting}
               isLoading={isDeleting}
             >
-              Delete User
+              Supprimer l'utilisateur
             </Button>
           </div>
         </Dialog>

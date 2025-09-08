@@ -140,7 +140,7 @@ export const NewReportPage: React.FC = () => {
       setDescriptionTypes(typesData);
       setClients(clientsData);
     } catch (error) {
-      console.error('Failed to load initial data:', error);
+      console.error('Échec du chargement des données initiales :', error);
     }
   };
 
@@ -163,31 +163,31 @@ export const NewReportPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
     const role = user?.role?.toLowerCase();
 
-    if (!formData.line_id) newErrors.line_id = 'Line is required';
-    if (!formData.product_id) newErrors.product_id = 'Product is required';
-    if (!formData.format_id) newErrors.format_id = 'Format is required';
-    if (!formData.report_date) newErrors.report_date = 'Report date is required';
-    if (!formData.production_date) newErrors.production_date = 'Production date is required';
-    if (!formData.team) newErrors.team = 'Team is required';
-    if (!formData.time) newErrors.time = 'Time is required';
-    if (!formData.description_type) newErrors.description_type = 'Description type is required';
-    if (!formData.description_details.trim()) newErrors.description_details = 'Description details are required';
-    if (formData.quantity <= 0) newErrors.quantity = 'Quantity must be greater than 0';
-    if (formData.valuation < 0) newErrors.valuation = 'Valuation cannot be negative';
+    if (!formData.line_id) newErrors.line_id = 'La ligne de production est requise';
+    if (!formData.product_id) newErrors.product_id = 'Le produit est requis';
+    if (!formData.format_id) newErrors.format_id = 'Le format est requis';
+    if (!formData.report_date) newErrors.report_date = 'La date de la réclamation est requise';
+    if (!formData.production_date) newErrors.production_date = 'La date de production est requise';
+    if (!formData.team) newErrors.team = "L'équipe est requise";
+    if (!formData.time) newErrors.time = "L'heure est requise";
+    if (!formData.description_type) newErrors.description_type = 'Le type de description est requis';
+    if (!formData.description_details.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
+    if (formData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
+    if (formData.valuation < 0) newErrors.valuation = 'La valorisation ne peut pas être négative';
 
     // Validate claim origin based on user role
     if (role === 'client') {
       if (!formData.claim_origin_client_id) {
-        newErrors.claim_origin_client_id = 'Please select a client';
+        newErrors.claim_origin_client_id = 'Veuillez sélectionner un client';
       }
     } else if (role === 'consommateur') {
       if (!formData.claim_origin_manual?.trim()) {
-        newErrors.claim_origin_manual = 'Please enter claim origin';
+        newErrors.claim_origin_manual = 'Veuillez saisir l\'origine de la réclamation';
       }
     } else {
       // For site01, site02, and other roles
       if (!formData.claim_origin) {
-        newErrors.claim_origin = 'Claim origin is required';
+        newErrors.claim_origin = 'L\'origine de la réclamation est requise';
       }
     }
 
@@ -246,10 +246,10 @@ export const NewReportPage: React.FC = () => {
         performance: '',
       });
 
-      alert('Report created successfully!');
+      alert('Déclaration créée avec succès !');
     } catch (error) {
       console.error('Failed to create report:', error);
-      alert('Failed to create report. Please try again.');
+      alert('Échec de la création de la déclaration. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -266,7 +266,7 @@ export const NewReportPage: React.FC = () => {
     if (role === 'site01' || role === 'site 01' || role === 'site02' || role === 'site 02') {
       return (
         <Select
-          label="Claim Origin *"
+          label="Origine de la réclamation *"
           value={formData.claim_origin}
           onChange={() => {}} // No-op since it's disabled
           options={[
@@ -275,7 +275,7 @@ export const NewReportPage: React.FC = () => {
           ]}
           error={errors.claim_origin}
           disabled={true}
-          placeholder="Claim origin (auto-selected)"
+          placeholder="Origine de la réclamation (sélectionnée automatiquement)"
         />
       );
     }
@@ -284,7 +284,7 @@ export const NewReportPage: React.FC = () => {
     if (role === 'client') {
       return (
         <SearchableSelect
-          label="Claim Origin *"
+          label="Origine de la réclamation *"
           value={formData.claim_origin_client_id}
           onChange={(value) => {
             handleInputChange('claim_origin_client_id', value);
@@ -299,8 +299,8 @@ export const NewReportPage: React.FC = () => {
             label: `Client: ${client.name}`
           }))}
           error={errors.claim_origin_client_id || errors.claim_origin}
-          placeholder="Search and select a client..."
-          searchPlaceholder="Search clients..."
+          placeholder="Recherchez et sélectionnez un client..."
+          searchPlaceholder="Rechercher des clients..."
         />
       );
     }
@@ -310,7 +310,7 @@ export const NewReportPage: React.FC = () => {
       return (
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Claim Origin *
+            Origine de la réclamation *
           </label>
           <Input
             type="text"
@@ -320,7 +320,7 @@ export const NewReportPage: React.FC = () => {
               handleInputChange('claim_origin', e.target.value);
             }}
             error={errors.claim_origin_manual || errors.claim_origin}
-            placeholder="Enter claim origin manually..."
+            placeholder="Saisissez l'origine de la réclamation manuellement..."
           />
         </div>
       );
@@ -329,7 +329,7 @@ export const NewReportPage: React.FC = () => {
     // Default fallback - regular select
     return (
       <Select
-        label="Claim Origin *"
+        label="Origine de la réclamation *"
         value={formData.claim_origin}
         onChange={(value) => handleInputChange('claim_origin', value)}
         options={[
@@ -339,7 +339,7 @@ export const NewReportPage: React.FC = () => {
           { value: 'consommateur', label: 'Consommateur' }
         ]}
         error={errors.claim_origin}
-        placeholder="Select claim origin"
+        placeholder="Sélectionnez l'origine de la réclamation"
       />
     );
   };
@@ -347,43 +347,43 @@ export const NewReportPage: React.FC = () => {
   return (
     <div className="p-4 lg:p-6 w-full">
       <div className="w-full max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-6">Create New Non-Conformity Report</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Rapport de Non-Conformité</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg shadow-md border border-border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Production Line */}
             <div>
               <Select
-                label="Production Line *"
+                label="Ligne de production *"
                 value={formData.line_id}
                 onChange={(value) => handleInputChange('line_id', value)}
                 options={[
-                  { value: '', label: 'Select a production line' },
+                  { value: '', label: 'Sélectionnez une ligne de production' },
                   ...lines.map((line) => ({
                     value: line.id,
                     label: line.name
                   }))
                 ]}
                 error={errors.line_id}
-                placeholder="Select a production line"
+                placeholder="Sélectionnez une ligne de production"
               />
             </div>
 
             {/* Product */}
             <div>
               <Select
-                label="Product *"
+                label="Produit *"
                 value={formData.product_id}
                 onChange={(value) => handleInputChange('product_id', value)}
                 options={[
-                  { value: '', label: 'Select a product' },
+                  { value: '', label: 'Sélectionnez un produit' },
                   ...products.map((product) => ({
                     value: product.id,
                     label: product.code ? `${product.designation} (${product.code})` : product.designation
                   }))
                 ]}
                 error={errors.product_id}
-                placeholder="Select a product"
+                placeholder="Sélectionnez un produit"
               />
             </div>
 
@@ -394,25 +394,25 @@ export const NewReportPage: React.FC = () => {
                 value={formData.format_id?.toString() || ''}
                 onChange={(value) => handleInputChange('format_id', value ? parseInt(value) : undefined)}
                 options={[
-                  { value: '', label: 'Select a format' },
+                  { value: '', label: 'Sélectionnez un format' },
                   ...formats.map((format) => ({
                     value: format.id.toString(),
                     label: `${format.format_index} ${format.format_unit}`
                   }))
                 ]}
                 error={errors.format_id}
-                placeholder="Select a format"
+                placeholder="Sélectionnez un format"
               />
             </div>
 
             {/* Report Date */}
             <div>
               <DatePicker
-                label="Report Date *"
+                label="Date de la réclamation *"
                 value={formData.report_date}
                 onChange={(value) => handleInputChange('report_date', value)}
                 error={errors.report_date}
-                placeholder="Select report date"
+                placeholder="Sélectionnez la date de la réclamation"
                 maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
               />
             </div>
@@ -420,11 +420,11 @@ export const NewReportPage: React.FC = () => {
             {/* Production Date */}
             <div>
               <DatePicker
-                label="Production Date *"
+                label="Date de production *"
                 value={formData.production_date}
                 onChange={(value) => handleInputChange('production_date', value)}
                 error={errors.production_date}
-                placeholder="Select production date"
+                placeholder="Sélectionnez la date de production"
                 maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
               />
             </div>
@@ -432,7 +432,7 @@ export const NewReportPage: React.FC = () => {
             {/* Time */}
             <div>
               <IntuitiveTimePicker
-                label="Time *"
+                label="Heure *"
                 value={formData.time}
                 onChange={(value) => handleInputChange('time', value)}
                 error={errors.time}
@@ -443,41 +443,41 @@ export const NewReportPage: React.FC = () => {
             {/* Team */}
             <div>
               <Select
-                label="Team *"
+                label="Équipe *"
                 value={formData.team}
                 onChange={(value) => handleInputChange('team', value)}
                 options={[
-                  { value: 'A', label: 'Team A' },
-                  { value: 'B', label: 'Team B' },
-                  { value: 'C', label: 'Team C' }
+                  { value: 'A', label: 'Équipe A' },
+                  { value: 'B', label: 'Équipe B' },
+                  { value: 'C', label: 'Équipe C' }
                 ]}
                 error={errors.team}
-                placeholder="Select team"
+                placeholder="Sélectionnez une équipe"
               />
             </div>
 
             {/* Description Type */}
             <div>
               <Select
-                label="Description Type *"
+                label="Description de la NC *"
                 value={formData.description_type}
                 onChange={(value) => handleInputChange('description_type', value)}
                 options={[
-                  { value: '', label: 'Select description type' },
+                  { value: '', label: 'Sélectionnez une description de la NC' },
                   ...descriptionTypes.map((type) => ({
                     value: type.name,
                     label: type.name
                   }))
                 ]}
                 error={errors.description_type}
-                placeholder="Select description type"
+                placeholder="Sélectionnez une description de la NC"
               />
             </div>
 
             {/* Quantity */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Quantity (bottles) *
+                Quantité (bouteilles) *
               </label>
               <Input
                 type="number"
@@ -496,7 +496,7 @@ export const NewReportPage: React.FC = () => {
             {/* Valuation */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Valuation (DZD)
+                Valorisation (DZD)
               </label>
               <Input
                 type="number"
@@ -512,14 +512,14 @@ export const NewReportPage: React.FC = () => {
           {/* Description Details */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Description Details *
+              Détails de la description *
             </label>
             <textarea
               value={formData.description_details}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
               rows={4}
               className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-              placeholder="Provide detailed description of the non-conformity..."
+              placeholder="Décrivez en détail la non-conformité..."
             />
             {errors.description_details && <p className="text-destructive text-sm mt-1">{errors.description_details}</p>}
           </div>
@@ -528,14 +528,14 @@ export const NewReportPage: React.FC = () => {
           {canViewPerformance && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Performance Notes
+                Notes de performance
               </label>
               <textarea
                 value={formData.performance}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('performance', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-                placeholder="Add performance-related notes or metrics..."
+                placeholder="Ajoutez des notes ou des indicateurs de performance..."
               />
             </div>
           )}
@@ -547,7 +547,7 @@ export const NewReportPage: React.FC = () => {
               disabled={loading}
               className="px-6 py-2"
             >
-              {loading ? 'Creating Report...' : 'Create Report'}
+              {loading ? 'Création en cours...' : 'Enregistrer la déclaration'}
             </Button>
           </div>
         </form>

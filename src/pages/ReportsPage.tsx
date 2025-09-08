@@ -173,7 +173,7 @@ export const ReportsPage: React.FC = () => {
       'Date de production',
       'Format',
       'Heure',
-      'Type',
+      'Description de la NC',
       'Détails de la description',
       'Équipe',
       'Quantité',
@@ -477,7 +477,7 @@ export const ReportsPage: React.FC = () => {
           },
           {
             key: 'description_type',
-            header: 'Type'
+            header: 'Description de la NC'
           },
           {
             key: 'description_details',
