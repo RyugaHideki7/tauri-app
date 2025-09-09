@@ -459,59 +459,117 @@ async fn create_sample_data(pool: &PgPool) -> Result<()> {
     if existing_lines == 0 {
         let now = Utc::now();
         
-        // Insert sample production lines one by one to avoid parameter binding issues
-        let line1_id = Uuid::new_v4();
-        sqlx::query(
-            "INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
-        )
-        .bind(line1_id)
-        .bind("Line 1")
-        .bind("Main production line")
-        .bind(true)
-        .bind(now)
-        .bind(now)
-        .execute(pool)
-        .await?;
+        // Insert production lines
+        let production_lines = [
+            "COMBI 20",
+            "K-MIXTE",
+            "CANETTE",
+            "TETRA 1000",
+            "KSB18-33",
+            "TETRA speed",
+            "KSB18-2",
+            "KSB 301",
+            "KSB 6",
+            "MATRIX",
+            "CSD",
+            "SASIB",
+            "ASEPTIQUE",
+            "Saida",
+            "KRV40",
+            "KSB 20",
+            "TETRA 330",
+            "TETRA 330/02",
+            "ARWA",
+            "TETRA 200"
+        ];
 
-        let line2_id = Uuid::new_v4();
-        sqlx::query(
-            "INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
-        )
-        .bind(line2_id)
-        .bind("Line 2")
-        .bind("Secondary production line")
-        .bind(true)
-        .bind(now)
-        .bind(now)
-        .execute(pool)
-        .await?;
+        for line_name in &production_lines {
+            let line_id = Uuid::new_v4();
+            sqlx::query(
+                "INSERT INTO production_lines (id, name, description, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+            )
+            .bind(line_id)
+            .bind(line_name.trim())
+            .bind("")
+            .bind(true)
+            .bind(now)
+            .bind(now)
+            .execute(pool)
+            .await?;
+        }
 
         // Insert sample products
-        let product1_id = Uuid::new_v4();
-        sqlx::query(
-            "INSERT INTO products (id, designation, code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
-        )
-        .bind(product1_id)
-        .bind("Product A")
-        .bind("PROD-A-001")
-        .bind(now)
-        .bind(now)
-        .execute(pool)
-        .await?;
+        let products = [
+            "Izem coco",
+            "Boisson pomme fraise au lait",
+            "Izem",
+            "Boisson pomme banane au lait",
+            "Jus raisin 100%",
+            "Boisson raisin cerise",
+            "Soda framboise",
+            "Citronnade -30%",
+            "Boisson pêche abricot",
+            "Boisson pomme mangue kids",
+            "Izem Poire",
+            "Jus pomme 100%",
+            "Boisson Pomme Orange kids",
+            "Boisson orange carotte citron",
+            "Soda orange",
+            "Izem 0%",
+            "Boisson Orange Ananas au Lait",
+            "Izem fruits rouge",
+            "Tropical",
+            "Soda bitter",
+            "Boisson fruits rouge au lait",
+            "Boisson orange",
+            "Boisson orange mangue au lait",
+            "Soda pomme noire",
+            "Soda pomme verte",
+            "Izem fraise abricot",
+            "Soda agrume",
+            "Soda ananas",
+            "Jus mandarine 100%",
+            "Izem tropical",
+            "Soda citron",
+            "Citronnade",
+            "Soda citron jaune",
+            "Izem Tropical",
+            "Boisson pomme kids",
+            "Izem cerise",
+            "Boisson pomme mangue",
+            "Boisson orange ananas",
+            "Boisson raisin mûre",
+            "Jus raisin blanc 100%",
+            "Izem mangue",
+            "Izem figue",
+            "citronnade -30%",
+            "Boisson cocktail kids",
+            "Citronnade menthe",
+            "Izem poire",
+            "Izem pastèque",
+            "Boisson raisin mure au lait",
+            "Boisson pêche orange",
+            "Jus orange 100%",
+            "Boisson pomme fraise kids"
+        ];
 
-        let product2_id = Uuid::new_v4();
-        sqlx::query(
-            "INSERT INTO products (id, designation, code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
-        )
-        .bind(product2_id)
-        .bind("Product B")
-        .bind("PROD-B-001")
-        .bind(now)
-        .bind(now)
-        .execute(pool)
-        .await?;
+        for (index, product_name) in products.iter().enumerate() {
+            let product_id = Uuid::new_v4();
+            let code = format!("PROD-{:04}", index + 1);
+            
+            sqlx::query(
+                "INSERT INTO products (id, designation, code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+            )
+            .bind(product_id)
+            .bind(product_name.trim())
+            .bind(code)
+            .bind(now)
+            .bind(now)
+            .execute(pool)
+            .await?;
+        }
 
-        println!("Created sample production data");
+        println!("Created sample production data with {} products", products.len());
     }
 
     Ok(())
