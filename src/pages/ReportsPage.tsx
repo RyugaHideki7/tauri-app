@@ -7,7 +7,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import DatePicker from '../components/ui/DatePicker';
 import Table from '../components/ui/Table';
-import Modal from '../components/ui/Modal';
+import Dialog from '../components/ui/Dialog';
 import { useToast } from '../components/ui/Toast';
 import * as ExcelJS from 'exceljs';
 
@@ -50,6 +50,19 @@ interface Product {
   code?: string;
 }
 
+interface ProductionLine {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+interface Format {
+  id: number;
+  format_index: number;
+  format_unit: string;
+}
+
 
 export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
@@ -71,10 +84,14 @@ export const ReportsPage: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   
   // Edit modal states
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<NonConformityReport | null>(null);
-  const [editPerformance, setEditPerformance] = useState('');
-  const [editLoading, setEditLoading] = useState(false);
+  
+  // Full edit modal states
+  const [fullEditModalOpen, setFullEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<NonConformityReport>>({});
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [lines, setLines] = useState<ProductionLine[]>([]);
+  const [formats, setFormats] = useState<Format[]>([]);
 
   useEffect(() => {
     // Debug current filters
@@ -84,7 +101,21 @@ export const ReportsPage: React.FC = () => {
 
   useEffect(() => {
     loadProducts();
+    loadEditData();
   }, []);
+
+  const loadEditData = async () => {
+    try {
+      const [linesData, formatsData] = await Promise.all([
+        invoke<ProductionLine[]>('get_lines'),
+        invoke<Format[]>('get_formats')
+      ]);
+      setLines(linesData);
+      setFormats(formatsData);
+    } catch (error) {
+      console.error('Failed to load edit data:', error);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -251,38 +282,92 @@ export const ReportsPage: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleEditPerformance = (report: NonConformityReport) => {
+
+  const handleFullEdit = (report: NonConformityReport) => {
     setEditingReport(report);
-    setEditPerformance(report.performance || '');
-    setEditModalOpen(true);
+    setEditFormData({
+      ...report,
+      production_date: report.production_date.split('T')[0],
+      report_date: report.report_date.split('T')[0]
+    });
+    setEditErrors({});
+    setFullEditModalOpen(true);
   };
 
-  const handleSavePerformance = async () => {
-    if (!editingReport) return;
-
-    setEditLoading(true);
-    try {
-      await invoke('update_report_performance', {
-        reportId: editingReport.id,
-        performance: editPerformance
-      });
-      
-      // Update the report in the local state
-      setReports(prev => prev.map(report => 
-        report.id === editingReport.id 
-          ? { ...report, performance: editPerformance }
-          : report
-      ));
-      
-      setEditModalOpen(false);
-      setEditingReport(null);
-      setEditPerformance('');
-    } catch (error) {
-      console.error('Échec de la mise à jour des performances :', error);
-    } finally {
-      setEditLoading(false);
+  const handleEditInputChange = (field: string, value: any) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    if (editErrors[field]) {
+      setEditErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
     }
   };
+
+  const validateEditForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!editFormData.line_id) newErrors.line_id = 'La ligne de production est requise';
+    if (!editFormData.product_id) newErrors.product_id = 'Le produit est requis';
+    if (!editFormData.format_id) newErrors.format_id = 'Le format est requis';
+    if (!editFormData.report_date) newErrors.report_date = 'La date de la réclamation est requise';
+    if (!editFormData.production_date) newErrors.production_date = 'La date de production est requise';
+    if (!editFormData.team) newErrors.team = "L'équipe est requise";
+    if (!editFormData.time) newErrors.time = "L'heure est requise";
+    if (!editFormData.description_type) newErrors.description_type = 'Le type de description est requis';
+    if (!editFormData.description_details?.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
+    if (!editFormData.quantity || editFormData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
+    if (editFormData.valuation === undefined || (typeof editFormData.valuation === 'number' && editFormData.valuation < 0)) newErrors.valuation = 'La valorisation ne peut pas être négative';
+    
+    setEditErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSaveFullEdit = async () => {
+    if (!editingReport || !validateEditForm()) return;
+
+    setLoading(true);
+    try {
+      await invoke('update_report', {
+        report_id: editingReport.id,
+        // Also send camelCase variant to be compatible with different backend expectations
+        reportId: editingReport.id,
+        request: {
+          line_id: editFormData.line_id,
+          product_id: editFormData.product_id,
+          format_id: editFormData.format_id ? parseInt(editFormData.format_id.toString(), 10) : null,
+          report_date: editFormData.report_date,
+          production_date: editFormData.production_date,
+          team: editFormData.team,
+          time: ((editFormData.time || '').trim().slice(0, 5)),
+          description_type: editFormData.description_type,
+          description_details: editFormData.description_details,
+          quantity: parseInt(editFormData.quantity?.toString() || '0', 10),
+          claim_origin: editFormData.claim_origin,
+          valuation: typeof editFormData.valuation === 'string' ? parseFloat(editFormData.valuation) : editFormData.valuation,
+          performance: editFormData.performance
+        }
+      });
+      
+      // Reload reports to get updated data
+      await loadReports();
+      
+      setFullEditModalOpen(false);
+      setEditingReport(null);
+      setEditFormData({});
+      addToast('Rapport mis à jour avec succès', 'success');
+    } catch (error) {
+      console.error('Échec de la mise à jour du rapport :', error);
+      addToast('Échec de la mise à jour du rapport', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -310,6 +395,7 @@ export const ReportsPage: React.FC = () => {
 
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
   const canEditPerformance = user?.role === 'performance' || user?.role === 'admin';
+  const canFullEdit = user?.role === 'performance' || user?.role === 'admin';
 
   return (
     <div className="p-4 lg:p-6 w-full">
@@ -504,16 +590,25 @@ export const ReportsPage: React.FC = () => {
                 <span className="max-w-xs truncate block">
                   {value || '-'}
                 </span>
-                {canEditPerformance && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEditPerformance(row)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    Modifier
-                  </Button>
-                )}
+              </div>
+            )
+          }] : []),
+          ...(canFullEdit ? [{
+            key: 'actions',
+            header: 'Actions',
+            render: (_value: any, row: NonConformityReport) => (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleFullEdit(row)}
+                  className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 transition-colors"
+                >
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  Éditer
+                </Button>
               </div>
             )
           }] : [])
@@ -539,42 +634,233 @@ export const ReportsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Performance Modal */}
-      <Modal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        title="Modifier la performance"
+
+      {/* Full Edit Modal */}
+      <Dialog
+        isOpen={fullEditModalOpen}
+        onClose={() => setFullEditModalOpen(false)}
+        title="Modifier le rapport complet"
+        maxWidth="4xl"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="bg-muted/30 p-4 rounded-lg border border-border/50 mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm font-medium text-foreground">Modification du rapport : {editingReport?.report_number}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Vous pouvez modifier tous les champs de ce rapport. Les modifications seront sauvegardées immédiatement.
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Line */}
+            <div>
+              <Select
+                label="Ligne de production *"
+                value={editFormData.line_id || ''}
+                onChange={(value) => handleEditInputChange('line_id', value)}
+                options={[
+                  { value: '', label: 'Sélectionnez une ligne' },
+                  ...lines.map(line => ({ value: line.id, label: line.name }))
+                ]}
+                error={editErrors.line_id}
+              />
+            </div>
+
+            {/* Product */}
+            <div>
+              <Select
+                label="Produit *"
+                value={editFormData.product_id || ''}
+                onChange={(value) => handleEditInputChange('product_id', value)}
+                options={[
+                  { value: '', label: 'Sélectionnez un produit' },
+                  ...products.map(product => ({ 
+                    value: product.id, 
+                    label: product.code ? `${product.designation} (${product.code})` : product.designation 
+                  }))
+                ]}
+                error={editErrors.product_id}
+              />
+            </div>
+
+            {/* Format */}
+            <div>
+              <Select
+                label="Format *"
+                value={editFormData.format_id?.toString() || ''}
+                onChange={(value) => handleEditInputChange('format_id', value ? parseInt(value) : undefined)}
+                options={[
+                  { value: '', label: 'Sélectionnez un format' },
+                  ...formats.map(format => ({ 
+                    value: format.id.toString(), 
+                    label: `${format.format_index} ${format.format_unit}` 
+                  }))
+                ]}
+                error={editErrors.format_id}
+              />
+            </div>
+
+            {/* Report Date */}
+            <div>
+              <DatePicker
+                label="Date de la réclamation *"
+                value={editFormData.report_date || ''}
+                onChange={(value) => handleEditInputChange('report_date', value)}
+                error={editErrors.report_date}
+                maxDate={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            {/* Production Date */}
+            <div>
+              <DatePicker
+                label="Date de production *"
+                value={editFormData.production_date || ''}
+                onChange={(value) => handleEditInputChange('production_date', value)}
+                error={editErrors.production_date}
+                maxDate={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            {/* Team */}
+            <div>
+              <Select
+                label="Équipe *"
+                value={editFormData.team || ''}
+                onChange={(value) => handleEditInputChange('team', value)}
+                options={[
+                  { value: 'A', label: 'Équipe A' },
+                  { value: 'B', label: 'Équipe B' },
+                  { value: 'C', label: 'Équipe C' }
+                ]}
+                error={editErrors.team}
+              />
+            </div>
+
+            {/* Time */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Heure *</label>
+              <Input
+                type="time"
+                value={editFormData.time || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('time', e.target.value)}
+                error={editErrors.time}
+              />
+            </div>
+
+            {/* Description Type */}
+            <div>
+              <Select
+                label="Description de la NC *"
+                value={editFormData.description_type || ''}
+                onChange={(value) => handleEditInputChange('description_type', value)}
+                options={[
+                  { value: 'Physique', label: 'Physique' },
+                  { value: 'Chimique', label: 'Chimique' },
+                  { value: 'Biologique', label: 'Biologique' },
+                  { value: 'Process', label: 'Process' }
+                ]}
+                error={editErrors.description_type}
+              />
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Quantité *</label>
+              <Input
+                type="number"
+                min="1"
+                value={editFormData.quantity?.toString() || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('quantity', parseInt(e.target.value) || 0)}
+                error={editErrors.quantity}
+              />
+            </div>
+
+            {/* Claim Origin */}
+            <div>
+              <Select
+                label="Origine de la réclamation *"
+                value={editFormData.claim_origin || ''}
+                onChange={(value) => handleEditInputChange('claim_origin', value)}
+                options={[
+                  { value: 'client', label: 'Client' },
+                  { value: 'site01', label: 'Site 01' },
+                  { value: 'site02', label: 'Site 02' },
+                  { value: 'consommateur', label: 'Consommateur' }
+                ]}
+                error={editErrors.claim_origin}
+              />
+            </div>
+
+            {/* Valuation */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Valorisation (DZD) *</label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={editFormData.valuation?.toString() || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('valuation', parseFloat(e.target.value) || 0)}
+                error={editErrors.valuation}
+              />
+            </div>
+          </div>
+
+          {/* Description Details */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Rapport : {editingReport?.report_number}
-            </label>
+            <label className="block text-sm font-medium text-foreground mb-2">Détails de la description *</label>
             <textarea
-              value={editPerformance}
-              onChange={(e) => setEditPerformance(e.target.value)}
-              placeholder="Saisissez les détails de performance..."
-              className="w-full h-32 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              value={editFormData.description_details || ''}
+              onChange={(e) => handleEditInputChange('description_details', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              placeholder="Détails de la non-conformité..."
+            />
+            {editErrors.description_details && <p className="text-destructive text-sm mt-1">{editErrors.description_details}</p>}
+          </div>
+
+          {/* Performance */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Performance</label>
+            <textarea
+              value={editFormData.performance || ''}
+              onChange={(e) => handleEditInputChange('performance', e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              placeholder="Notes de performance..."
             />
           </div>
-          <div className="flex justify-end gap-2">
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-border">
             <Button
               variant="outline"
-              onClick={() => setEditModalOpen(false)}
-              disabled={editLoading}
+              onClick={() => setFullEditModalOpen(false)}
+              disabled={loading}
+              className="px-6"
             >
               Annuler
             </Button>
             <Button
-              onClick={handleSavePerformance}
-              disabled={editLoading}
-              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleSaveFullEdit}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 px-6"
             >
-              {editLoading ? 'Enregistrement...' : 'Enregistrer'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Enregistrement...
+                </>
+              ) : (
+                'Enregistrer les modifications'
+              )}
             </Button>
           </div>
         </div>
-      </Modal>
+      </Dialog>
     </div>
   );
 };

@@ -25,6 +25,23 @@ pub struct CreateReportRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateReportRequest {
+    pub line_id: String,
+    pub product_id: String,
+    pub format_id: Option<i32>,
+    pub report_date: String,
+    pub production_date: String,
+    pub team: String,
+    pub time: String,
+    pub description_type: String,
+    pub description_details: String,
+    pub quantity: i32,
+    pub claim_origin: String,
+    pub valuation: f64,
+    pub performance: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaginationParams {
     pub page: i64,
     pub limit: i64,
@@ -66,8 +83,11 @@ impl ReportsService {
         let production_date = NaiveDate::parse_from_str(&request.production_date, "%Y-%m-%d")
             .map_err(|e| anyhow::anyhow!("Invalid production date format: {}", e))?;
         
-        let time = NaiveTime::parse_from_str(&request.time, "%H:%M")
-            .map_err(|e| anyhow::anyhow!("Invalid time format: {}", e))?;
+        let time_input = request.time.trim();
+        let time_clean: String = time_input.chars().filter(|c| c.is_ascii_digit() || *c == ':').collect();
+        let time = NaiveTime::parse_from_str(&time_clean, "%H:%M")
+            .or_else(|_| NaiveTime::parse_from_str(&time_clean, "%H:%M:%S"))
+            .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?;
         
         // Parse UUIDs
         let line_id = Uuid::parse_str(&request.line_id)
@@ -376,6 +396,90 @@ impl ReportsService {
         .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn update_report(&self, report_id: Uuid, request: UpdateReportRequest) -> Result<NonConformityReport> {
+        let now = Utc::now();
+        
+        // Parse dates and times
+        let report_date = NaiveDate::parse_from_str(&request.report_date, "%Y-%m-%d")
+            .map_err(|e| anyhow::anyhow!("Invalid report date format: {}", e))?;
+            
+        let production_date = NaiveDate::parse_from_str(&request.production_date, "%Y-%m-%d")
+            .map_err(|e| anyhow::anyhow!("Invalid production date format: {}", e))?;
+        
+        let time = NaiveTime::parse_from_str(&request.time, "%H:%M")
+            .or_else(|_| NaiveTime::parse_from_str(&request.time, "%H:%M:%S"))
+            .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?;
+        
+        // Parse UUIDs
+        let line_id = Uuid::parse_str(&request.line_id)
+            .map_err(|e| anyhow::anyhow!("Invalid line ID: {}", e))?;
+        
+        let product_id = Uuid::parse_str(&request.product_id)
+            .map_err(|e| anyhow::anyhow!("Invalid product ID: {}", e))?;
+
+        // Update the report
+        sqlx::query(
+            r#"
+            UPDATE non_conformity_reports SET
+                line_id = $1,
+                product_id = $2,
+                format_id = $3,
+                report_date = $4,
+                production_date = $5,
+                team = $6,
+                time = $7,
+                description_type = $8,
+                description_details = $9,
+                quantity = $10,
+                claim_origin = $11,
+                valuation = $12,
+                performance = $13,
+                updated_at = $14
+            WHERE id = $15
+            "#,
+        )
+        .bind(line_id)
+        .bind(product_id)
+        .bind(request.format_id)
+        .bind(report_date)
+        .bind(production_date)
+        .bind(&request.team)
+        .bind(time)
+        .bind(&request.description_type)
+        .bind(&request.description_details)
+        .bind(request.quantity)
+        .bind(&request.claim_origin)
+        .bind(Decimal::from_f64(request.valuation).unwrap_or_default())
+        .bind(&request.performance)
+        .bind(now)
+        .bind(report_id)
+        .execute(&self.pool)
+        .await?;
+
+        // Fetch the updated report with joins
+        let report = sqlx::query_as::<_, NonConformityReport>(
+            r#"
+            SELECT ncr.*, 
+                   p.designation as product_name,
+                   pl.name as line_name,
+                   CASE 
+                       WHEN f.format_index IS NOT NULL THEN CONCAT(f.format_index, ' ', f.format_unit)
+                       ELSE NULL 
+                   END as format_display
+            FROM non_conformity_reports ncr
+            LEFT JOIN products p ON ncr.product_id = p.id
+            LEFT JOIN production_lines pl ON ncr.line_id = pl.id
+            LEFT JOIN formats f ON ncr.format_id = f.id
+            WHERE ncr.id = $1
+            "#,
+        )
+        .bind(report_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(report)
     }
 
     pub async fn delete_report(&self, report_id: Uuid) -> Result<bool> {

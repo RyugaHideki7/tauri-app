@@ -1,15 +1,16 @@
 mod database;
 
 use database::auth::{AuthService, LoginRequest, LoginResponse, UserInfo, PaginationParams as AuthPaginationParams, PaginatedResponse as AuthPaginatedResponse};
-use database::models::{CreateUser, CreateClient, NcDes, Format};
+use database::models::{CreateUser, CreateClient, NcDes, Format, NonConformityReport};
 use database::clients::{ClientsService, CreateClientRequest, BulkCreateClientsRequest, UpdateClientRequest, PaginationParams as ClientsPaginationParams, PaginatedResponse as ClientsPaginatedResponse};
 use database::products::{ProductsService, CreateProductRequest, BulkCreateProductsRequest, UpdateProductRequest, PaginationParams as ProductsPaginationParams, PaginatedResponse as ProductsPaginatedResponse};
 use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, UpdateLineRequest, PaginationParams as LinesPaginationParams, PaginatedResponse as LinesPaginatedResponse};
-use database::reports::{ReportsService, CreateReportRequest, PaginationParams as ReportsPaginationParams, PaginatedResponse as ReportsPaginatedResponse};
+use database::reports::{ReportsService, CreateReportRequest, UpdateReportRequest, PaginationParams as ReportsPaginationParams, PaginatedResponse as ReportsPaginatedResponse};
 use database::{Database};
 use std::sync::Arc;
 use tauri::State;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 type DatabaseState = Arc<Mutex<Database>>;
 
@@ -638,12 +639,42 @@ async fn update_report_performance(
 ) -> Result<bool, String> {
     let db = db_state.lock().await;
     let reports_service = ReportsService::new(db.pool.clone());
-
-    let uuid = uuid::Uuid::parse_str(&report_id)
+    
+    let uuid = Uuid::parse_str(&report_id)
         .map_err(|e| format!("Invalid UUID: {}", e))?;
 
     reports_service
         .update_report_performance(uuid, performance)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn update_report(
+    db_state: State<'_, DatabaseState>,
+    reportId: String,
+    request: UpdateReportRequest,
+) -> Result<NonConformityReport, String> {
+    let db = db_state.lock().await;
+    let reports_service = ReportsService::new(db.pool.clone());
+
+    println!(
+        "[TAURI] update_report called with reportId present: {}",
+        !reportId.is_empty()
+    );
+    println!(
+        "[TAURI] update_report request fields: line_id={}, product_id={}, report_date={}, production_date={}",
+        request.line_id,
+        request.product_id,
+        request.report_date,
+        request.production_date
+    );
+
+    let uuid = Uuid::parse_str(&reportId)
+        .map_err(|e| format!("Invalid UUID: {}", e))?;
+
+    reports_service
+        .update_report(uuid, request)
         .await
         .map_err(|e| e.to_string())
 }
@@ -726,6 +757,7 @@ pub fn run() {
             get_formats,
             update_report_status,
             update_report_performance,
+            update_report,
             delete_report,
         ])
         .run(tauri::generate_context!())

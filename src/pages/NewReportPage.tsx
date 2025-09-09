@@ -7,6 +7,7 @@ import Select from '../components/ui/Select';
 import SearchableSelect from '../components/ui/SearchableSelect';
 import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
+import Dialog from '../components/ui/Dialog';
 
 interface ProductionLine {
   id: string;
@@ -88,6 +89,8 @@ export const NewReportPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -173,7 +176,6 @@ export const NewReportPage: React.FC = () => {
     if (!formData.description_type) newErrors.description_type = 'Le type de description est requis';
     if (!formData.description_details.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
     if (formData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
-    if (formData.valuation < 0) newErrors.valuation = 'La valorisation ne peut pas être négative';
 
     // Validate claim origin based on user role
     if (role === 'client') {
@@ -202,7 +204,13 @@ export const NewReportPage: React.FC = () => {
       return;
     }
 
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setShowConfirmDialog(false);
     setLoading(true);
+    
     try {
       // Prepare report data based on user role and claim origin type
       const reportData: CreateReportRequest = {
@@ -217,7 +225,7 @@ export const NewReportPage: React.FC = () => {
         description_details: formData.description_details,
         quantity: formData.quantity,
         claim_origin: formData.claim_origin,
-        valuation: formData.valuation,
+        valuation: 0,
         // Only include performance field if user has permission
         performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined
       };
@@ -246,7 +254,7 @@ export const NewReportPage: React.FC = () => {
         performance: '',
       });
 
-      alert('Déclaration créée avec succès !');
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Failed to create report:', error);
       alert('Échec de la création de la déclaration. Veuillez réessayer.');
@@ -493,20 +501,6 @@ export const NewReportPage: React.FC = () => {
               {renderClaimOriginField()}
             </div>
 
-            {/* Valuation */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Valorisation (DZD)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.valuation.toString()}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('valuation', parseFloat(e.target.value) || 0)}
-                error={errors.valuation}
-              />
-            </div>
           </div>
 
           {/* Description Details */}
@@ -547,10 +541,86 @@ export const NewReportPage: React.FC = () => {
               disabled={loading}
               className="px-6 py-2"
             >
-              {loading ? 'Création en cours...' : 'Enregistrer la déclaration'}
+              {loading ? 'Création en cours...' : 'Enregistrer'}
             </Button>
           </div>
         </form>
+
+        {/* Confirmation Dialog */}
+        <Dialog
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          title="Confirmer la soumission"
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <p className="text-foreground">
+              Êtes-vous sûr de vouloir soumettre ce rapport de non-conformité ?
+            </p>
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm text-foreground">
+              <div><strong className="text-foreground">Ligne:</strong> <span className="text-foreground">{lines.find(l => l.id === formData.line_id)?.name}</span></div>
+              <div><strong className="text-foreground">Produit:</strong> <span className="text-foreground">{products.find(p => p.id === formData.product_id)?.designation}</span></div>
+              <div><strong className="text-foreground">Quantité:</strong> <span className="text-foreground">{formData.quantity} bouteilles</span></div>
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmDialog(false)}
+                disabled={loading}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleConfirmSubmit}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {loading ? 'Soumission...' : 'Confirmer'}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+
+        {/* Success Dialog */}
+        <Dialog
+          isOpen={showSuccessDialog}
+          onClose={() => setShowSuccessDialog(false)}
+          title="Rapport créé avec succès"
+          maxWidth="md"
+        >
+          <div className="space-y-4 text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Rapport de non-conformité créé
+              </h3>
+              <p className="text-muted-foreground">
+                Votre rapport a été enregistré avec succès dans le système.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  window.location.href = '/reports';
+                }}
+              >
+                Voir les rapports
+              </Button>
+              <Button
+                onClick={() => setShowSuccessDialog(false)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Créer un autre rapport
+              </Button>
+            </div>
+          </div>
+        </Dialog>
       </div>
     </div>
   );
