@@ -9,6 +9,67 @@ import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Dialog from '../components/ui/Dialog';
 
+const WILAYAS = [
+  { value: "Adrar", label: "Adrar" },
+  { value: "Chlef", label: "Chlef" },
+  { value: "Laghouat", label: "Laghouat" },
+  { value: "Oum El Bouaghi", label: "Oum El Bouaghi" },
+  { value: "Batna", label: "Batna" },
+  { value: "Béjaïa", label: "Béjaïa" },
+  { value: "Biskra", label: "Biskra" },
+  { value: "Bechar", label: "Bechar" },
+  { value: "Blida", label: "Blida" },
+  { value: "Bouira", label: "Bouira" },
+  { value: "Tamanrasset", label: "Tamanrasset" },
+  { value: "Tbessa", label: "Tbessa" },
+  { value: "Tlemcen", label: "Tlemcen" },
+  { value: "Tiaret", label: "Tiaret" },
+  { value: "Tizi Ouzou", label: "Tizi Ouzou" },
+  { value: "Alger", label: "Alger" },
+  { value: "Djelfa", label: "Djelfa" },
+  { value: "Jijel", label: "Jijel" },
+  { value: "Setif", label: "Setif" },
+  { value: "Saefda", label: "Saefda" },
+  { value: "Skikda", label: "Skikda" },
+  { value: "Sidi Bel Abbes", label: "Sidi Bel Abbes" },
+  { value: "Annaba", label: "Annaba" },
+  { value: "Guelma", label: "Guelma" },
+  { value: "Constantine", label: "Constantine" },
+  { value: "Medea", label: "Medea" },
+  { value: "Mostaganem", label: "Mostaganem" },
+  { value: "M'Sila", label: "M'Sila" },
+  { value: "Mascara", label: "Mascara" },
+  { value: "Ouargla", label: "Ouargla" },
+  { value: "Oran", label: "Oran" },
+  { value: "El Bayadh", label: "El Bayadh" },
+  { value: "Illizi", label: "Illizi" },
+  { value: "Bordj Bou Arreridj", label: "Bordj Bou Arreridj" },
+  { value: "Boumerdes", label: "Boumerdes" },
+  { value: "El Tarf", label: "El Tarf" },
+  { value: "Tindouf", label: "Tindouf" },
+  { value: "Tissemsilt", label: "Tissemsilt" },
+  { value: "El Oued", label: "El Oued" },
+  { value: "Khenchela", label: "Khenchela" },
+  { value: "Souk Ahras", label: "Souk Ahras" },
+  { value: "Tipaza", label: "Tipaza" },
+  { value: "Mila", label: "Mila" },
+  { value: "Ain Defla", label: "Ain Defla" },
+  { value: "Naama", label: "Naama" },
+  { value: "Ain Temouchent", label: "Ain Temouchent" },
+  { value: "Ghardaefa", label: "Ghardaefa" },
+  { value: "Relizane", label: "Relizane" },
+  { value: "El M'ghair", label: "El M'ghair" },
+  { value: "El Menia", label: "El Menia" },
+  { value: "Ouled Djellal", label: "Ouled Djellal" },
+  { value: "Bordj Baji Mokhtar", label: "Bordj Baji Mokhtar" },
+  { value: "Béni Abbès", label: "Béni Abbès" },
+  { value: "Timimoun", label: "Timimoun" },
+  { value: "Touggourt", label: "Touggourt" },
+  { value: "Djanet", label: "Djanet" },
+  { value: "In Salah", label: "In Salah" },
+  { value: "In Guezzam", label: "In Guezzam" }
+];
+
 interface ProductionLine {
   id: string;
   name: string;
@@ -69,6 +130,7 @@ export const NewReportPage: React.FC = () => {
   const [formats, setFormats] = useState<Format[]>([]);
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [selectedWilaya, setSelectedWilaya] = useState<string>('');
   
   const [formData, setFormData] = useState<FormData>({
     line_id: '',
@@ -183,8 +245,13 @@ export const NewReportPage: React.FC = () => {
         newErrors.claim_origin_client_id = 'Veuillez sélectionner un client';
       }
     } else if (role === 'consommateur') {
-      if (!formData.claim_origin_manual?.trim()) {
-        newErrors.claim_origin_manual = 'Veuillez saisir l\'origine de la réclamation';
+      if (Object.keys(errors).length > 0 || Object.keys(newErrors).length > 0) {
+        if (!selectedWilaya) {
+          newErrors.claim_origin = 'Veuillez sélectionner une wilaya';
+        }
+        if (!formData.claim_origin_manual?.trim()) {
+          newErrors.claim_origin_manual = 'Veuillez saisir les détails de la réclamation';
+        }
       }
     } else {
       // For site01, site02, and other roles
@@ -199,7 +266,7 @@ export const NewReportPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -210,7 +277,7 @@ export const NewReportPage: React.FC = () => {
   const handleConfirmSubmit = async () => {
     setShowConfirmDialog(false);
     setLoading(true);
-    
+
     try {
       // Prepare report data based on user role and claim origin type
       const reportData: CreateReportRequest = {
@@ -265,18 +332,17 @@ export const NewReportPage: React.FC = () => {
 
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
 
-
   // Render claim origin field based on user role
   const renderClaimOriginField = () => {
     const role = user?.role?.toLowerCase();
-    
+
     // For site01 and site02 roles - show disabled select with pre-selected value
     if (role === 'site01' || role === 'site 01' || role === 'site02' || role === 'site 02') {
       return (
         <Select
           label="Origine de la réclamation *"
           value={formData.claim_origin}
-          onChange={() => {}} // No-op since it's disabled
+          onChange={() => { }} // No-op since it's disabled
           options={[
             { value: 'site01', label: 'Site 01' },
             { value: 'site02', label: 'Site 02' }
@@ -287,7 +353,7 @@ export const NewReportPage: React.FC = () => {
         />
       );
     }
-    
+
     // For client role - show searchable dropdown of clients
     if (role === 'client') {
       return (
@@ -312,28 +378,53 @@ export const NewReportPage: React.FC = () => {
         />
       );
     }
-    
+
     // For consommateur role - show manual input
     if (role === 'consommateur') {
       return (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Origine de la réclamation *
-          </label>
-          <Input
-            type="text"
-            value={formData.claim_origin_manual}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              handleInputChange('claim_origin_manual', e.target.value);
-              handleInputChange('claim_origin', e.target.value);
-            }}
-            error={errors.claim_origin_manual || errors.claim_origin}
-            placeholder="Saisissez l'origine de la réclamation manuellement..."
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Wilaya *
+            </label>
+            <SearchableSelect
+              value={selectedWilaya}
+              onChange={(value) => {
+                setSelectedWilaya(value);
+                // Update claim_origin with both wilaya and manual input
+                const origin = value ? `${value}: ${formData.claim_origin_manual || ''}`.trim() : formData.claim_origin_manual;
+                handleInputChange('claim_origin', origin);
+              }}
+              options={[
+                { value: '', label: 'Sélectionnez une wilaya' },
+                ...WILAYAS
+              ]}
+              error={errors.claim_origin}
+              placeholder="Recherchez une wilaya..."
+              searchPlaceholder="Rechercher une wilaya..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Détails de la réclamation *
+            </label>
+            <Input
+              type="text"
+              value={formData.claim_origin_manual}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                handleInputChange('claim_origin_manual', e.target.value);
+                // Update claim_origin with both wilaya and manual input
+                const origin = selectedWilaya ? `${selectedWilaya}: ${e.target.value}`.trim() : e.target.value;
+                handleInputChange('claim_origin', origin);
+              }}
+              error={errors.claim_origin_manual || errors.claim_origin}
+              placeholder="Détails de la réclamation..."
+            />
+          </div>
         </div>
       );
     }
-    
+
     // Default fallback - regular select
     return (
       <Select

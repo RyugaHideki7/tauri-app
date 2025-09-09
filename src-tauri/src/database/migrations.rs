@@ -4,6 +4,19 @@ use uuid::Uuid;
 use chrono::Utc;
 use bcrypt::{hash, DEFAULT_COST};
 
+const WILAYAS: [&str; 58] = [
+    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra",
+    "Bechar", "Blida", "Bouira", "Tamanrasset", "Tbessa", "Tlemcen", "Tiaret",
+    "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Setif", "Saefda", "Skikda",
+    "Sidi Bel Abbes", "Annaba", "Guelma", "Constantine", "Medea", "Mostaganem",
+    "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj",
+    "Boumerdes", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
+    "Souk Ahras", "Tipaza", "Mila", "Ain Defla", "Naama", "Ain Temouchent",
+    "Ghardaefa", "Relizane", "El M'ghair", "El Menia", "Ouled Djellal",
+    "Bordj Baji Mokhtar", "Béni Abbès", "Timimoun", "Touggourt", "Djanet",
+    "In Salah", "In Guezzam"
+];
+
 pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     // Create users table
     sqlx::query(
@@ -97,6 +110,36 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
         println!("Inserted initial format data");
     }
 
+    // Create wilayas table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS wilayas (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) UNIQUE NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Insert wilayas if table is empty
+    let wilaya_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM wilayas")
+        .fetch_one(pool)
+        .await?;
+
+    if wilaya_count == 0 {
+        for wilaya in &WILAYAS {
+            sqlx::query(
+                "INSERT INTO wilayas (name) VALUES ($1) ON CONFLICT (name) DO NOTHING"
+            )
+            .bind(wilaya.to_string())
+            .execute(pool)
+            .await?;
+        }
+        println!("Inserted wilayas data");
+    }
+
     // Create non_conformity_reports table
     sqlx::query(
         r#"
@@ -113,7 +156,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             description_type VARCHAR(50) NOT NULL CHECK (description_type IN ('Physique', 'Chimique', 'Biologique', 'Process')),
             description_details TEXT NOT NULL,
             quantity INTEGER NOT NULL,
-            claim_origin VARCHAR(50) NOT NULL CHECK (claim_origin IN ('client', 'site01', 'site02', 'Consommateur')),
+            claim_origin VARCHAR(255) NOT NULL,
             valuation DECIMAL(10, 2) NOT NULL,
             performance TEXT,
             status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),

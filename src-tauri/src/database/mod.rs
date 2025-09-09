@@ -38,7 +38,7 @@ impl Database {
         let db = Database { pool };
         
         // Check if any required tables are missing
-        let required_tables = ["users", "production_lines", "products", "non_conformity_reports", "nc_des", "clients"];
+        let required_tables = ["users", "production_lines", "products", "non_conformity_reports", "nc_des", "clients", "wilayas"];
         let mut missing_tables = Vec::new();
         
         for table in &required_tables {

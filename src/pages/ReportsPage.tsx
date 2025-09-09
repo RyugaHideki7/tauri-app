@@ -792,6 +792,7 @@ export const ReportsPage: React.FC = () => {
                   { value: 'consommateur', label: 'Consommateur' }
                 ]}
                 error={editErrors.claim_origin}
+                disabled={true}
               />
             </div>
 
