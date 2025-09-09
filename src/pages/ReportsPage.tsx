@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import DatePicker from '../components/ui/DatePicker';
+import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Table from '../components/ui/Table';
 import Dialog from '../components/ui/Dialog';
 import { useToast } from '../components/ui/Toast';
@@ -577,11 +578,11 @@ export const ReportsPage: React.FC = () => {
             key: 'claim_origin',
             header: 'Origine'
           },
-          {
+          ...(user?.role === 'performance' || user?.role === 'admin' ? [{
             key: 'valuation',
-            header: 'Évaluation',
-            render: (value) => `${parseFloat(value).toFixed(2)} DZD`
-          },
+            header: 'Valorisation',
+            render: (value: string) => `${parseFloat(value).toFixed(2)} DZD`
+          }] : []),
           ...(canViewPerformance ? [{
             key: 'performance',
             header: 'Performance',
@@ -599,15 +600,16 @@ export const ReportsPage: React.FC = () => {
             render: (_value: any, row: NonConformityReport) => (
               <div className="flex items-center gap-2">
                 <Button
-                  size="sm"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => handleFullEdit(row)}
-                  className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 transition-colors"
+                  className="h-12 w-12 p-2.5 flex items-center justify-center rounded-full bg-primary/5 hover:bg-primary/20 text-primary hover:scale-105 focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-all duration-200"
+                  title="Modifier le rapport"
+                  aria-label="Modifier le rapport"
                 >
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                   </svg>
-                  Éditer
+                  <span className="sr-only">Modifier</span>
                 </Button>
               </div>
             )
@@ -740,12 +742,12 @@ export const ReportsPage: React.FC = () => {
 
             {/* Time */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Heure *</label>
-              <Input
-                type="time"
+              <IntuitiveTimePicker
+                label="Heure *"
                 value={editFormData.time || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('time', e.target.value)}
+                onChange={(value) => handleEditInputChange('time', value)}
                 error={editErrors.time}
+                format="24"
               />
             </div>
 
