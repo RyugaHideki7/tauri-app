@@ -395,7 +395,6 @@ export const ReportsPage: React.FC = () => {
   // };
 
   const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
-  const canEditPerformance = user?.role === 'performance' || user?.role === 'admin';
   const canFullEdit = user?.role === 'performance' || user?.role === 'admin';
 
   return (
@@ -586,7 +585,7 @@ export const ReportsPage: React.FC = () => {
           ...(canViewPerformance ? [{
             key: 'performance',
             header: 'Performance',
-            render: (value: string, row: NonConformityReport) => (
+            render: (value: string) => (
               <div className="flex items-center gap-2">
                 <span className="max-w-xs truncate block">
                   {value || '-'}
