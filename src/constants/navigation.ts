@@ -15,7 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { ROLES, UserRole } from "../types/auth";
 
-const { CLIENT, SITE01, SITE02, PERFORMANCE, ADMIN, CONSOMMATEUR } = ROLES;
+const { RECLAMATION_CLIENT, RETOUR_CLIENT, SITE01, SITE02, PERFORMANCE, ADMIN, CONSOMMATEUR } = ROLES;
 
 export interface NavigationItem {
   icon: IconDefinition;
@@ -37,7 +37,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: faUser,
     label: "Profil",
     path: "/profile",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
     showInNav: true,
   },
   {
@@ -58,21 +58,21 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: faClipboardList,
     label: "Rapports",
     path: "/reports",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
     showInNav: true,
   },
   {
     icon: faExclamationTriangle,
     label: "Nouveau rapport",
     path: "/reports/new",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, CLIENT],
+    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
     showInNav: true,
   },
   {
     icon: faBuilding,
     label: "Clients",
     path: "/clients",
-    allowedRoles: [ADMIN, CLIENT],
+    allowedRoles: [ADMIN, RECLAMATION_CLIENT, RETOUR_CLIENT],
     showInNav: true,
   },
   {

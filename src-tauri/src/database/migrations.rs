@@ -156,7 +156,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             description_type VARCHAR(50) NOT NULL CHECK (description_type IN ('Physique', 'Chimique', 'Biologique', 'Process')),
             description_details TEXT NOT NULL,
             quantity INTEGER NOT NULL CHECK (quantity > 0),
-            claim_origin VARCHAR(20) NOT NULL CHECK (claim_origin IN ('client', 'site01', 'site02', 'consommateur')),
+            claim_origin VARCHAR(20) NOT NULL CHECK (claim_origin IN ('Réclamation client', 'Retour client', 'site01', 'site02', 'consommateur')),
             claim_origin_detail TEXT,
             valuation DECIMAL(10, 2) NOT NULL,
             performance TEXT,

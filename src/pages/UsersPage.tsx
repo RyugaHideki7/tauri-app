@@ -6,6 +6,7 @@ import Input from '../components/ui/Input';
 import Table from '../components/ui/Table';
 import Select from '../components/ui/Select';
 import Dialog from '../components/ui/Dialog';
+import { ROLES } from '../types/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import { PaginatedResponse } from '../types/pagination';
@@ -31,14 +32,14 @@ interface EditUserForm {
   newPassword?: string;
 }
 
-const ROLES = [
-  { value: 'admin', label: 'Administrateur' },
-  { value: 'Réclamation client', label: 'Réclamation client' },
-  { value: 'Retour client', label: 'Retour client' },
-  { value: 'site01', label: 'Site 01' },
-  { value: 'site02', label: 'Site 02' },
-  { value: 'performance', label: 'Performance' },
-  { value: 'consommateur', label: 'Consommateur' },
+const ROLE_OPTIONS = [
+  { value: ROLES.ADMIN, label: 'Administrateur' },
+  { value: ROLES.RECLAMATION_CLIENT, label: 'Réclamation client' },
+  { value: ROLES.RETOUR_CLIENT, label: 'Retour client' },
+  { value: ROLES.SITE01, label: 'Site 01' },
+  { value: ROLES.SITE02, label: 'Site 02' },
+  { value: ROLES.PERFORMANCE, label: 'Performance' },
+  { value: ROLES.CONSOMMATEUR, label: 'Consommateur' },
 ];
 
 export const UsersPage: React.FC = () => {
@@ -63,7 +64,7 @@ export const UsersPage: React.FC = () => {
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     username: '',
     password: '',
-    role: 'Réclamation client'
+    role: ROLES.RECLAMATION_CLIENT,
   });
   const [editForm, setEditForm] = useState<EditUserForm>({
     id: '',
@@ -140,7 +141,7 @@ export const UsersPage: React.FC = () => {
       
       toast.success('Utilisateur créé avec succès');
       setIsCreateModalOpen(false);
-      setCreateForm({ username: '', password: '', role: 'Réclamation client' });
+      setCreateForm({ username: '', password: '', role: ROLES.RECLAMATION_CLIENT });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la création de l\'utilisateur :', error);
@@ -192,7 +193,7 @@ export const UsersPage: React.FC = () => {
       
       toast.success('Utilisateur mis à jour avec succès');
       setIsEditModalOpen(false);
-      setEditForm({ id: '', username: '', role: 'Réclamation client', newPassword: '' });
+      setEditForm({ id: '', username: '', role: ROLES.RECLAMATION_CLIENT, newPassword: '' });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
@@ -247,22 +248,23 @@ export const UsersPage: React.FC = () => {
   };
 
   const getRoleLabel = (role: string) => {
-    const roleObj = ROLES.find(r => r.value === role);
+    const roleObj = ROLE_OPTIONS.find(r => r.value === role);
     return roleObj ? roleObj.label : role;
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin':
+      case ROLES.ADMIN:
         return 'bg-muted text-muted-foreground border-muted/20';
-      case 'performance':
+      case ROLES.PERFORMANCE:
         return 'bg-primary text-primary-foreground border-primary/20';
-      case 'site01':
-      case 'site02':
+      case ROLES.SITE01:
+      case ROLES.SITE02:
         return 'bg-secondary text-secondary-foreground border-secondary/20';
-      case 'client':
+      case ROLES.RECLAMATION_CLIENT:
+      case ROLES.RETOUR_CLIENT:
         return 'bg-popover text-popover-foreground border-popover/20';
-      case 'consommateur':
+      case ROLES.CONSOMMATEUR:
         return 'bg-accent text-accent-foreground border-accent/20';
       default:
         return 'bg-ring text-input border-ring/20';
@@ -460,7 +462,7 @@ export const UsersPage: React.FC = () => {
               label="Rôle"
               value={createForm.role}
               onChange={(value) => setCreateForm({ ...createForm, role: value })}
-              options={ROLES}
+              options={ROLE_OPTIONS}
             />
             
             <div className="flex items-center justify-end space-x-3 pt-4">
@@ -505,7 +507,7 @@ export const UsersPage: React.FC = () => {
               label="Rôle"
               value={editForm.role}
               onChange={(value) => setEditForm({ ...editForm, role: value })}
-              options={ROLES}
+              options={ROLE_OPTIONS}
             />
             
             <Input

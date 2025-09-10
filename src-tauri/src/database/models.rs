@@ -99,7 +99,7 @@ pub struct NonConformityReport {
 // Enums for validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserRole {
-    #[serde(rename = "Réclamation client")]
+    #[serde(rename = "Reclamation client")]
     ReclamationClient,
     #[serde(rename = "Retour client")]
     RetourClient,
@@ -113,7 +113,7 @@ pub enum UserRole {
 impl UserRole {
     pub fn as_str(&self) -> &'static str {
         match self {
-            UserRole::ReclamationClient => "Réclamation client",
+            UserRole::ReclamationClient => "Reclamation client",
             UserRole::RetourClient => "Retour client",
             UserRole::Site01 => "site01",
             UserRole::Site02 => "site02",
@@ -129,7 +129,7 @@ impl FromStr for UserRole {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Réclamation client" => Ok(UserRole::ReclamationClient),
+            "Reclamation client" => Ok(UserRole::ReclamationClient),
             "Retour client" => Ok(UserRole::RetourClient),
             "site01" => Ok(UserRole::Site01),
             "site02" => Ok(UserRole::Site02),
@@ -179,7 +179,7 @@ impl DescriptionType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClaimOrigin {
-    #[serde(rename = "Réclamation client")]
+    #[serde(rename = "Reclamation client")]
     ReclamationClient,
     Site01,
     Site02,
@@ -189,7 +189,7 @@ pub enum ClaimOrigin {
 impl ClaimOrigin {
     pub fn as_str(&self) -> &'static str {
         match self {
-            ClaimOrigin::ReclamationClient => "Réclamation client",
+            ClaimOrigin::ReclamationClient => "Reclamation client",
             ClaimOrigin::Site01 => "site01",
             ClaimOrigin::Site02 => "site02",
             ClaimOrigin::Consommateur => "Consommateur",
@@ -202,7 +202,7 @@ impl FromStr for ClaimOrigin {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Réclamation client" => Ok(ClaimOrigin::ReclamationClient),
+            "Reclamation client" => Ok(ClaimOrigin::ReclamationClient),
             "site01" => Ok(ClaimOrigin::Site01),
             "site02" => Ok(ClaimOrigin::Site02),
             "Consommateur" => Ok(ClaimOrigin::Consommateur),

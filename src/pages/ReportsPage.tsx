@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Table from '../components/ui/Table';
@@ -81,6 +82,8 @@ export const ReportsPage: React.FC = () => {
   // Filter states
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [lines, setLines] = useState<ProductionLine[]>([]);
+  const [selectedLine, setSelectedLine] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
@@ -91,17 +94,18 @@ export const ReportsPage: React.FC = () => {
   const [fullEditModalOpen, setFullEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<NonConformityReport>>({});
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
-  const [lines, setLines] = useState<ProductionLine[]>([]);
+  const [editLines, setEditLines] = useState<ProductionLine[]>([]);
   const [formats, setFormats] = useState<Format[]>([]);
 
   useEffect(() => {
     // Debug current filters
-    console.debug('[Reports] loadReports with', { page, itemsPerPage, search, selectedProduct, startDate, endDate });
+    console.debug('[Reports] loadReports with', { page, itemsPerPage, search, selectedProduct, selectedLine, startDate, endDate });
     loadReports();
-  }, [page, search, selectedProduct, startDate, endDate, itemsPerPage]);
+  }, [page, search, selectedProduct, selectedLine, startDate, endDate, itemsPerPage]);
 
   useEffect(() => {
     loadProducts();
+    loadLines();
     loadEditData();
   }, []);
 
@@ -111,7 +115,7 @@ export const ReportsPage: React.FC = () => {
         invoke<ProductionLine[]>('get_lines'),
         invoke<Format[]>('get_formats')
       ]);
-      setLines(linesData);
+      setEditLines(linesData);
       setFormats(formatsData);
     } catch (error) {
       console.error('Failed to load edit data:', error);
@@ -127,17 +131,27 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
+  const loadLines = async () => {
+    try {
+      const linesData = await invoke<ProductionLine[]>('get_lines');
+      setLines(linesData);
+    } catch (error) {
+      console.error('Échec du chargement des lignes :', error);
+    }
+  };
+
   // Debug effect for filter state changes (post-setState values)
   useEffect(() => {
     console.debug('[Reports] Filter state changed ->', {
       selectedProduct,
+      selectedLine,
       startDate,
       endDate,
       search,
       page,
       itemsPerPage,
     });
-  }, [selectedProduct, startDate, endDate, search, page, itemsPerPage]);
+  }, [selectedProduct, selectedLine, startDate, endDate, search, page, itemsPerPage]);
 
   const loadReports = async () => {
     setLoading(true);
@@ -145,6 +159,7 @@ export const ReportsPage: React.FC = () => {
       console.debug('[Reports] Raw filter values:', {
         search: `"${search}"`,
         selectedProduct: `"${selectedProduct}"`,
+        selectedLine: `"${selectedLine}"`,
         startDate: `"${startDate}"`,
         endDate: `"${endDate}"`
       });
@@ -155,6 +170,8 @@ export const ReportsPage: React.FC = () => {
         // Send both casings to diagnose mapping behavior
         product_id: selectedProduct || null,
         productId: selectedProduct || null,
+        line_id: selectedLine || null,
+        lineId: selectedLine || null,
         start_date: startDate || null,
         startDate: startDate || null,
         end_date: endDate || null,
@@ -184,6 +201,7 @@ export const ReportsPage: React.FC = () => {
 
   const clearFilters = () => {
     setSelectedProduct('');
+    setSelectedLine('');
     setStartDate('');
     setEndDate('');
     setSearch('');
@@ -420,7 +438,7 @@ export const ReportsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="mb-6 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <Input
             label="Rechercher"
             type="text"
@@ -428,7 +446,7 @@ export const ReportsPage: React.FC = () => {
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
           />
-          <Select
+          <SearchableSelect
             label="Filtrer par produit"
             value={selectedProduct}
             onChange={(value) => {
@@ -444,6 +462,25 @@ export const ReportsPage: React.FC = () => {
                 label: product.code ? `${product.designation} (${product.code})` : product.designation
               }))
             ]}
+            searchPlaceholder="Rechercher un produit..."
+          />
+          <SearchableSelect
+            label="Filtrer par ligne"
+            value={selectedLine}
+            onChange={(value) => {
+              console.debug('[Reports] line selected:', value, 'type:', typeof value);
+              setSelectedLine(value);
+              console.debug('[Reports] selectedLine state after set:', selectedLine);
+              handleFilterChange();
+            }}
+            options={[
+              { value: '', label: 'Toutes les lignes' },
+              ...lines.map((line) => ({
+                value: line.id,
+                label: line.name
+              }))
+            ]}
+            searchPlaceholder="Rechercher une ligne..."
           />
           <DatePicker
             label="Date de début"
@@ -507,7 +544,7 @@ export const ReportsPage: React.FC = () => {
             </svg>
             <p className="text-lg font-medium">Aucun rapport trouvé</p>
             <p className="text-sm">
-              {selectedProduct || startDate || endDate || search 
+              {selectedProduct || selectedLine || startDate || endDate || search 
                 ? "Essayez d'ajuster vos filtres ou termes de recherche" 
                 : "Aucun rapport n'a été créé pour le moment"}
             </p>
@@ -662,7 +699,7 @@ export const ReportsPage: React.FC = () => {
                 onChange={(value) => handleEditInputChange('line_id', value)}
                 options={[
                   { value: '', label: 'Sélectionnez une ligne' },
-                  ...lines.map(line => ({ value: line.id, label: line.name }))
+                  ...editLines.map(line => ({ value: line.id, label: line.name }))
                 ]}
                 error={editErrors.line_id}
               />

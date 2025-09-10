@@ -8,67 +8,13 @@ import SearchableSelect from '../components/ui/SearchableSelect';
 import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Dialog from '../components/ui/Dialog';
+import { ROLES } from '../types/auth';
 
-const WILAYAS = [
-  { value: "Adrar", label: "Adrar" },
-  { value: "Chlef", label: "Chlef" },
-  { value: "Laghouat", label: "Laghouat" },
-  { value: "Oum El Bouaghi", label: "Oum El Bouaghi" },
-  { value: "Batna", label: "Batna" },
-  { value: "Béjaïa", label: "Béjaïa" },
-  { value: "Biskra", label: "Biskra" },
-  { value: "Bechar", label: "Bechar" },
-  { value: "Blida", label: "Blida" },
-  { value: "Bouira", label: "Bouira" },
-  { value: "Tamanrasset", label: "Tamanrasset" },
-  { value: "Tbessa", label: "Tbessa" },
-  { value: "Tlemcen", label: "Tlemcen" },
-  { value: "Tiaret", label: "Tiaret" },
-  { value: "Tizi Ouzou", label: "Tizi Ouzou" },
-  { value: "Alger", label: "Alger" },
-  { value: "Djelfa", label: "Djelfa" },
-  { value: "Jijel", label: "Jijel" },
-  { value: "Setif", label: "Setif" },
-  { value: "Saefda", label: "Saefda" },
-  { value: "Skikda", label: "Skikda" },
-  { value: "Sidi Bel Abbes", label: "Sidi Bel Abbes" },
-  { value: "Annaba", label: "Annaba" },
-  { value: "Guelma", label: "Guelma" },
-  { value: "Constantine", label: "Constantine" },
-  { value: "Medea", label: "Medea" },
-  { value: "Mostaganem", label: "Mostaganem" },
-  { value: "M'Sila", label: "M'Sila" },
-  { value: "Mascara", label: "Mascara" },
-  { value: "Ouargla", label: "Ouargla" },
-  { value: "Oran", label: "Oran" },
-  { value: "El Bayadh", label: "El Bayadh" },
-  { value: "Illizi", label: "Illizi" },
-  { value: "Bordj Bou Arreridj", label: "Bordj Bou Arreridj" },
-  { value: "Boumerdes", label: "Boumerdes" },
-  { value: "El Tarf", label: "El Tarf" },
-  { value: "Tindouf", label: "Tindouf" },
-  { value: "Tissemsilt", label: "Tissemsilt" },
-  { value: "El Oued", label: "El Oued" },
-  { value: "Khenchela", label: "Khenchela" },
-  { value: "Souk Ahras", label: "Souk Ahras" },
-  { value: "Tipaza", label: "Tipaza" },
-  { value: "Mila", label: "Mila" },
-  { value: "Ain Defla", label: "Ain Defla" },
-  { value: "Naama", label: "Naama" },
-  { value: "Ain Temouchent", label: "Ain Temouchent" },
-  { value: "Ghardaefa", label: "Ghardaefa" },
-  { value: "Relizane", label: "Relizane" },
-  { value: "El M'ghair", label: "El M'ghair" },
-  { value: "El Menia", label: "El Menia" },
-  { value: "Ouled Djellal", label: "Ouled Djellal" },
-  { value: "Bordj Baji Mokhtar", label: "Bordj Baji Mokhtar" },
-  { value: "Béni Abbès", label: "Béni Abbès" },
-  { value: "Timimoun", label: "Timimoun" },
-  { value: "Touggourt", label: "Touggourt" },
-  { value: "Djanet", label: "Djanet" },
-  { value: "In Salah", label: "In Salah" },
-  { value: "In Guezzam", label: "In Guezzam" }
-];
+interface Client {
+  id: string;
+  name: string;
+}
+
 
 interface ProductionLine {
   id: string;
@@ -94,12 +40,6 @@ interface DescriptionType {
   name: string;
 }
 
-interface Client {
-  id: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-}
 
 interface CreateReportRequest {
   line_id: string;
@@ -113,6 +53,7 @@ interface CreateReportRequest {
   description_details: string;
   quantity: number;
   claim_origin: string;
+  claim_origin_detail: string | null;
   valuation: number;
   performance?: string;
 }
@@ -130,7 +71,7 @@ export const NewReportPage: React.FC = () => {
   const [formats, setFormats] = useState<Format[]>([]);
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedWilaya, setSelectedWilaya] = useState<string>('');
+  const [selectedClient, setSelectedClient] = useState<string>('');
   
   const [formData, setFormData] = useState<FormData>({
     line_id: '',
@@ -144,6 +85,7 @@ export const NewReportPage: React.FC = () => {
     description_details: '',
     quantity: 0,
     claim_origin: '',
+    claim_origin_detail: '',
     claim_origin_client_id: '',
     claim_origin_manual: '',
     valuation: 0,
@@ -161,31 +103,36 @@ export const NewReportPage: React.FC = () => {
   // Initialize claim origin based on user role
   useEffect(() => {
     if (user?.role) {
+      const role = user.role;
       let initialClaimOrigin = '';
       
-      switch (user.role.toLowerCase()) {
-        case 'site01':
-        case 'site 01':
-          initialClaimOrigin = 'site01';
-          break;
-        case 'site02':
-        case 'site 02':
-          initialClaimOrigin = 'site02';
-          break;
-        case 'client':
-          initialClaimOrigin = 'client';
-          break;
-        case 'consommateur':
-          initialClaimOrigin = 'consommateur';
-          break;
-        default:
-          initialClaimOrigin = 'client';
+      // Only set initial value for non-admin/non-performance roles
+      if (role !== ROLES.PERFORMANCE && role !== ROLES.ADMIN) {
+        switch (role) {
+          case ROLES.SITE01:
+            initialClaimOrigin = ROLES.SITE01;
+            break;
+          case ROLES.SITE02:
+            initialClaimOrigin = ROLES.SITE02;
+            break;
+          case ROLES.RECLAMATION_CLIENT:
+            initialClaimOrigin = ROLES.RECLAMATION_CLIENT;
+            break;
+          case ROLES.RETOUR_CLIENT:
+            initialClaimOrigin = ROLES.RETOUR_CLIENT;
+            break;
+          case ROLES.CONSOMMATEUR:
+            initialClaimOrigin = ROLES.CONSOMMATEUR;
+            break;
+          default:
+            initialClaimOrigin = role;
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          claim_origin: initialClaimOrigin
+        }));
       }
-      
-      setFormData(prev => ({
-        ...prev,
-        claim_origin: initialClaimOrigin
-      }));
     }
   }, [user?.role]);
 
@@ -203,20 +150,25 @@ export const NewReportPage: React.FC = () => {
       setProducts(productsData);
       setFormats(formatsData);
       setDescriptionTypes(typesData);
-      setClients(clientsData);
+      setClients(clientsData || []);
     } catch (error) {
       console.error('Échec du chargement des données initiales :', error);
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string | number | undefined) => {
+  const handleInputChange = (field: keyof FormData, value: string | number | undefined | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // Handle both direct values and React change events
+    const newValue = typeof value === 'object' && value !== null && 'target' in value 
+      ? value.target.value 
+      : value;
+      
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: newValue
     }));
     
     // Clear error when user starts typing
-    if (errors[field]) {
+    if (errors[field as string]) {
       setErrors(prev => ({
         ...prev,
         [field]: ''
@@ -226,7 +178,6 @@ export const NewReportPage: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const role = user?.role?.toLowerCase();
 
     if (!formData.line_id) newErrors.line_id = 'La ligne de production est requise';
     if (!formData.product_id) newErrors.product_id = 'Le produit est requis';
@@ -239,25 +190,9 @@ export const NewReportPage: React.FC = () => {
     if (!formData.description_details.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
     if (formData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
 
-    // Validate claim origin based on user role
-    if (role === 'client') {
-      if (!formData.claim_origin_client_id) {
-        newErrors.claim_origin_client_id = 'Veuillez sélectionner un client';
-      }
-    } else if (role === 'consommateur') {
-      if (Object.keys(errors).length > 0 || Object.keys(newErrors).length > 0) {
-        if (!selectedWilaya) {
-          newErrors.claim_origin = 'Veuillez sélectionner une wilaya';
-        }
-        if (!formData.claim_origin_manual?.trim()) {
-          newErrors.claim_origin_manual = 'Veuillez saisir les détails de la réclamation';
-        }
-      }
-    } else {
-      // For site01, site02, and other roles
-      if (!formData.claim_origin) {
-        newErrors.claim_origin = 'L\'origine de la réclamation est requise';
-      }
+    // Validate claim origin - required for all roles
+    if (!formData.claim_origin) {
+      newErrors.claim_origin = 'L\'origine de la réclamation est requise';
     }
 
     setErrors(newErrors);
@@ -292,6 +227,7 @@ export const NewReportPage: React.FC = () => {
         description_details: formData.description_details,
         quantity: formData.quantity,
         claim_origin: formData.claim_origin,
+        claim_origin_detail: formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null,
         valuation: 0,
         // Only include performance field if user has permission
         performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined
@@ -315,6 +251,7 @@ export const NewReportPage: React.FC = () => {
         description_details: '',
         quantity: 0,
         claim_origin: '',
+        claim_origin_detail: '',
         claim_origin_client_id: '',
         claim_origin_manual: '',
         valuation: 0,
@@ -330,114 +267,99 @@ export const NewReportPage: React.FC = () => {
     }
   };
 
-  const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
-
   // Render claim origin field based on user role
   const renderClaimOriginField = () => {
-    const role = user?.role?.toLowerCase();
+    const role = user?.role;
+    const canEditClaimOrigin = role === ROLES.PERFORMANCE || role === ROLES.ADMIN;
 
-    // For site01 and site02 roles - show disabled select with pre-selected value
-    if (role === 'site01' || role === 'site 01' || role === 'site02' || role === 'site 02') {
+    // For performance and admin roles - show full select with all options
+    if (canEditClaimOrigin) {
       return (
         <Select
           label="Origine de la réclamation *"
           value={formData.claim_origin}
-          onChange={() => { }} // No-op since it's disabled
+          onChange={(value) => handleInputChange('claim_origin', value as string)}
+          options={[
+            { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
+            { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
+            { value: 'site01', label: 'Site 01' },
+            { value: 'site02', label: 'Site 02' },
+            { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
+          ]}
+          error={errors.claim_origin}
+          placeholder="Sélectionnez l'origine de la réclamation"
+        />
+      );
+    }
+
+    // For site01 and site02 roles - show disabled select with pre-selected value
+    if (role === 'site01' || role === 'site02') {
+      return (
+        <Select
+          label="Origine de la réclamation *"
+          value={role}
+          onChange={() => {}}
           options={[
             { value: 'site01', label: 'Site 01' },
-            { value: 'site02', label: 'Site 02' }
+            { value: 'site02', label: 'Site 02' },
           ]}
           error={errors.claim_origin}
           disabled={true}
-          placeholder="Origine de la réclamation (sélectionnée automatiquement)"
+          placeholder="Origine de la réclamation (pré-sélectionnée)"
         />
       );
     }
 
-    // For client role - show searchable dropdown of clients
-    if (role === 'client') {
+    // For client roles - show disabled select with role pre-selected
+    if (role === ROLES.RECLAMATION_CLIENT || role === ROLES.RETOUR_CLIENT) {
       return (
-        <SearchableSelect
+        <Select
           label="Origine de la réclamation *"
-          value={formData.claim_origin_client_id}
-          onChange={(value) => {
-            handleInputChange('claim_origin_client_id', value);
-            // Also update the main claim_origin field for backend
-            const selectedClient = clients.find(c => c.id === value);
-            if (selectedClient) {
-              handleInputChange('claim_origin', `Client: ${selectedClient.name}`);
-            }
-          }}
-          options={clients.map(client => ({
-            value: client.id,
-            label: `Client: ${client.name}`
-          }))}
-          error={errors.claim_origin_client_id || errors.claim_origin}
-          placeholder="Recherchez et sélectionnez un client..."
-          searchPlaceholder="Rechercher des clients..."
+          value={role}
+          onChange={() => {}}
+          options={[
+            { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
+            { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
+          ]}
+          error={errors.claim_origin}
+          disabled={true}
+          placeholder="Origine de la réclamation (pré-sélectionnée)"
         />
       );
     }
 
-    // For consommateur role - show manual input
-    if (role === 'consommateur') {
+    // For consommateur role - show disabled select with consommateur pre-selected
+    if (role === ROLES.CONSOMMATEUR) {
       return (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Wilaya *
-            </label>
-            <SearchableSelect
-              value={selectedWilaya}
-              onChange={(value) => {
-                setSelectedWilaya(value);
-                // Update claim_origin with both wilaya and manual input
-                const origin = value ? `${value}: ${formData.claim_origin_manual || ''}`.trim() : formData.claim_origin_manual;
-                handleInputChange('claim_origin', origin);
-              }}
-              options={[
-                { value: '', label: 'Sélectionnez une wilaya' },
-                ...WILAYAS
-              ]}
-              error={errors.claim_origin}
-              placeholder="Recherchez une wilaya..."
-              searchPlaceholder="Rechercher une wilaya..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Détails de la réclamation *
-            </label>
-            <Input
-              type="text"
-              value={formData.claim_origin_manual}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                handleInputChange('claim_origin_manual', e.target.value);
-                // Update claim_origin with both wilaya and manual input
-                const origin = selectedWilaya ? `${selectedWilaya}: ${e.target.value}`.trim() : e.target.value;
-                handleInputChange('claim_origin', origin);
-              }}
-              error={errors.claim_origin_manual || errors.claim_origin}
-              placeholder="Détails de la réclamation..."
-            />
-          </div>
-        </div>
+        <Select
+          label="Origine de la réclamation *"
+          value={ROLES.CONSOMMATEUR}
+          onChange={() => {}}
+          options={[
+            { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
+          ]}
+          error={errors.claim_origin}
+          disabled={true}
+          placeholder="Origine de la réclamation (pré-sélectionnée)"
+        />
       );
     }
 
-    // Default fallback - regular select
+    // Default fallback - should not happen with proper role setup
     return (
       <Select
         label="Origine de la réclamation *"
         value={formData.claim_origin}
-        onChange={(value) => handleInputChange('claim_origin', value)}
+        onChange={() => {}}
         options={[
-          { value: 'client', label: 'Client' },
+          { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
+          { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
           { value: 'site01', label: 'Site 01' },
           { value: 'site02', label: 'Site 02' },
-          { value: 'consommateur', label: 'Consommateur' }
+          { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
         ]}
         error={errors.claim_origin}
+        disabled={true}
         placeholder="Sélectionnez l'origine de la réclamation"
       />
     );
@@ -452,10 +374,10 @@ export const NewReportPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Production Line */}
             <div>
-              <Select
+              <SearchableSelect
                 label="Ligne de production *"
                 value={formData.line_id}
-                onChange={(value) => handleInputChange('line_id', value)}
+                onChange={(value) => handleInputChange('line_id', value as string)}
                 options={[
                   { value: '', label: 'Sélectionnez une ligne de production' },
                   ...lines.map((line) => ({
@@ -465,15 +387,16 @@ export const NewReportPage: React.FC = () => {
                 ]}
                 error={errors.line_id}
                 placeholder="Sélectionnez une ligne de production"
+                searchPlaceholder="Rechercher une ligne..."
               />
             </div>
 
             {/* Product */}
             <div>
-              <Select
+              <SearchableSelect
                 label="Produit *"
                 value={formData.product_id}
-                onChange={(value) => handleInputChange('product_id', value)}
+                onChange={(value) => handleInputChange('product_id', value as string)}
                 options={[
                   { value: '', label: 'Sélectionnez un produit' },
                   ...products.map((product) => ({
@@ -483,6 +406,7 @@ export const NewReportPage: React.FC = () => {
                 ]}
                 error={errors.product_id}
                 placeholder="Sélectionnez un produit"
+                searchPlaceholder="Rechercher un produit..."
               />
             </div>
 
@@ -592,48 +516,92 @@ export const NewReportPage: React.FC = () => {
               {renderClaimOriginField()}
             </div>
 
-          </div>
-
-          {/* Description Details */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Détails de la description *
-            </label>
-            <textarea
-              value={formData.description_details}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-              placeholder="Décrivez en détail la non-conformité..."
-            />
-            {errors.description_details && <p className="text-destructive text-sm mt-1">{errors.description_details}</p>}
-          </div>
-
-          {/* Performance Field - Only visible to performance and admin roles */}
-          {canViewPerformance && (
-            <div>
+            {/* Client Selection or Description */}
+            <div className="col-span-2">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Notes de performance
+                Détail de la réclamation *
+              </label>
+              {(user?.role === ROLES.RECLAMATION_CLIENT || user?.role === ROLES.RETOUR_CLIENT) ? (
+                <>
+                  <SearchableSelect
+                    value={selectedClient}
+                    onChange={(value) => {
+                      const selectedClientData = clients.find(c => c.id === value);
+                      setSelectedClient(value);
+                      // Store client name in claim_origin_detail
+                      handleInputChange('claim_origin_detail', selectedClientData?.name || '');
+                      // Store client ID in claim_origin_client_id
+                      handleInputChange('claim_origin_client_id', value);
+                    }}
+                    options={[
+                      { value: '', label: 'Sélectionnez un client' },
+                      ...clients.map(client => ({
+                        value: client.id,
+                        label: client.name
+                      }))
+                    ]}
+                    error={errors.description_details}
+                    placeholder="Sélectionnez un client"
+                    searchPlaceholder="Rechercher un client..."
+                  />
+                  {errors.description_details && (
+                    <p className="mt-1 text-sm text-red-500">{errors.description_details}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <textarea
+                    value={formData.description_details}
+                    onChange={(e) => handleInputChange('description_details', e.target.value)}
+                    className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    rows={4}
+                    placeholder="Décrivez en détail la non-conformité constatée..."
+                    required
+                  />
+                  {errors.description_details && (
+                    <p className="mt-1 text-sm text-red-500">{errors.description_details}</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Claim Origin Detail (optional) */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Détails complémentaires
               </label>
               <textarea
-                value={formData.performance}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('performance', e.target.value)}
-                rows={3}
+                value={formData.description_details || ''}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
+                rows={2}
                 className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-                placeholder="Ajoutez des notes ou des indicateurs de performance..."
+                placeholder="Détails complémentaires sur la non-conformité..."
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ce champ est optionnel et sert à ajouter des détails spécifiques sur l'origine du signalement.
+              </p>
             </div>
-          )}
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2"
-            >
-              {loading ? 'Création en cours...' : 'Enregistrer'}
-            </Button>
+            {/* Submit Button */}
+            <div className="col-span-2 pt-4">
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.history.back()}
+                  disabled={loading}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {loading ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
 
@@ -641,71 +609,84 @@ export const NewReportPage: React.FC = () => {
         <Dialog
           isOpen={showConfirmDialog}
           onClose={() => setShowConfirmDialog(false)}
-          title="Confirmer la soumission"
-          maxWidth="md"
+          title="Confirmer la déclaration"
         >
-          <div className="space-y-4">
-            <p className="text-foreground">
-              Êtes-vous sûr de vouloir soumettre ce rapport de non-conformité ?
-            </p>
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm text-foreground">
-              <div><strong className="text-foreground">Ligne:</strong> <span className="text-foreground">{lines.find(l => l.id === formData.line_id)?.name}</span></div>
-              <div><strong className="text-foreground">Produit:</strong> <span className="text-foreground">{products.find(p => p.id === formData.product_id)?.designation}</span></div>
-              <div><strong className="text-foreground">Quantité:</strong> <span className="text-foreground">{formData.quantity} bouteilles</span></div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowConfirmDialog(false)}
-                disabled={loading}
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleConfirmSubmit}
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {loading ? 'Soumission...' : 'Confirmer'}
-              </Button>
-            </div>
+          <p className="mb-6">Êtes-vous sûr de vouloir soumettre cette déclaration de non-conformité ?</p>
+          <div className="flex justify-end space-x-4 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleConfirmSubmit}
+              disabled={loading}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {loading ? 'Envoi en cours...' : 'Confirmer'}
+            </Button>
           </div>
         </Dialog>
 
         {/* Success Dialog */}
         <Dialog
           isOpen={showSuccessDialog}
-          onClose={() => setShowSuccessDialog(false)}
-          title="Rapport créé avec succès"
-          maxWidth="md"
+          onClose={() => {
+            setShowSuccessDialog(false);
+            window.location.href = '/reports';
+          }}
+          title="Déclaration enregistrée"
+          className="max-w-md"
         >
-          <div className="space-y-4 text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Rapport de non-conformité créé
-              </h3>
-              <p className="text-muted-foreground">
-                Votre rapport a été enregistré avec succès dans le système.
-              </p>
-            </div>
-            <div className="flex justify-center gap-3 pt-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Déclaration enregistrée</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Votre rapport a été enregistré avec succès dans le système.
+            </p>
+            <div className="flex justify-center gap-3 pt-2">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowSuccessDialog(false);
                   window.location.href = '/reports';
                 }}
+                className="px-4 py-2"
               >
                 Voir les rapports
               </Button>
               <Button
-                onClick={() => setShowSuccessDialog(false)}
-                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  // Reset form data
+                  setFormData({
+                    line_id: '',
+                    product_id: '',
+                    format_id: undefined,
+                    report_date: new Date().toISOString().split('T')[0],
+                    production_date: new Date().toISOString().split('T')[0],
+                    team: 'A',
+                    time: new Date().toTimeString().slice(0, 5),
+                    description_type: '',
+                    description_details: '',
+                    quantity: 0,
+                    claim_origin: '',
+                    claim_origin_detail: '', // This will be set by the client selection
+                    claim_origin_client_id: '',
+                    claim_origin_manual: '',
+                    valuation: 0,
+                    performance: '',
+                  });
+                  // Reset client selection
+                  setSelectedClient('');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
               >
                 Créer un autre rapport
               </Button>

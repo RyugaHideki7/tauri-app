@@ -1,6 +1,7 @@
 // These should match the backend's UserRole enum exactly
 export const ROLES = {
-  CLIENT: 'client',
+  RECLAMATION_CLIENT: 'Réclamation client',
+  RETOUR_CLIENT: 'Retour client',
   SITE01: 'site01',
   SITE02: 'site02',
   PERFORMANCE: 'performance',
