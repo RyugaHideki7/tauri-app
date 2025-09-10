@@ -33,7 +33,8 @@ interface EditUserForm {
 
 const ROLES = [
   { value: 'admin', label: 'Administrateur' },
-  { value: 'client', label: 'Client' },
+  { value: 'Réclamation client', label: 'Réclamation client' },
+  { value: 'Retour client', label: 'Retour client' },
   { value: 'site01', label: 'Site 01' },
   { value: 'site02', label: 'Site 02' },
   { value: 'performance', label: 'Performance' },
@@ -62,7 +63,7 @@ export const UsersPage: React.FC = () => {
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     username: '',
     password: '',
-    role: 'client'
+    role: 'Réclamation client'
   });
   const [editForm, setEditForm] = useState<EditUserForm>({
     id: '',
@@ -139,7 +140,7 @@ export const UsersPage: React.FC = () => {
       
       toast.success('Utilisateur créé avec succès');
       setIsCreateModalOpen(false);
-      setCreateForm({ username: '', password: '', role: 'client' });
+      setCreateForm({ username: '', password: '', role: 'Réclamation client' });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la création de l\'utilisateur :', error);
@@ -191,7 +192,7 @@ export const UsersPage: React.FC = () => {
       
       toast.success('Utilisateur mis à jour avec succès');
       setIsEditModalOpen(false);
-      setEditForm({ id: '', username: '', role: '', newPassword: '' });
+      setEditForm({ id: '', username: '', role: 'Réclamation client', newPassword: '' });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);

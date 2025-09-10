@@ -25,7 +25,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             id UUID PRIMARY KEY,
             username VARCHAR(255) UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'site01', 'site02', 'performance', 'admin', 'consommateur')),
+            role VARCHAR(50) NOT NULL CHECK (role IN ('Réclamation client', 'Retour client', 'site01', 'site02', 'performance', 'admin', 'consommateur')),
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL
         )
@@ -145,28 +145,25 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
         r#"
         CREATE TABLE IF NOT EXISTS non_conformity_reports (
             id UUID PRIMARY KEY,
-            report_number VARCHAR(100) UNIQUE NOT NULL,
+            report_number VARCHAR(50) UNIQUE NOT NULL,
             report_date TIMESTAMPTZ NOT NULL,
-            line_id UUID NOT NULL,
-            product_id UUID NOT NULL,
-            format_id INTEGER,
+            line_id UUID NOT NULL REFERENCES production_lines(id) ON DELETE CASCADE,
+            product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+            format_id INTEGER REFERENCES formats(id) ON DELETE SET NULL,
             production_date DATE NOT NULL,
             team VARCHAR(1) NOT NULL CHECK (team IN ('A', 'B', 'C')),
             time TIME NOT NULL,
             description_type VARCHAR(50) NOT NULL CHECK (description_type IN ('Physique', 'Chimique', 'Biologique', 'Process')),
             description_details TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            claim_origin VARCHAR(255) NOT NULL,
+            quantity INTEGER NOT NULL CHECK (quantity > 0),
+            claim_origin VARCHAR(20) NOT NULL CHECK (claim_origin IN ('client', 'site01', 'site02', 'consommateur')),
+            claim_origin_detail TEXT,
             valuation DECIMAL(10, 2) NOT NULL,
             performance TEXT,
-            status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
-            reported_by UUID NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+            reported_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             created_at TIMESTAMPTZ NOT NULL,
-            updated_at TIMESTAMPTZ NOT NULL,
-            FOREIGN KEY (line_id) REFERENCES production_lines (id) ON DELETE CASCADE,
-            FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
-            FOREIGN KEY (format_id) REFERENCES formats (id) ON DELETE SET NULL,
-            FOREIGN KEY (reported_by) REFERENCES users (id) ON DELETE CASCADE
+            updated_at TIMESTAMPTZ NOT NULL
         )
         "#,
     )

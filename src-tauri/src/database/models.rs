@@ -84,6 +84,7 @@ pub struct NonConformityReport {
     pub description_details: String,
     pub quantity: i32,
     pub claim_origin: String, // client, site01, site02, Consommateur
+    pub claim_origin_detail: Option<String>, // Détail de la réclamation
     pub valuation: Decimal,
     pub performance: Option<String>,
     pub status: String, // open, in_progress, resolved, closed
@@ -98,7 +99,10 @@ pub struct NonConformityReport {
 // Enums for validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserRole {
-    Client,
+    #[serde(rename = "Réclamation client")]
+    ReclamationClient,
+    #[serde(rename = "Retour client")]
+    RetourClient,
     Site01,
     Site02,
     Performance,
@@ -109,7 +113,8 @@ pub enum UserRole {
 impl UserRole {
     pub fn as_str(&self) -> &'static str {
         match self {
-            UserRole::Client => "client",
+            UserRole::ReclamationClient => "Réclamation client",
+            UserRole::RetourClient => "Retour client",
             UserRole::Site01 => "site01",
             UserRole::Site02 => "site02",
             UserRole::Performance => "performance",
@@ -123,14 +128,15 @@ impl FromStr for UserRole {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "client" => Ok(UserRole::Client),
+        match s {
+            "Réclamation client" => Ok(UserRole::ReclamationClient),
+            "Retour client" => Ok(UserRole::RetourClient),
             "site01" => Ok(UserRole::Site01),
             "site02" => Ok(UserRole::Site02),
             "performance" => Ok(UserRole::Performance),
             "admin" => Ok(UserRole::Admin),
             "consommateur" => Ok(UserRole::Consommateur),
-            _ => Err(format!("Invalid user role: {}", s)),
+            _ => Err(format!("Invalid role: {}", s)),
         }
     }
 }
@@ -173,7 +179,8 @@ impl DescriptionType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClaimOrigin {
-    Client,
+    #[serde(rename = "Réclamation client")]
+    ReclamationClient,
     Site01,
     Site02,
     Consommateur,
@@ -182,10 +189,24 @@ pub enum ClaimOrigin {
 impl ClaimOrigin {
     pub fn as_str(&self) -> &'static str {
         match self {
-            ClaimOrigin::Client => "client",
+            ClaimOrigin::ReclamationClient => "Réclamation client",
             ClaimOrigin::Site01 => "site01",
             ClaimOrigin::Site02 => "site02",
             ClaimOrigin::Consommateur => "Consommateur",
+        }
+    }
+}
+
+impl FromStr for ClaimOrigin {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Réclamation client" => Ok(ClaimOrigin::ReclamationClient),
+            "site01" => Ok(ClaimOrigin::Site01),
+            "site02" => Ok(ClaimOrigin::Site02),
+            "Consommateur" => Ok(ClaimOrigin::Consommateur),
+            _ => Err(format!("Invalid claim origin: {}", s)),
         }
     }
 }

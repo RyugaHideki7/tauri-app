@@ -20,6 +20,7 @@ pub struct CreateReportRequest {
     pub description_details: String,
     pub quantity: i32,
     pub claim_origin: String,
+    pub claim_origin_detail: Option<String>,
     pub valuation: f64,
     pub performance: Option<String>,
 }
@@ -37,6 +38,7 @@ pub struct UpdateReportRequest {
     pub description_details: String,
     pub quantity: i32,
     pub claim_origin: String,
+    pub claim_origin_detail: Option<String>,
     pub valuation: f64,
     pub performance: Option<String>,
 }
@@ -102,7 +104,7 @@ impl ReportsService {
             INSERT INTO non_conformity_reports (
                 id, report_number, report_date, line_id, product_id, format_id,
                 production_date, team, time, description_type, description_details,
-                quantity, claim_origin, valuation, performance, status, reported_by,
+                quantity, claim_origin, claim_origin_detail, valuation, performance, status, reported_by,
                 created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             "#,
@@ -120,6 +122,7 @@ impl ReportsService {
         .bind(&request.description_details)
         .bind(request.quantity)
         .bind(&request.claim_origin)
+        .bind(&request.claim_origin_detail)
         .bind(Decimal::from_f64(request.valuation).unwrap_or_default())
         .bind(&request.performance)
         .bind("open") // Default status
@@ -434,10 +437,11 @@ impl ReportsService {
                 description_details = $9,
                 quantity = $10,
                 claim_origin = $11,
-                valuation = $12,
-                performance = $13,
-                updated_at = $14
-            WHERE id = $15
+                claim_origin_detail = $12,
+                valuation = $13,
+                performance = $14,
+                updated_at = $15
+            WHERE id = $16
             "#,
         )
         .bind(line_id)
@@ -451,6 +455,7 @@ impl ReportsService {
         .bind(&request.description_details)
         .bind(request.quantity)
         .bind(&request.claim_origin)
+        .bind(&request.claim_origin_detail)
         .bind(Decimal::from_f64(request.valuation).unwrap_or_default())
         .bind(&request.performance)
         .bind(now)
