@@ -394,7 +394,10 @@ export const ReportsPage: React.FC = () => {
     if (!editFormData.team) newErrors.team = "L'équipe est requise";
     if (!editFormData.time) newErrors.time = "L'heure est requise";
     if (!editFormData.description_type) newErrors.description_type = 'Le type de description est requis';
-    if (!editFormData.description_details?.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
+    // "Détail de la réclamation" must be provided (maps to claim_origin_detail)
+    if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
+      newErrors.claim_origin_detail = 'Le détail de la réclamation est requis';
+    }
     if (!editFormData.quantity || editFormData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
     if (editFormData.valuation === undefined || (typeof editFormData.valuation === 'number' && editFormData.valuation < 0)) newErrors.valuation = 'La valorisation ne peut pas être négative';
     
@@ -421,6 +424,7 @@ export const ReportsPage: React.FC = () => {
           time: ((editFormData.time || '').trim().slice(0, 5)),
           description_type: editFormData.description_type,
           description_details: editFormData.description_details,
+          claim_origin_detail: (editFormData.claim_origin_detail && editFormData.claim_origin_detail.trim() !== '') ? editFormData.claim_origin_detail.trim() : null,
           quantity: parseInt(editFormData.quantity?.toString() || '0', 10),
           claim_origin: editFormData.claim_origin,
           valuation: typeof editFormData.valuation === 'string' ? parseFloat(editFormData.valuation) : editFormData.valuation,
