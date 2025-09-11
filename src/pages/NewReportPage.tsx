@@ -82,7 +82,7 @@ export const NewReportPage: React.FC = () => {
     team: 'A',
     time: new Date().toTimeString().slice(0, 5),
     description_type: '',
-    description_details: user?.role === 'site01' ? 'Site 01' : user?.role === 'site02' ? 'Site 02' : '',
+    description_details: '',
     quantity: 0,
     claim_origin: '',
     claim_origin_detail: '',
@@ -158,20 +158,20 @@ export const NewReportPage: React.FC = () => {
 
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => {
-      // If claim_origin changes to/from site01/site02, update description_details accordingly
+      // If claim_origin changes to/from site01/site02, update claim_origin_detail accordingly
       if (name === 'claim_origin') {
         if (['site01', 'site02'].includes(value)) {
           return {
             ...prev,
             [name]: value,
-            description_details: value === 'site01' ? 'Site 01' : 'Site 02'
+            claim_origin_detail: value === 'site01' ? 'Site 01' : 'Site 02'
           };
         } else if (['site01', 'site02'].includes(prev.claim_origin)) {
-          // If changing from site01/site02 to something else, clear the description
+          // If changing from site01/site02 to something else, clear the claim_origin_detail
           return {
             ...prev,
             [name]: value,
-            description_details: ''
+            claim_origin_detail: ''
           };
         }
       }
@@ -243,10 +243,10 @@ export const NewReportPage: React.FC = () => {
         team: formData.team,
         time: formData.time,
         description_type: formData.description_type,
-        description_details: formData.description_details,
+        description_details: formData.description_details, // "Détails complémentaires" maps to description_details
         quantity: formData.quantity,
         claim_origin: formData.claim_origin,
-        claim_origin_detail: formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null,
+        claim_origin_detail: formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null, // "Détail de la réclamation" maps to claim_origin_detail
         valuation: 0,
         // Only include performance field if user has permission
         performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined
@@ -566,7 +566,7 @@ export const NewReportPage: React.FC = () => {
                     onChange={(value) => {
                       const selectedClientData = clients.find(c => c.id === value);
                       setSelectedClient(value);
-                      // Store client name in claim_origin_detail
+                      // Store client name in claim_origin_detail (Détail de la réclamation)
                       handleInputChange('claim_origin_detail', selectedClientData?.name || '');
                       // Store client ID in claim_origin_client_id
                       handleInputChange('claim_origin_client_id', value);
@@ -591,8 +591,8 @@ export const NewReportPage: React.FC = () => {
                   <div className="w-full">
                     <textarea
                       id="description-details"
-                      value={formData.description_details || ''}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
+                      value={formData.claim_origin_detail || ''}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('claim_origin_detail', e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                       rows={4}
                       placeholder="Décrivez en détail la non-conformité constatée..."
@@ -614,11 +614,11 @@ export const NewReportPage: React.FC = () => {
               <div className="w-full">
                 <textarea
                   id="claim-origin-details"
-                  value={formData.claim_origin_detail || ''}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('claim_origin_detail', e.target.value)}
+                  value={formData.description_details || ''}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
                   rows={2}
                   className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-                  placeholder="Détails complémentaires sur la non-conformité..."
+                  placeholder="Informations complémentaires sur le client (ex: contact, numéro de commande, etc.)"
                 />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">

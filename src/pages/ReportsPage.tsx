@@ -12,6 +12,7 @@ import Table from '../components/ui/Table';
 import Dialog from '../components/ui/Dialog';
 import { useToast } from '../components/ui/Toast';
 import * as ExcelJS from 'exceljs';
+import { ROLES } from '../types/auth';
 
 interface NonConformityReport {
   id: string;
@@ -224,12 +225,13 @@ export const ReportsPage: React.FC = () => {
       'Produit',
       'Date de production',
       'Format',
+      'Équipe',
       'Heure',
       'Description de la NC',
-      'Détails de la description',
-      'Équipe',
       'Quantité',
-      'Origine de réclamation',
+      'Origine de la réclamation',
+      'Détail de la réclamation',
+      'Détails complémentaires',
       'Valorisation',
       ...(canViewPerformance ? ['Performance'] : [])
     ];
@@ -245,7 +247,11 @@ export const ReportsPage: React.FC = () => {
       pattern: 'solid',
       fgColor: { argb: 'D9EAD3' }
     };
-    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.alignment = { 
+      horizontal: 'center', 
+      vertical: 'middle',
+      wrapText: true
+    };
     headerRow.border = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -253,9 +259,50 @@ export const ReportsPage: React.FC = () => {
       right: { style: 'thin' }
     };
     headerRow.height = 25;
+    
+    // Style data rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) { // Skip header row
+        row.alignment = { 
+          vertical: 'middle',
+          wrapText: true 
+        };
+        
+        // Right align numeric columns
+        [9, 13].forEach(colIndex => { // Quantity and Valuation columns
+          const cell = row.getCell(colIndex);
+          cell.alignment = cell.alignment || {};
+          cell.alignment.horizontal = 'right';
+        });
+        
+        // Center align team and time columns
+        [6, 7].forEach(colIndex => {
+          const cell = row.getCell(colIndex);
+          cell.alignment = cell.alignment || {};
+          cell.alignment.horizontal = 'center';
+        });
+      }
+    });
 
     // Add data rows
     reports.forEach(report => {
+      const originMap: Record<string, string> = {
+        'site01': 'Site 01',
+        'site02': 'Site 02',
+        'Réclamation client': 'Réclamation client',
+        'Retour client': 'Retour client'
+      };
+      
+      const originDetail = () => {
+        if (['site01', 'site02'].includes(report.claim_origin)) {
+          return report.claim_origin === 'site01' ? 'Site 01' : 'Site 02';
+        }
+        if (['Réclamation client', 'Retour client'].includes(report.claim_origin)) {
+          return report.claim_origin_detail || '-';
+        }
+        return '-';
+      };
+
       const rowData = [
         report.report_number,
         formatDate(report.report_date),
@@ -263,20 +310,22 @@ export const ReportsPage: React.FC = () => {
         report.product_name || 'Produit inconnu',
         formatDate(report.production_date),
         report.format_display || '-',
+        `Équipe ${report.team}`,
         report.time || '-',
         report.description_type,
-        report.description_details,
-        `Équipe ${report.team}`,
         report.quantity,
-        report.claim_origin,
+        originMap[report.claim_origin] || report.claim_origin || '-',
+        originDetail(),
+        report.description_details || '-',
         `${parseFloat(report.valuation).toFixed(2).replace('.', ',')} DZD`,
         ...(canViewPerformance ? [report.performance || '-'] : [])
       ];
+      
       worksheet.addRow(rowData);
     });
 
     // Set column widths
-    const columnWidths = [15, 18, 15, 25, 12, 10, 8, 15, 30, 10, 8, 20, 12];
+    const columnWidths = [15, 18, 15, 25, 15, 12, 10, 8, 20, 10, 20, 20, 30, 15];
     if (canViewPerformance) columnWidths.push(15);
     
     worksheet.columns.forEach((column, index) => {
@@ -619,7 +668,7 @@ export const ReportsPage: React.FC = () => {
           },
           {
             key: 'claim_origin_detail',
-            header: 'Détail de l\'origine',
+            header: 'Détail de la réclamation',
             render: (value, row) => {
               // For site01/site02, show the role name as detail
               if (['site01', 'site02'].includes(row.claim_origin)) {
@@ -848,12 +897,13 @@ export const ReportsPage: React.FC = () => {
                 label="Origine de la réclamation *"
                 value={editFormData.claim_origin || ''}
                 onChange={(value) => handleEditInputChange('claim_origin', value)}
-                options={[
-                  { value: 'client', label: 'Client' },
-                  { value: 'site01', label: 'Site 01' },
-                  { value: 'site02', label: 'Site 02' },
-                  { value: 'consommateur', label: 'Consommateur' }
-                ]}
+                 options={[
+                            { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
+                            { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
+                            { value: 'site01', label: 'Site 01' },
+                            { value: 'site02', label: 'Site 02' },
+                            { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
+                          ]}
                 error={editErrors.claim_origin}
                 disabled={true}
               />
@@ -873,17 +923,29 @@ export const ReportsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Description Details */}
+          {/* Détail de la réclamation */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Détails de la description *</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Détail de la réclamation *</label>
+            <textarea
+              value={editFormData.claim_origin_detail || ''}
+              onChange={(e) => handleEditInputChange('claim_origin_detail', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              placeholder="Détails de la réclamation..."
+            />
+            {editErrors.claim_origin_detail && <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>}
+          </div>
+
+          {/* Détails complémentaires */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-foreground mb-2">Détails complémentaires</label>
             <textarea
               value={editFormData.description_details || ''}
               onChange={(e) => handleEditInputChange('description_details', e.target.value)}
-              rows={3}
+              rows={2}
               className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              placeholder="Détails de la non-conformité..."
+              placeholder="Informations complémentaires..."
             />
-            {editErrors.description_details && <p className="text-destructive text-sm mt-1">{editErrors.description_details}</p>}
           </div>
 
           {/* Performance */}
