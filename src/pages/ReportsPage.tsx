@@ -28,6 +28,9 @@ interface NonConformityReport {
   description_details: string;
   quantity: number;
   claim_origin: string;
+  claim_origin_detail?: string;
+  claim_origin_client_id?: string;
+  claim_origin_manual?: string;
   valuation: string; // Decimal serializes as string from Rust
   performance?: string;
   status: string;
@@ -598,21 +601,45 @@ export const ReportsPage: React.FC = () => {
             header: 'Description de la NC'
           },
           {
-            key: 'description_details',
-            header: 'Détails de la description',
-            render: (value) => (
-              <span className="max-w-xs truncate block" title={value}>
-                {value || '-'}
-              </span>
-            )
-          },
-          {
             key: 'quantity',
             header: 'Quantité'
           },
           {
             key: 'claim_origin',
-            header: 'Origine'
+            header: 'Origine de la réclamation',
+            render: (value) => {
+              const originMap: Record<string, string> = {
+                'site01': 'Site 01',
+                'site02': 'Site 02',
+                'Réclamation client': 'Réclamation client',
+                'Retour client': 'Retour client'
+              };
+              return originMap[value] || value || '-';
+            }
+          },
+          {
+            key: 'claim_origin_detail',
+            header: 'Détail de l\'origine',
+            render: (value, row) => {
+              // For site01/site02, show the role name as detail
+              if (['site01', 'site02'].includes(row.claim_origin)) {
+                return row.claim_origin === 'site01' ? 'Site 01' : 'Site 02';
+              }
+              // For client claims, show the client details if available
+              if (['Réclamation client', 'Retour client'].includes(row.claim_origin)) {
+                return value || '-';
+              }
+              return '-';
+            }
+          },
+          {
+            key: 'description_details',
+            header: 'Détails complémentaires',
+            render: (value) => (
+              <span className="max-w-xs truncate block" title={value}>
+                {value || '-'}
+              </span>
+            )
           },
           ...(user?.role === 'performance' || user?.role === 'admin' ? [{
             key: 'valuation',
