@@ -23,6 +23,7 @@ pub struct CreateReportRequest {
     pub claim_origin_detail: Option<String>,
     pub valuation: f64,
     pub performance: Option<String>,
+    pub picture_data: Option<String>, // Base64 encoded image data
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,6 +42,7 @@ pub struct UpdateReportRequest {
     pub claim_origin_detail: Option<String>,
     pub valuation: f64,
     pub performance: Option<String>,
+    pub picture_data: Option<String>, // Base64 encoded image data
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -104,9 +106,9 @@ impl ReportsService {
             INSERT INTO non_conformity_reports (
                 id, report_number, report_date, line_id, product_id, format_id,
                 production_date, team, time, description_type, description_details,
-                quantity, claim_origin, claim_origin_detail, valuation, performance, status, reported_by,
+                quantity, claim_origin, claim_origin_detail, valuation, performance, picture_data, status, reported_by,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             "#,
         )
         .bind(id)
@@ -125,6 +127,7 @@ impl ReportsService {
         .bind(&request.claim_origin_detail)
         .bind(Decimal::from_f64(request.valuation).unwrap_or_default())
         .bind(&request.performance)
+        .bind(&request.picture_data)
         .bind("open") // Default status
         .bind(reported_by)
         .bind(now)
@@ -440,8 +443,9 @@ impl ReportsService {
                 claim_origin_detail = $12,
                 valuation = $13,
                 performance = $14,
-                updated_at = $15
-            WHERE id = $16
+                picture_data = $15,
+                updated_at = $16
+            WHERE id = $17
             "#,
         )
         .bind(line_id)
@@ -458,6 +462,7 @@ impl ReportsService {
         .bind(&request.claim_origin_detail)
         .bind(Decimal::from_f64(request.valuation).unwrap_or_default())
         .bind(&request.performance)
+        .bind(&request.picture_data)
         .bind(now)
         .bind(report_id)
         .execute(&self.pool)

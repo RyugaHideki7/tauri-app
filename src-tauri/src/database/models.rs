@@ -87,6 +87,7 @@ pub struct NonConformityReport {
     pub claim_origin_detail: Option<String>, // Détail de la réclamation
     pub valuation: Decimal,
     pub performance: Option<String>,
+    pub picture_data: Option<String>, // Base64 encoded image data
     pub status: String, // open, in_progress, resolved, closed
     pub reported_by: Uuid,
     pub created_at: DateTime<Utc>,

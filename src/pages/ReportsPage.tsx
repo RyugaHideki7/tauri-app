@@ -34,6 +34,7 @@ interface NonConformityReport {
   claim_origin_manual?: string;
   valuation: string; // Decimal serializes as string from Rust
   performance?: string;
+  picture_data?: string;
   status: string;
   reported_by: string;
   created_at: string;
@@ -107,6 +108,10 @@ export const ReportsPage: React.FC = () => {
   const [formats, setFormats] = useState<Format[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [editSelectedClient, setEditSelectedClient] = useState('');
+  
+  // Picture view modal states
+  const [pictureViewModalOpen, setPictureViewModalOpen] = useState(false);
+  const [viewingPicture, setViewingPicture] = useState<string | null>(null);
 
   useEffect(() => {
     // Debug current filters
@@ -456,6 +461,11 @@ export const ReportsPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleViewPicture = (pictureData: string) => {
+    setViewingPicture(pictureData);
+    setPictureViewModalOpen(true);
+  };
+
   const handleSaveFullEdit = async () => {
     if (!editingReport || !validateEditForm()) return;
 
@@ -488,7 +498,9 @@ export const ReportsPage: React.FC = () => {
           quantity: parseInt(editFormData.quantity?.toString() || '0', 10),
           claim_origin: editFormData.claim_origin,
           valuation: typeof editFormData.valuation === 'string' ? parseFloat(editFormData.valuation) : editFormData.valuation,
-          performance: editFormData.performance
+          performance: editFormData.performance,
+          // Preserve existing picture_data - don't overwrite with null
+          picture_data: editingReport.picture_data
         }
       });
       
@@ -784,6 +796,20 @@ export const ReportsPage: React.FC = () => {
             header: 'Actions',
             render: (_value: any, row: NonConformityReport) => (
               <div className="flex items-center gap-2">
+                {row.picture_data && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleViewPicture(row.picture_data!)}
+                    className="h-12 w-12 p-2.5 flex items-center justify-center rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-600 hover:scale-105 focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 transition-all duration-200"
+                    title="Voir la photo"
+                    aria-label="Voir la photo"
+                  >
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                    </svg>
+                    <span className="sr-only">Voir la photo</span>
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   onClick={() => handleFullEdit(row)}
@@ -1092,6 +1118,35 @@ export const ReportsPage: React.FC = () => {
               ) : (
                 'Enregistrer les modifications'
               )}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Picture View Modal */}
+      <Dialog
+        isOpen={pictureViewModalOpen}
+        onClose={() => setPictureViewModalOpen(false)}
+        title="Photo de la non-conformité"
+        maxWidth="4xl"
+      >
+        <div className="space-y-4">
+          {viewingPicture && (
+            <div className="flex justify-center">
+              <img
+                src={viewingPicture}
+                alt="Photo de la non-conformité"
+                className="max-w-full max-h-[70vh] object-contain rounded-lg border border-border shadow-lg"
+              />
+            </div>
+          )}
+          <div className="flex justify-center pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setPictureViewModalOpen(false)}
+              className="px-6"
+            >
+              Fermer
             </Button>
           </div>
         </div>

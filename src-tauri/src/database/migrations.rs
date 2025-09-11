@@ -180,6 +180,16 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // Add picture column to existing non_conformity_reports table if it doesn't exist
+    sqlx::query(
+        r#"
+        ALTER TABLE non_conformity_reports 
+        ADD COLUMN IF NOT EXISTS picture_data TEXT
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     // Remove the separate ALTER TABLE for format_id since it's now in the main CREATE TABLE
 
     // Create clients table

@@ -8,6 +8,7 @@ import SearchableSelect from '../components/ui/SearchableSelect';
 import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Dialog from '../components/ui/Dialog';
+import PictureUpload from '../components/ui/PictureUpload';
 import { ROLES } from '../types/auth';
 
 interface Client {
@@ -56,6 +57,7 @@ interface CreateReportRequest {
   claim_origin_detail: string | null;
   valuation: number;
   performance?: string;
+  picture_data?: string | null;
 }
 
 interface FormData extends CreateReportRequest {
@@ -90,6 +92,7 @@ export const NewReportPage: React.FC = () => {
     claim_origin_manual: '',
     valuation: 0,
     performance: '',
+    picture_data: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -249,7 +252,8 @@ export const NewReportPage: React.FC = () => {
         claim_origin_detail: formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null, // "Détail de la réclamation" maps to claim_origin_detail
         valuation: 0,
         // Only include performance field if user has permission
-        performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined
+        performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined,
+        picture_data: formData.picture_data
       };
 
       await invoke('create_report', {
@@ -275,6 +279,7 @@ export const NewReportPage: React.FC = () => {
         claim_origin_manual: '',
         valuation: 0,
         performance: '',
+        picture_data: null,
       });
 
       setShowSuccessDialog(true);
@@ -626,6 +631,18 @@ export const NewReportPage: React.FC = () => {
               </p>
             </div>
 
+            {/* Picture Upload */}
+            <div className="col-span-2">
+              <PictureUpload
+                label="Photo de la non-conformité (optionnelle)"
+                value={formData.picture_data}
+                onChange={(pictureData) => handleInputChange('picture_data', pictureData)}
+                error={errors.picture_data}
+                disabled={loading}
+                maxSize={5}
+              />
+            </div>
+
             {/* Submit Button */}
             <div className="col-span-2 pt-4">
               <div className="flex justify-end space-x-4">
@@ -726,6 +743,7 @@ export const NewReportPage: React.FC = () => {
                     claim_origin_manual: '',
                     valuation: 0,
                     performance: '',
+                    picture_data: null,
                   });
                   // Reset client selection
                   setSelectedClient('');
