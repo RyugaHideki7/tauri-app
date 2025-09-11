@@ -9,6 +9,7 @@ interface DialogProps {
   children: ReactNode;
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
+  theme?: 'light' | 'dark';
 }
 
 const maxWidthClasses = {
@@ -32,6 +33,7 @@ const Dialog: React.FC<DialogProps> = ({
   children,
   className = '',
   maxWidth = 'md',
+  theme,
 }) => {
   // Close on Escape key
   useEffect(() => {
@@ -56,7 +58,7 @@ const Dialog: React.FC<DialogProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 backdrop-blur-sm bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4 transition-all duration-200"
+      className={`fixed inset-0 backdrop-blur-sm bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4 transition-all duration-200 ${theme}`}
       onClick={onClose}
     >
       <div 
@@ -73,7 +75,7 @@ const Dialog: React.FC<DialogProps> = ({
             <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-6">
+        <div className={`p-6 ${theme || ''}`}>
           {children}
         </div>
       </div>

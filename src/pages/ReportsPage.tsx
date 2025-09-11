@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../components/layout/ThemeProvider';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -10,6 +11,7 @@ import DatePicker from '../components/ui/DatePicker';
 import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Table from '../components/ui/Table';
 import Dialog from '../components/ui/Dialog';
+import ActionButtons from '../components/ui/ActionButtons';
 import { useToast } from '../components/ui/Toast';
 import * as ExcelJS from 'exceljs';
 import { ROLES } from '../types/auth';
@@ -77,8 +79,9 @@ interface Format {
 
 
 export const ReportsPage: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isDarkMode } = useTheme();
   const { addToast } = useToast();
   const todayStr = new Date().toISOString().split('T')[0];
   const [reports, setReports] = useState<NonConformityReport[]>([]);
@@ -466,6 +469,19 @@ export const ReportsPage: React.FC = () => {
     setPictureViewModalOpen(true);
   };
 
+  // Delete a report
+  const handleDeleteReport = async (report: NonConformityReport) => {
+    try {
+      // Send both snake_case and camelCase to satisfy any mapping
+      await invoke<boolean>('delete_report', { report_id: report.id, reportId: report.id });
+      await loadReports();
+      addToast('Rapport supprimé avec succès', 'success');
+    } catch (error) {
+      console.error('Échec de la suppression du rapport :', error);
+      addToast('Échec de la suppression du rapport', 'error');
+    }
+  };
+
   const handleSaveFullEdit = async () => {
     if (!editingReport || !validateEditForm()) return;
 
@@ -718,7 +734,7 @@ export const ReportsPage: React.FC = () => {
           {
             key: 'team',
             header: 'Équipe',
-            render: (value) => `Team ${value}`
+            render: (value) => `Équipe ${value}`
           },
           {
             key: 'time',
@@ -795,34 +811,19 @@ export const ReportsPage: React.FC = () => {
             key: 'actions',
             header: 'Actions',
             render: (_value: any, row: NonConformityReport) => (
-              <div className="flex items-center gap-2">
-                {row.picture_data && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleViewPicture(row.picture_data!)}
-                    className="h-12 w-12 p-2.5 flex items-center justify-center rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-600 hover:scale-105 focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 transition-all duration-200"
-                    title="Voir la photo"
-                    aria-label="Voir la photo"
-                  >
-                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                    </svg>
-                    <span className="sr-only">Voir la photo</span>
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() => handleFullEdit(row)}
-                  className="h-12 w-12 p-2.5 flex items-center justify-center rounded-full bg-primary/5 hover:bg-primary/20 text-primary hover:scale-105 focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-all duration-200"
-                  title="Modifier le rapport"
-                  aria-label="Modifier le rapport"
-                >
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                  </svg>
-                  <span className="sr-only">Modifier</span>
-                </Button>
-              </div>
+              <ActionButtons
+                onEdit={() => handleFullEdit(row)}
+                onShowImage={row.picture_data ? () => handleViewPicture(row.picture_data!) : undefined}
+                onDelete={() => handleDeleteReport(row)}
+                size="sm"
+                variant="default"
+                showImageButton={!!row.picture_data}
+                theme={isDarkMode ? 'dark' : 'light'}
+                deleteConfirmation={{
+                  title: "Confirmer la suppression",
+                  message: `Êtes-vous sûr de vouloir supprimer le rapport #${row.report_number} ? Cette action est irréversible.`
+                }}
+              />
             )
           }] : [])
         ]}
