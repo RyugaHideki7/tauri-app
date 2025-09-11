@@ -72,7 +72,7 @@ export const NewReportPage: React.FC = () => {
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
-  
+
   const [formData, setFormData] = useState<FormData>({
     line_id: '',
     product_id: '',
@@ -82,7 +82,7 @@ export const NewReportPage: React.FC = () => {
     team: 'A',
     time: new Date().toTimeString().slice(0, 5),
     description_type: '',
-    description_details: '',
+    description_details: user?.role === 'site01' ? 'Site 01' : user?.role === 'site02' ? 'Site 02' : '',
     quantity: 0,
     claim_origin: '',
     claim_origin_detail: '',
@@ -156,22 +156,36 @@ export const NewReportPage: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string | number | undefined | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    // Handle both direct values and React change events
-    const newValue = typeof value === 'object' && value !== null && 'target' in value 
-      ? value.target.value 
-      : value;
-      
-    setFormData(prev => ({
-      ...prev,
-      [field]: newValue
-    }));
+  const handleInputChange = (name: string, value: any) => {
+    setFormData(prev => {
+      // If claim_origin changes to/from site01/site02, update description_details accordingly
+      if (name === 'claim_origin') {
+        if (['site01', 'site02'].includes(value)) {
+          return {
+            ...prev,
+            [name]: value,
+            description_details: value === 'site01' ? 'Site 01' : 'Site 02'
+          };
+        } else if (['site01', 'site02'].includes(prev.claim_origin)) {
+          // If changing from site01/site02 to something else, clear the description
+          return {
+            ...prev,
+            [name]: value,
+            description_details: ''
+          };
+        }
+      }
+      return {
+        ...prev,
+        [name]: value
+      };
+    });
     
     // Clear error when user starts typing
-    if (errors[field as string]) {
+    if (errors[name]) {
       setErrors(prev => ({
         ...prev,
-        [field]: ''
+        [name]: ''
       }));
     }
   };
@@ -187,7 +201,12 @@ export const NewReportPage: React.FC = () => {
     if (!formData.team) newErrors.team = "L'équipe est requise";
     if (!formData.time) newErrors.time = "L'heure est requise";
     if (!formData.description_type) newErrors.description_type = 'Le type de description est requis';
-    if (!formData.description_details.trim()) newErrors.description_details = 'Veuillez fournir des détails de description';
+    // Skip description_details validation for site01/site02 users or when site01/site02 is selected
+    const isSiteUser = ['site01', 'site02'].includes(user?.role || '');
+    const isSiteSelected = ['site01', 'site02'].includes(formData.claim_origin);
+    if (!isSiteUser && !isSiteSelected && !formData.description_details.trim()) {
+      newErrors.description_details = 'Veuillez fournir des détails de description';
+    }
     if (formData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
 
     // Validate claim origin - required for all roles
@@ -271,6 +290,7 @@ export const NewReportPage: React.FC = () => {
   const renderClaimOriginField = () => {
     const role = user?.role;
     const canEditClaimOrigin = role === ROLES.PERFORMANCE || role === ROLES.ADMIN;
+    const isClientClaim = [ROLES.RECLAMATION_CLIENT, ROLES.RETOUR_CLIENT].includes(formData.claim_origin as typeof ROLES.RECLAMATION_CLIENT | typeof ROLES.RETOUR_CLIENT);
 
     // For performance and admin roles - show full select with all options
     if (canEditClaimOrigin) {
@@ -278,7 +298,13 @@ export const NewReportPage: React.FC = () => {
         <Select
           label="Origine de la réclamation *"
           value={formData.claim_origin}
-          onChange={(value) => handleInputChange('claim_origin', value as string)}
+          onChange={(value) => {
+            handleInputChange('claim_origin', value as string);
+            // Clear client selection when changing claim origin
+            setSelectedClient('');
+            handleInputChange('claim_origin_detail', '');
+            handleInputChange('claim_origin_client_id', '');
+          }}
           options={[
             { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
             { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
@@ -521,7 +547,19 @@ export const NewReportPage: React.FC = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Détail de la réclamation *
               </label>
-              {(user?.role === ROLES.RECLAMATION_CLIENT || user?.role === ROLES.RETOUR_CLIENT) ? (
+              {['site01', 'site02'].includes(user?.role || '') || 
+               ['site01', 'site02'].includes(formData.claim_origin) ? (
+                <Input
+                  type="text"
+                  value={formData.claim_origin === 'site01' || user?.role === 'site01' ? 'Site 01' : 'Site 02'}
+                  disabled
+                  className="w-full bg-gray-100"
+                />
+              ) : ((user?.role === ROLES.RECLAMATION_CLIENT || 
+                 user?.role === ROLES.RETOUR_CLIENT ||
+                 (user?.role === ROLES.ADMIN && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT)) ||
+                 (user?.role === ROLES.PERFORMANCE && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT))
+                ) && clients.length > 0) ? (
                 <>
                   <SearchableSelect
                     value={selectedClient}
@@ -550,14 +588,17 @@ export const NewReportPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <textarea
-                    value={formData.description_details}
-                    onChange={(e) => handleInputChange('description_details', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    rows={4}
-                    placeholder="Décrivez en détail la non-conformité constatée..."
-                    required
-                  />
+                  <div className="w-full">
+                    <textarea
+                      id="description-details"
+                      value={formData.description_details || ''}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                      rows={4}
+                      placeholder="Décrivez en détail la non-conformité constatée..."
+                      required
+                    />
+                  </div>
                   {errors.description_details && (
                     <p className="mt-1 text-sm text-red-500">{errors.description_details}</p>
                   )}
@@ -570,13 +611,16 @@ export const NewReportPage: React.FC = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Détails complémentaires
               </label>
-              <textarea
-                value={formData.description_details || ''}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description_details', e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-                placeholder="Détails complémentaires sur la non-conformité..."
-              />
+              <div className="w-full">
+                <textarea
+                  id="claim-origin-details"
+                  value={formData.claim_origin_detail || ''}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('claim_origin_detail', e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
+                  placeholder="Détails complémentaires sur la non-conformité..."
+                />
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Ce champ est optionnel et sert à ajouter des détails spécifiques sur l'origine du signalement.
               </p>
