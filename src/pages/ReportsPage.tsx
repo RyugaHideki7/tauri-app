@@ -56,6 +56,11 @@ interface Product {
   code?: string;
 }
 
+interface Client {
+  id: string;
+  name: string;
+}
+
 interface ProductionLine {
   id: string;
   name: string;
@@ -100,6 +105,8 @@ export const ReportsPage: React.FC = () => {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editLines, setEditLines] = useState<ProductionLine[]>([]);
   const [formats, setFormats] = useState<Format[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [editSelectedClient, setEditSelectedClient] = useState('');
 
   useEffect(() => {
     // Debug current filters
@@ -115,12 +122,14 @@ export const ReportsPage: React.FC = () => {
 
   const loadEditData = async () => {
     try {
-      const [linesData, formatsData] = await Promise.all([
+      const [linesData, formatsData, clientsData] = await Promise.all([
         invoke<ProductionLine[]>('get_lines'),
-        invoke<Format[]>('get_formats')
+        invoke<Format[]>('get_formats'),
+        invoke<Client[]>('get_clients')
       ]);
       setEditLines(linesData);
       setFormats(formatsData);
+      setClients(clientsData || []);
     } catch (error) {
       console.error('Failed to load edit data:', error);
     }
@@ -360,14 +369,53 @@ export const ReportsPage: React.FC = () => {
 
   const handleFullEdit = (report: NonConformityReport) => {
     setEditingReport(report);
+    // Ensure site origins have a visible, immutable detail value
+    const isSite = ['site01', 'site02'].includes(report.claim_origin);
+    const ensuredDetail = isSite
+      ? (report.claim_origin === 'site01' ? 'Site 01' : 'Site 02')
+      : (report.claim_origin_detail || '');
+
     setEditFormData({
       ...report,
       production_date: report.production_date.split('T')[0],
-      report_date: report.report_date.split('T')[0]
+      report_date: report.report_date.split('T')[0],
+      claim_origin_detail: ensuredDetail
     });
+    // Default-select original client for client-origin reports
+    if (['Réclamation client', 'Retour client'].includes(report.claim_origin)) {
+      const fallbackId = (() => {
+        if (report.claim_origin_client_id) return report.claim_origin_client_id;
+        const match = clients.find(c => c.name === (report.claim_origin_detail || ''));
+        return match ? match.id : '';
+      })();
+      setEditSelectedClient(fallbackId);
+      // Also ensure formData has the id so it submits even if user doesn't touch the field
+      setEditFormData(prev => ({
+        ...prev,
+        claim_origin_client_id: fallbackId || undefined,
+      }));
+    } else {
+      setEditSelectedClient('');
+    }
     setEditErrors({});
     setFullEditModalOpen(true);
   };
+
+  // If clients load after opening the modal, backfill selection from name when needed
+  useEffect(() => {
+    if (!fullEditModalOpen) return;
+    if (!editingReport) return;
+    const origin = editFormData.claim_origin || editingReport.claim_origin;
+    if (!['Réclamation client', 'Retour client'].includes(origin)) return;
+    if (editSelectedClient) return; // already set
+    const name = (editFormData.claim_origin_detail || editingReport.claim_origin_detail || '').trim();
+    if (!name) return;
+    const match = clients.find(c => c.name === name);
+    if (match) {
+      setEditSelectedClient(match.id);
+      setEditFormData(prev => ({ ...prev, claim_origin_client_id: match.id }));
+    }
+  }, [clients, fullEditModalOpen]);
 
   const handleEditInputChange = (field: string, value: any) => {
     setEditFormData(prev => ({
@@ -394,9 +442,12 @@ export const ReportsPage: React.FC = () => {
     if (!editFormData.team) newErrors.team = "L'équipe est requise";
     if (!editFormData.time) newErrors.time = "L'heure est requise";
     if (!editFormData.description_type) newErrors.description_type = 'Le type de description est requis';
-    // "Détail de la réclamation" must be provided (maps to claim_origin_detail)
-    if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
-      newErrors.claim_origin_detail = 'Le détail de la réclamation est requis';
+    // "Détail de la réclamation" must be provided for non-site origins
+    const isSiteEdit = ['site01', 'site02'].includes(editFormData.claim_origin || '');
+    if (!isSiteEdit) {
+      if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
+        newErrors.claim_origin_detail = 'Le détail de la réclamation est requis';
+      }
     }
     if (!editFormData.quantity || editFormData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
     if (editFormData.valuation === undefined || (typeof editFormData.valuation === 'number' && editFormData.valuation < 0)) newErrors.valuation = 'La valorisation ne peut pas être négative';
@@ -424,7 +475,16 @@ export const ReportsPage: React.FC = () => {
           time: ((editFormData.time || '').trim().slice(0, 5)),
           description_type: editFormData.description_type,
           description_details: editFormData.description_details,
-          claim_origin_detail: (editFormData.claim_origin_detail && editFormData.claim_origin_detail.trim() !== '') ? editFormData.claim_origin_detail.trim() : null,
+          // Ensure site origins persist a consistent detail label
+          claim_origin_detail: (() => {
+            const origin = editFormData.claim_origin || '';
+            if (origin === 'site01') return 'Site 01';
+            if (origin === 'site02') return 'Site 02';
+            return (editFormData.claim_origin_detail && editFormData.claim_origin_detail.trim() !== '')
+              ? editFormData.claim_origin_detail.trim()
+              : null;
+          })(),
+          claim_origin_client_id: editFormData.claim_origin_client_id || null,
           quantity: parseInt(editFormData.quantity?.toString() || '0', 10),
           claim_origin: editFormData.claim_origin,
           valuation: typeof editFormData.valuation === 'string' ? parseFloat(editFormData.valuation) : editFormData.valuation,
@@ -939,14 +999,48 @@ export const ReportsPage: React.FC = () => {
           {/* Détail de la réclamation */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Détail de la réclamation *</label>
-            <textarea
-              value={editFormData.claim_origin_detail || ''}
-              onChange={(e) => handleEditInputChange('claim_origin_detail', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              placeholder="Détails de la réclamation..."
-            />
-            {editErrors.claim_origin_detail && <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>}
+            {['site01', 'site02'].includes(editFormData.claim_origin || '') ? (
+              <Input
+                type="text"
+                value={(editFormData.claim_origin === 'site01') ? 'Site 01' : 'Site 02'}
+                disabled
+                className="w-full bg-gray-100"
+              />
+            ) : (['Réclamation client', 'Retour client'].includes(editFormData.claim_origin || '') && clients.length > 0) ? (
+              <>
+                <SearchableSelect
+                  value={editSelectedClient}
+                  onChange={(value) => {
+                    const selected = clients.find(c => c.id === value);
+                    setEditSelectedClient(value);
+                    // Store client name in claim_origin_detail and ID in claim_origin_client_id
+                    handleEditInputChange('claim_origin_detail', selected?.name || '');
+                    handleEditInputChange('claim_origin_client_id', value);
+                  }}
+                  options={[
+                    { value: '', label: 'Sélectionnez un client' },
+                    ...clients.map(c => ({ value: c.id, label: c.name }))
+                  ]}
+                  placeholder="Sélectionnez un client"
+                  searchPlaceholder="Rechercher un client..."
+                  error={editErrors.claim_origin_detail}
+                />
+                {editErrors.claim_origin_detail && (
+                  <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <textarea
+                  value={editFormData.claim_origin_detail || ''}
+                  onChange={(e) => handleEditInputChange('claim_origin_detail', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  placeholder="Détails de la réclamation..."
+                />
+                {editErrors.claim_origin_detail && <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>}
+              </>
+            )}
           </div>
 
           {/* Détails complémentaires */}
