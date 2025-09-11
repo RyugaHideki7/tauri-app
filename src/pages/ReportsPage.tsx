@@ -290,7 +290,8 @@ export const ReportsPage: React.FC = () => {
         'site01': 'Site 01',
         'site02': 'Site 02',
         'Réclamation client': 'Réclamation client',
-        'Retour client': 'Retour client'
+        'Retour client': 'Retour client',
+        'consommateur': 'Consommateur'
       };
       
       const originDetail = () => {
@@ -298,6 +299,9 @@ export const ReportsPage: React.FC = () => {
           return report.claim_origin === 'site01' ? 'Site 01' : 'Site 02';
         }
         if (['Réclamation client', 'Retour client'].includes(report.claim_origin)) {
+          return report.claim_origin_detail || '-';
+        }
+        if (report.claim_origin === 'consommateur') {
           return report.claim_origin_detail || '-';
         }
         return '-';
@@ -661,7 +665,8 @@ export const ReportsPage: React.FC = () => {
                 'site01': 'Site 01',
                 'site02': 'Site 02',
                 'Réclamation client': 'Réclamation client',
-                'Retour client': 'Retour client'
+                'Retour client': 'Retour client',
+                'consommateur': 'Consommateur'
               };
               return originMap[value] || value || '-';
             }
@@ -676,6 +681,10 @@ export const ReportsPage: React.FC = () => {
               }
               // For client claims, show the client details if available
               if (['Réclamation client', 'Retour client'].includes(row.claim_origin)) {
+                return value || '-';
+              }
+              // For consumer, show the typed detail
+              if (row.claim_origin === 'consommateur') {
                 return value || '-';
               }
               return '-';
