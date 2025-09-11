@@ -88,10 +88,15 @@ impl ReportsService {
             .map_err(|e| anyhow::anyhow!("Invalid production date format: {}", e))?;
         
         let time_input = request.time.trim();
-        let time_clean: String = time_input.chars().filter(|c| c.is_ascii_digit() || *c == ':').collect();
-        let time = NaiveTime::parse_from_str(&time_clean, "%H:%M")
-            .or_else(|_| NaiveTime::parse_from_str(&time_clean, "%H:%M:%S"))
-            .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?;
+        let time = if time_input == "--:--" || time_input.is_empty() {
+            // Default time when not specified
+            NaiveTime::from_hms_opt(0, 0, 0).unwrap()
+        } else {
+            let time_clean: String = time_input.chars().filter(|c| c.is_ascii_digit() || *c == ':').collect();
+            NaiveTime::parse_from_str(&time_clean, "%H:%M")
+                .or_else(|_| NaiveTime::parse_from_str(&time_clean, "%H:%M:%S"))
+                .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?
+        };
         
         // Parse UUIDs
         let line_id = Uuid::parse_str(&request.line_id)
@@ -414,9 +419,14 @@ impl ReportsService {
         let production_date = NaiveDate::parse_from_str(&request.production_date, "%Y-%m-%d")
             .map_err(|e| anyhow::anyhow!("Invalid production date format: {}", e))?;
         
-        let time = NaiveTime::parse_from_str(&request.time, "%H:%M")
-            .or_else(|_| NaiveTime::parse_from_str(&request.time, "%H:%M:%S"))
-            .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?;
+        let time = if request.time.trim() == "--:--" || request.time.trim().is_empty() {
+            // Default time when not specified
+            NaiveTime::from_hms_opt(0, 0, 0).unwrap()
+        } else {
+            NaiveTime::parse_from_str(&request.time, "%H:%M")
+                .or_else(|_| NaiveTime::parse_from_str(&request.time, "%H:%M:%S"))
+                .map_err(|e| anyhow::anyhow!("Invalid time format (expected HH:MM or HH:MM:SS): {}", e))?
+        };
         
         // Parse UUIDs
         let line_id = Uuid::parse_str(&request.line_id)

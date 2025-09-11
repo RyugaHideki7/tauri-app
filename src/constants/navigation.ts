@@ -86,7 +86,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: faCog,
     label: "Paramètres",
     path: "/settings",
-    allowedRoles: [ADMIN, PERFORMANCE],
+    allowedRoles: [ADMIN],
     showInNav: true,
   },
 ];

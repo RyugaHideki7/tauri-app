@@ -82,7 +82,7 @@ export const NewReportPage: React.FC = () => {
     report_date: new Date().toISOString().split('T')[0],
     production_date: new Date().toISOString().split('T')[0],
     team: 'A',
-    time: new Date().toTimeString().slice(0, 5),
+    time: '--:--',
     description_type: '',
     description_details: '',
     quantity: 0,
@@ -202,7 +202,6 @@ export const NewReportPage: React.FC = () => {
     if (!formData.report_date) newErrors.report_date = 'La date de la réclamation est requise';
     if (!formData.production_date) newErrors.production_date = 'La date de production est requise';
     if (!formData.team) newErrors.team = "L'équipe est requise";
-    if (!formData.time) newErrors.time = "L'heure est requise";
     if (!formData.description_type) newErrors.description_type = 'Le type de description est requis';
     // Skip description_details validation for site01/site02 users or when site01/site02 is selected
     const isSiteUser = ['site01', 'site02'].includes(user?.role || '');
@@ -269,7 +268,7 @@ export const NewReportPage: React.FC = () => {
         report_date: new Date().toISOString().split('T')[0],
         production_date: new Date().toISOString().split('T')[0],
         team: 'A',
-        time: new Date().toTimeString().slice(0, 5),
+        time: '--:--',
         description_type: '',
         description_details: '',
         quantity: 0,
@@ -295,8 +294,6 @@ export const NewReportPage: React.FC = () => {
   const renderClaimOriginField = () => {
     const role = user?.role;
     const canEditClaimOrigin = role === ROLES.PERFORMANCE || role === ROLES.ADMIN;
-    const isClientClaim = [ROLES.RECLAMATION_CLIENT, ROLES.RETOUR_CLIENT].includes(formData.claim_origin as typeof ROLES.RECLAMATION_CLIENT | typeof ROLES.RETOUR_CLIENT);
-
     // For performance and admin roles - show full select with all options
     if (canEditClaimOrigin) {
       return (
@@ -486,11 +483,12 @@ export const NewReportPage: React.FC = () => {
             {/* Time */}
             <div>
               <IntuitiveTimePicker
-                label="Heure *"
+                label="Heure"
                 value={formData.time}
                 onChange={(value) => handleInputChange('time', value)}
                 error={errors.time}
                 format="24"
+                placeholder="--:-- (optionnel)"
               />
             </div>
 
@@ -733,7 +731,7 @@ export const NewReportPage: React.FC = () => {
                     report_date: new Date().toISOString().split('T')[0],
                     production_date: new Date().toISOString().split('T')[0],
                     team: 'A',
-                    time: new Date().toTimeString().slice(0, 5),
+                    time: '--:--',
                     description_type: '',
                     description_details: '',
                     quantity: 0,

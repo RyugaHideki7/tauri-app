@@ -50,7 +50,7 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
 
   // Parse HH:MM string to TimeState
   const parseTimeString = (timeStr: string): TimeState => {
-    if (!timeStr) return { hours: format === '12' ? 12 : 0, minutes: 0, period: 'AM' };
+    if (!timeStr || timeStr === '--:--') return { hours: format === '12' ? 12 : 0, minutes: 0, period: 'AM' };
     
     const [hoursStr, minutesStr] = timeStr.split(':');
     const hours24 = parseInt(hoursStr) || 0;
@@ -288,8 +288,8 @@ const IntuitiveTimePicker: React.FC<TimePickerProps> = ({
             ${className}
           `}
         >
-          <span className={`truncate ${!value ? 'text-muted-foreground' : 'text-foreground'}`}>
-            {value ? formatDisplayTime(selectedTime) : placeholder}
+          <span className={`truncate ${!value || value === '--:--' ? 'text-muted-foreground' : 'text-foreground'}`}>
+            {value && value !== '--:--' ? formatDisplayTime(selectedTime) : placeholder}
           </span>
           <svg
             className={`h-4 w-4 flex-shrink-0 ml-2 transition-colors duration-200 ${
