@@ -74,6 +74,7 @@ export const NewReportPage: React.FC = () => {
   const [descriptionTypes, setDescriptionTypes] = useState<DescriptionType[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
+  const [activeRole, setActiveRole] = useState<string>(''); // Role selected by user for this report
 
   const [formData, setFormData] = useState<FormData>({
     line_id: '',
@@ -103,15 +104,20 @@ export const NewReportPage: React.FC = () => {
     loadInitialData();
   }, []);
 
-  // Initialize claim origin based on user role
+  // Initialize active role and claim origin based on user roles
   useEffect(() => {
-    if (user?.role) {
-      const role = user.role;
+    if (user) {
+      const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+      
+      // Set default active role (first role or primary role)
+      const defaultRole = userRoles[0];
+      setActiveRole(defaultRole);
+      
       let initialClaimOrigin = '';
       
       // Only set initial value for non-admin/non-performance roles
-      if (role !== ROLES.PERFORMANCE && role !== ROLES.ADMIN) {
-        switch (role) {
+      if (defaultRole !== ROLES.PERFORMANCE && defaultRole !== ROLES.ADMIN) {
+        switch (defaultRole) {
           case ROLES.SITE01:
             initialClaimOrigin = ROLES.SITE01;
             break;
@@ -128,16 +134,40 @@ export const NewReportPage: React.FC = () => {
             initialClaimOrigin = ROLES.CONSOMMATEUR;
             break;
           default:
-            initialClaimOrigin = role;
+            initialClaimOrigin = defaultRole;
         }
         
+        if (initialClaimOrigin) {
+          setFormData(prev => ({
+            ...prev,
+            claim_origin: initialClaimOrigin
+          }));
+        }
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (activeRole && activeRole !== ROLES.PERFORMANCE && activeRole !== ROLES.ADMIN) {
+      let claimOrigin = '';
+      switch (activeRole) {
+        case ROLES.SITE01:
+        case ROLES.SITE02:
+        case ROLES.RECLAMATION_CLIENT:
+        case ROLES.RETOUR_CLIENT:
+        case ROLES.CONSOMMATEUR:
+          claimOrigin = activeRole;
+          break;
+      }
+      
+      if (claimOrigin) {
         setFormData(prev => ({
           ...prev,
-          claim_origin: initialClaimOrigin
+          claim_origin: claimOrigin
         }));
       }
     }
-  }, [user?.role]);
+  }, [activeRole]);
 
   const loadInitialData = async () => {
     try {
@@ -290,9 +320,52 @@ export const NewReportPage: React.FC = () => {
     }
   };
 
-  // Render claim origin field based on user role
+  // Get available roles for the user that can be used for claim origin
+  const getAvailableClaimOriginRoles = () => {
+    if (!user) return [];
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    
+    // Filter roles that can be used for claim origin
+    return userRoles.filter(role => 
+      role === ROLES.RECLAMATION_CLIENT ||
+      role === ROLES.RETOUR_CLIENT ||
+      role === ROLES.SITE01 ||
+      role === ROLES.SITE02 ||
+      role === ROLES.CONSOMMATEUR ||
+      role === ROLES.PERFORMANCE ||
+      role === ROLES.ADMIN
+    );
+  };
+
+  // Render role selector for users with multiple roles
+  const renderRoleSelector = () => {
+    const availableRoles = getAvailableClaimOriginRoles();
+    
+    if (availableRoles.length <= 1) return null;
+    
+    const roleOptions = availableRoles.map(role => ({
+      value: role,
+      label: role === ROLES.SITE01 ? 'Site 01' :
+             role === ROLES.SITE02 ? 'Site 02' :
+             role === ROLES.ADMIN ? 'Administrateur' :
+             role === ROLES.PERFORMANCE ? 'Performance' :
+             role
+    }));
+
+    return (
+      <Select
+        label="Rôle actif pour ce rapport"
+        value={activeRole}
+        onChange={(value) => setActiveRole(value as string)}
+        options={roleOptions}
+        placeholder="Sélectionnez votre rôle actif"
+      />
+    );
+  };
+
+  // Render claim origin field based on active role
   const renderClaimOriginField = () => {
-    const role = user?.role;
+    const role = activeRole || user?.role;
     const canEditClaimOrigin = role === ROLES.PERFORMANCE || role === ROLES.ADMIN;
     // For performance and admin roles - show full select with all options
     if (canEditClaimOrigin) {
@@ -540,6 +613,11 @@ export const NewReportPage: React.FC = () => {
               />
             </div>
 
+            {/* Role Selector for multi-role users */}
+            <div>
+              {renderRoleSelector()}
+            </div>
+
             {/* Claim Origin - Dynamic based on user role */}
             <div>
               {renderClaimOriginField()}
@@ -550,18 +628,18 @@ export const NewReportPage: React.FC = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Détail de la réclamation *
               </label>
-              {['site01', 'site02'].includes(user?.role || '') || 
+              {['site01', 'site02'].includes(activeRole || user?.role || '') || 
                ['site01', 'site02'].includes(formData.claim_origin) ? (
                 <Input
                   type="text"
-                  value={formData.claim_origin === 'site01' || user?.role === 'site01' ? 'Site 01' : 'Site 02'}
+                  value={formData.claim_origin === 'site01' || activeRole === 'site01' ? 'Site 01' : 'Site 02'}
                   disabled
                   className="w-full bg-gray-100"
                 />
-              ) : ((user?.role === ROLES.RECLAMATION_CLIENT || 
-                 user?.role === ROLES.RETOUR_CLIENT ||
-                 (user?.role === ROLES.ADMIN && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT)) ||
-                 (user?.role === ROLES.PERFORMANCE && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT))
+              ) : ((activeRole === ROLES.RECLAMATION_CLIENT || 
+                 activeRole === ROLES.RETOUR_CLIENT ||
+                 (activeRole === ROLES.ADMIN && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT)) ||
+                 (activeRole === ROLES.PERFORMANCE && (formData.claim_origin === ROLES.RECLAMATION_CLIENT || formData.claim_origin === ROLES.RETOUR_CLIENT))
                 ) && clients.length > 0) ? (
                 <>
                   <SearchableSelect

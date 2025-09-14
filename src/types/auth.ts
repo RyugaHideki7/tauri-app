@@ -16,6 +16,13 @@ export interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  role: string; // Primary role for backward compatibility
+  roles: string[]; // Multiple roles array
+}
+
 export interface NavItem {
   icon: any; // This will be FontAwesome icon
   label: string;
@@ -23,3 +30,19 @@ export interface NavItem {
   allowedRoles: UserRole[];
   showInNav?: boolean;
 }
+
+// Utility functions for role checking
+export const hasRole = (user: User | null, role: UserRole): boolean => {
+  if (!user) return false;
+  return user.roles.includes(role);
+};
+
+export const hasAnyRole = (user: User | null, roles: UserRole[]): boolean => {
+  if (!user) return false;
+  return roles.some(role => user.roles.includes(role));
+};
+
+export const hasAllRoles = (user: User | null, roles: UserRole[]): boolean => {
+  if (!user) return false;
+  return roles.every(role => user.roles.includes(role));
+};

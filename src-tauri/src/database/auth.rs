@@ -43,7 +43,8 @@ pub struct LoginResponse {
 pub struct UserInfo {
     pub id: uuid::Uuid,
     pub username: String,
-    pub role: String,
+    pub role: String, // Keep for backward compatibility - will be primary role
+    pub roles: Vec<String>, // New multiple roles field
 }
 
 pub struct AuthService {
@@ -58,7 +59,7 @@ impl AuthService {
     pub async fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
         // Find user by username
         let user_result = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE username = $1"
+            "SELECT id, username, password_hash, role, roles, created_at, updated_at FROM users WHERE username = $1"
         )
         .bind(&request.username)
         .fetch_optional(&self.pool)
@@ -66,14 +67,18 @@ impl AuthService {
 
         match user_result {
             Some(user) => {
-                // Verify password
                 if verify(&request.password, &user.password_hash)? {
+                    // Use roles array if available, otherwise fall back to single role
+                    let roles = user.roles.unwrap_or_else(|| vec![user.role.clone()]);
+                    let primary_role = roles.first().unwrap_or(&user.role).clone();
+                    
                     Ok(LoginResponse {
                         success: true,
                         user: Some(UserInfo {
                             id: user.id,
                             username: user.username,
-                            role: user.role,
+                            role: primary_role,
+                            roles,
                         }),
                         message: "Login successful".to_string(),
                     })
@@ -81,14 +86,14 @@ impl AuthService {
                     Ok(LoginResponse {
                         success: false,
                         user: None,
-                        message: "Invalid password".to_string(),
+                        message: "Invalid credentials".to_string(),
                     })
                 }
             }
             None => Ok(LoginResponse {
                 success: false,
                 user: None,
-                message: "User not found".to_string(),
+                message: "Invalid credentials".to_string(),
             }),
         }
     }
@@ -98,16 +103,19 @@ impl AuthService {
         let password_hash = hash(&create_user.password, DEFAULT_COST)?;
         let now = Utc::now();
 
+        let roles = create_user.roles.unwrap_or_else(|| vec![create_user.role.clone()]);
+
         sqlx::query(
             "
-            INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO users (id, username, password_hash, role, roles, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "
         )
         .bind(&user_id)
         .bind(&create_user.username)
         .bind(&password_hash)
         .bind(&create_user.role)
+        .bind(&roles)
         .bind(now)
         .bind(now)
         .execute(&self.pool)
@@ -118,6 +126,7 @@ impl AuthService {
             username: create_user.username,
             password_hash,
             role: create_user.role,
+            roles: Some(roles),
             created_at: now,
             updated_at: now,
         };
@@ -127,7 +136,7 @@ impl AuthService {
 
     pub async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<User>> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE id = $1"
+            "SELECT id, username, password_hash, role, roles, created_at, updated_at FROM users WHERE id = $1"
         )
         .bind(user_id)
         .fetch_optional(&self.pool)
@@ -138,7 +147,7 @@ impl AuthService {
 
     pub async fn get_all_users(&self) -> Result<Vec<User>> {
         let users = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users ORDER BY created_at DESC"
+            "SELECT id, username, password_hash, role, roles, created_at, updated_at FROM users ORDER BY created_at DESC"
         )
         .fetch_all(&self.pool)
         .await?;
@@ -149,7 +158,7 @@ impl AuthService {
     pub async fn get_paginated_users(&self, params: PaginationParams) -> Result<PaginatedResponse<User>> {
         let offset = (params.page - 1) * params.limit;
         
-        let mut query = "SELECT id, username, password_hash, role, created_at, updated_at FROM users".to_string();
+        let mut query = "SELECT id, username, password_hash, role, roles, created_at, updated_at FROM users".to_string();
         let mut count_query = "SELECT COUNT(*) as count FROM users".to_string();
         
         if let Some(search) = &params.search {
@@ -240,6 +249,38 @@ impl AuthService {
         Ok(())
     }
 
+    pub async fn update_user_roles(
+        &self,
+        user_id: &Uuid,
+        new_roles: Vec<String>,
+    ) -> Result<()> {
+        // Validate all roles
+        for role in &new_roles {
+            if let Err(_) = UserRole::from_str(role) {
+                return Err(anyhow!("Invalid role specified: {}", role));
+            }
+        }
+
+        if new_roles.is_empty() {
+            return Err(anyhow!("At least one role must be specified"));
+        }
+
+        let now = Utc::now();
+        let primary_role = new_roles.first().unwrap();
+
+        sqlx::query(
+            "UPDATE users SET role = $1, roles = $2, updated_at = $3 WHERE id = $4"
+        )
+        .bind(primary_role)
+        .bind(&new_roles)
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn update_username(
         &self,
         user_id: &Uuid,
@@ -247,7 +288,7 @@ impl AuthService {
     ) -> Result<()> {
         // Check if username already exists
         let existing_user = sqlx::query_as::<_, User>(
-            "SELECT id, username, password_hash, role, created_at, updated_at FROM users WHERE username = $1 AND id != $2"
+            "SELECT id, username, password_hash, role, roles, created_at, updated_at FROM users WHERE username = $1 AND id != $2"
         )
         .bind(new_username)
         .bind(user_id)

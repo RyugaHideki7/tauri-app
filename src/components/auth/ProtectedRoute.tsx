@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types/auth';
+import { UserRole, hasAnyRole } from '../../types/auth';
 
 interface ProtectedRouteProps {
   allowedRoles: UserRole[];
@@ -17,8 +17,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user has any of the allowed roles
-  const hasPermission = user?.role && allowedRoles.includes(user.role as UserRole);
+  // Check if user has any of the allowed roles (supports multiple roles)
+  const hasPermission = hasAnyRole(user, allowedRoles);
 
   if (!hasPermission) {
     // Redirect to dashboard or unauthorized page

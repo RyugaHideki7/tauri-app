@@ -8,12 +8,12 @@ import {
   faBuilding,
   faCog,
   faSignOutAlt,
+  faClipboardList,
+  faExclamationTriangle,
   faChevronLeft,
   faChevronRight,
-  faExclamationTriangle,
-  faClipboardList,
 } from "@fortawesome/free-solid-svg-icons";
-import { ROLES, UserRole } from "../types/auth";
+import { UserRole, User, hasAnyRole, ROLES } from '../types/auth';
 
 const { RECLAMATION_CLIENT, RETOUR_CLIENT, SITE01, SITE02, PERFORMANCE, ADMIN, CONSOMMATEUR } = ROLES;
 
@@ -91,10 +91,10 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
 ];
 
-// Helper function to filter navigation items based on user role
-export const getFilteredNavItems = (userRole: UserRole) => {
+// Helper function to filter navigation items based on user roles (supports multiple roles)
+export const getFilteredNavItems = (user: User) => {
   return NAVIGATION_ITEMS.filter(
-    (item) => item.showInNav && item.allowedRoles.includes(userRole)
+    (item) => item.showInNav && hasAnyRole(user, item.allowedRoles)
   );
 };
 

@@ -114,11 +114,30 @@ async fn update_user_role(
 }
 
 #[tauri::command]
+async fn update_user_roles(
+    db_state: State<'_, DatabaseState>,
+    user_id: String,
+    new_roles: Vec<String>,
+) -> Result<(), String> {
+    let db = db_state.lock().await;
+    let auth_service = AuthService::new(db.pool.clone());
+
+    let user_uuid =
+        uuid::Uuid::parse_str(&user_id).map_err(|e| format!("Invalid user ID: {}", e))?;
+
+    auth_service
+        .update_user_roles(&user_uuid, new_roles)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn create_user(
     db_state: State<'_, DatabaseState>,
     username: String,
     password: String,
     role: String,
+    roles: Option<Vec<String>>,
 ) -> Result<UserInfo, String> {
     let db = db_state.lock().await;
     let auth_service = AuthService::new(db.pool.clone());
@@ -127,15 +146,20 @@ async fn create_user(
         username,
         password,
         role,
+        roles,
     };
 
     auth_service
         .create_user(create_user)
         .await
-        .map(|user| UserInfo {
-            id: user.id,
-            username: user.username,
-            role: user.role,
+        .map(|user| {
+            let role_clone = user.role.clone();
+            UserInfo {
+                id: user.id,
+                username: user.username,
+                role: user.role,
+                roles: user.roles.unwrap_or_else(|| vec![role_clone]),
+            }
         })
         .map_err(|e| e.to_string())
 }
@@ -745,6 +769,7 @@ pub fn run() {
             // User management
             change_password,
             update_user_role,
+            update_user_roles,
             create_user,
             update_username,
             delete_user,

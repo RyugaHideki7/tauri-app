@@ -30,7 +30,8 @@ pub struct User {
     pub id: Uuid,
     pub username: String,
     pub password_hash: String,
-    pub role: String,
+    pub role: String, // Keep for backward compatibility
+    pub roles: Option<Vec<String>>, // New multiple roles field
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -39,7 +40,8 @@ pub struct User {
 pub struct CreateUser {
     pub username: String,
     pub password: String,
-    pub role: String,
+    pub role: String, // Keep for backward compatibility
+    pub roles: Option<Vec<String>>, // New multiple roles field
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -100,7 +102,7 @@ pub struct NonConformityReport {
 // Enums for validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserRole {
-    #[serde(rename = "Reclamation client")]
+    #[serde(rename = "Réclamation client")]
     ReclamationClient,
     #[serde(rename = "Retour client")]
     RetourClient,
@@ -114,7 +116,7 @@ pub enum UserRole {
 impl UserRole {
     pub fn as_str(&self) -> &'static str {
         match self {
-            UserRole::ReclamationClient => "Reclamation client",
+            UserRole::ReclamationClient => "Réclamation client",
             UserRole::RetourClient => "Retour client",
             UserRole::Site01 => "site01",
             UserRole::Site02 => "site02",
@@ -130,7 +132,7 @@ impl FromStr for UserRole {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Reclamation client" => Ok(UserRole::ReclamationClient),
+            "Réclamation client" => Ok(UserRole::ReclamationClient),
             "Retour client" => Ok(UserRole::RetourClient),
             "site01" => Ok(UserRole::Site01),
             "site02" => Ok(UserRole::Site02),

@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Table from '../components/ui/Table';
-import Select from '../components/ui/Select';
+import MultiSelect from '../components/ui/MultiSelect';
 import Dialog from '../components/ui/Dialog';
 import { ROLES } from '../types/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,6 +15,7 @@ interface User {
   id: string;
   username: string;
   role: string;
+  roles?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -22,13 +23,13 @@ interface User {
 interface CreateUserForm {
   username: string;
   password: string;
-  role: string;
+  roles: string[];
 }
 
 interface EditUserForm {
   id: string;
   username: string;
-  role: string;
+  roles: string[];
   newPassword?: string;
 }
 
@@ -64,12 +65,12 @@ export const UsersPage: React.FC = () => {
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     username: '',
     password: '',
-    role: ROLES.RECLAMATION_CLIENT,
+    roles: []
   });
   const [editForm, setEditForm] = useState<EditUserForm>({
     id: '',
     username: '',
-    role: '',
+    roles: [],
     newPassword: ''
   });
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -121,8 +122,8 @@ export const UsersPage: React.FC = () => {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!createForm.username.trim() || !createForm.password.trim()) {
-      toast.error('Le nom d\'utilisateur et le mot de passe sont requis');
+    if (!createForm.username.trim() || !createForm.password.trim() || createForm.roles.length === 0) {
+      toast.error('Le nom d\'utilisateur, le mot de passe et les rôles sont requis');
       return;
     }
     
@@ -136,12 +137,13 @@ export const UsersPage: React.FC = () => {
       await invoke('create_user', {
         username: createForm.username.trim(),
         password: createForm.password,
-        role: createForm.role
+        role: createForm.roles[0], // Primary role for backward compatibility
+        roles: createForm.roles
       });
       
       toast.success('Utilisateur créé avec succès');
       setIsCreateModalOpen(false);
-      setCreateForm({ username: '', password: '', role: ROLES.RECLAMATION_CLIENT });
+      setCreateForm({ username: '', password: '', roles: [] });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la création de l\'utilisateur :', error);
@@ -154,8 +156,8 @@ export const UsersPage: React.FC = () => {
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!editForm.username.trim()) {
-      toast.error('Le nom d\'utilisateur est requis');
+    if (!editForm.username.trim() || editForm.roles.length === 0) {
+      toast.error('Le nom d\'utilisateur et les rôles sont requis');
       return;
     }
     
@@ -171,29 +173,15 @@ export const UsersPage: React.FC = () => {
         });
       }
       
-      // Update role if changed
-      if (originalUser && originalUser.role !== editForm.role) {
-        await invoke('update_user_role', {
-          userId: editForm.id,
-          newRole: editForm.role
-        });
-      }
-      
-      // Update password if provided
-      if (editForm.newPassword && editForm.newPassword.trim()) {
-        if (editForm.newPassword.length < 8) {
-          toast.error('Le mot de passe doit contenir au moins 8 caractères');
-          return;
-        }
-        await invoke('update_user_password', {
-          userId: editForm.id,
-          newPassword: editForm.newPassword
-        });
-      }
+      // Update roles - always update since roles array might have changed
+      await invoke('update_user_roles', {
+        userId: editForm.id,
+        newRoles: editForm.roles
+      });
       
       toast.success('Utilisateur mis à jour avec succès');
       setIsEditModalOpen(false);
-      setEditForm({ id: '', username: '', role: ROLES.RECLAMATION_CLIENT, newPassword: '' });
+      setEditForm({ id: '', username: '', roles: [], newPassword: '' });
       await loadUsers();
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
@@ -226,7 +214,7 @@ export const UsersPage: React.FC = () => {
     setEditForm({
       id: user.id,
       username: user.username,
-      role: user.role,
+      roles: user.roles || [user.role], // Use roles array or fallback to single role
       newPassword: ''
     });
     setIsEditModalOpen(true);
@@ -368,12 +356,23 @@ export const UsersPage: React.FC = () => {
             },
             {
               key: 'role',
-              header: 'Rôle',
-              render: (value) => (
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(value)}`}>
-                  {getRoleLabel(value)}
-                </span>
-              )
+              header: 'Rôles',
+              render: (value, user) => {
+                void value; // Acknowledge unused parameter
+                const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+                return (
+                  <div className="flex flex-wrap gap-1">
+                    {userRoles.map((role: string, index: number) => (
+                      <span 
+                        key={index}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(role)}`}
+                      >
+                        {getRoleLabel(role)}
+                      </span>
+                    ))}
+                  </div>
+                );
+              }
             },
             {
               key: 'created_at',
@@ -458,11 +457,12 @@ export const UsersPage: React.FC = () => {
               helperText="Minimum 8 caractères"
             />
             
-            <Select
-              label="Rôle"
-              value={createForm.role}
-              onChange={(value) => setCreateForm({ ...createForm, role: value })}
+            <MultiSelect
+              label="Rôles"
+              value={createForm.roles}
+              onChange={(roles) => setCreateForm({ ...createForm, roles })}
               options={ROLE_OPTIONS}
+              placeholder="Sélectionnez les rôles..."
             />
             
             <div className="flex items-center justify-end space-x-3 pt-4">
@@ -503,11 +503,12 @@ export const UsersPage: React.FC = () => {
               required
             />
             
-            <Select
-              label="Rôle"
-              value={editForm.role}
-              onChange={(value) => setEditForm({ ...editForm, role: value })}
+            <MultiSelect
+              label="Rôles"
+              value={editForm.roles}
+              onChange={(roles) => setEditForm({ ...editForm, roles })}
               options={ROLE_OPTIONS}
+              placeholder="Sélectionnez les rôles..."
             />
             
             <Input

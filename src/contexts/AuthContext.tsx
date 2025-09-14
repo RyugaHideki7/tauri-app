@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
+import { User } from '../types/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -35,7 +30,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (isAuth === 'true' && userData) {
         try {
           const user = JSON.parse(userData);
-          setUser(user);
+          // Ensure roles array exists for backward compatibility
+          const userWithRoles = {
+            ...user,
+            roles: user.roles || [user.role]
+          };
+          setUser(userWithRoles);
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('isAuthenticated');
@@ -60,16 +60,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const response = await invoke<{
         success: boolean;
-        user?: { id: string; username: string; role: string };
+        user?: { id: string; username: string; role: string; roles: string[] };
         message: string;
       }>('login', {
         request: { username, password }
       });
 
       if (response.success && response.user) {
-        setUser(response.user);
+        // Ensure roles array exists for backward compatibility
+        const userWithRoles = {
+          ...response.user,
+          roles: response.user.roles || [response.user.role]
+        };
+        setUser(userWithRoles);
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userData', JSON.stringify(response.user));
+        localStorage.setItem('userData', JSON.stringify(userWithRoles));
         setIsLoading(false);
         return { success: true };
       } else {

@@ -17,8 +17,7 @@ const WILAYAS: [&str; 58] = [
     "In Salah", "In Guezzam"
 ];
 
-pub async fn run_migrations(pool: &PgPool) -> Result<()> {
-    // Create users table
+pub async fn create_users_table(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS users (
@@ -26,6 +25,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             username VARCHAR(255) UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             role VARCHAR(50) NOT NULL CHECK (role IN ('Réclamation client', 'Retour client', 'site01', 'site02', 'performance', 'admin', 'consommateur')),
+            roles TEXT[], 
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL
         )
@@ -33,6 +33,41 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    Ok(())
+}
+
+async fn migrate_single_roles_to_multiple(pool: &PgPool) -> Result<()> {
+    // Check if roles column exists and has data
+    let has_roles_data: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM users WHERE roles IS NOT NULL AND array_length(roles, 1) > 0"
+    )
+    .fetch_one(pool)
+    .await?;
+
+    if has_roles_data == 0 {
+        // Migrate existing single roles to roles array
+        sqlx::query(
+            "UPDATE users SET roles = ARRAY[role] WHERE roles IS NULL OR array_length(roles, 1) IS NULL"
+        )
+        .execute(pool)
+        .await?;
+        
+        println!("Migrated {} users from single role to multiple roles", 
+                 sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users")
+                     .fetch_one(pool)
+                     .await?);
+    }
+
+    Ok(())
+}
+
+pub async fn run_migrations(pool: &PgPool) -> Result<()> {
+    // Create users table
+    create_users_table(pool).await?;
+    
+    // Migrate existing single roles to multiple roles
+    migrate_single_roles_to_multiple(pool).await?;
 
     // Create production_lines table
     sqlx::query(
@@ -476,15 +511,17 @@ async fn create_initial_admin_user(pool: &PgPool) -> Result<()> {
         let password = "admin123"; // In production, use a more secure password
         let password_hash = hash(password, DEFAULT_COST)?;
         let role = "admin";
+        let roles = vec!["admin".to_string()]; // Initialize with single admin role
         let now = Utc::now();
 
         sqlx::query(
-            "INSERT INTO users (id, username, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+            "INSERT INTO users (id, username, password_hash, role, roles, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
         )
         .bind(user_id)
         .bind(username)
         .bind(password_hash)
         .bind(role)
+        .bind(&roles)
         .bind(now)
         .bind(now)
         .execute(pool)
