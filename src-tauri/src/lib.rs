@@ -576,6 +576,7 @@ async fn get_reports_paginated(
     limit: i64,
     search: Option<String>,
     product_id: Option<String>,
+    line_id: Option<String>,
     start_date: Option<String>,
     end_date: Option<String>,
 ) -> Result<ReportsPaginatedResponse<database::models::NonConformityReport>, String> {
@@ -583,8 +584,8 @@ async fn get_reports_paginated(
     let reports_service = ReportsService::new(db.pool.clone());
     
     println!(
-        "[TAURI] get_reports_paginated received - page={}, limit={}, search={:?}, product_id={:?}, start_date={:?}, end_date={:?}",
-        page, limit, search, product_id, start_date, end_date
+        "[TAURI] get_reports_paginated received - page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}",
+        page, limit, search, product_id, line_id, start_date, end_date
     );
     
     // Additional debug to check for empty strings vs None
@@ -593,6 +594,9 @@ async fn get_reports_paginated(
     }
     if let Some(ref p) = product_id {
         println!("[TAURI] product_id string length: {}, content: '{}'", p.len(), p);
+    }
+    if let Some(ref l) = line_id {
+        println!("[TAURI] line_id string length: {}, content: '{}'", l.len(), l);
     }
     if let Some(ref sd) = start_date {
         println!("[TAURI] start_date string length: {}, content: '{}'", sd.len(), sd);
@@ -606,6 +610,7 @@ async fn get_reports_paginated(
         limit, 
         search,
         product_id,
+        line_id,
         start_date,
         end_date,
     };

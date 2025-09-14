@@ -51,6 +51,7 @@ pub struct PaginationParams {
     pub limit: i64,
     pub search: Option<String>,
     pub product_id: Option<String>,
+    pub line_id: Option<String>,
     pub start_date: Option<String>,
     pub end_date: Option<String>,
 }
@@ -186,8 +187,8 @@ impl ReportsService {
     }
 
     pub async fn get_paginated_reports(&self, params: PaginationParams) -> Result<PaginatedResponse<NonConformityReport>> {
-        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, start_date={:?}, end_date={:?}", 
-                 params.page, params.limit, params.search, params.product_id, params.start_date, params.end_date);
+        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}", 
+                 params.page, params.limit, params.search, params.product_id, params.line_id, params.start_date, params.end_date);
         
         let offset = (params.page - 1) * params.limit;
         
@@ -242,6 +243,21 @@ impl ReportsService {
             }
         } else {
             println!("[REPORTS_SERVICE] Product_id is None");
+        }
+
+        if let Some(line_id) = &params.line_id {
+            println!("[REPORTS_SERVICE] Processing line_id: '{}'", line_id);
+            if !line_id.trim().is_empty() {
+                println!("[REPORTS_SERVICE] Adding line_id condition");
+                let line_uuid = uuid::Uuid::parse_str(line_id)
+                    .map_err(|e| anyhow::anyhow!("Invalid line UUID: {}", e))?;
+                conditions.push("ncr.line_id = $PLACEHOLDER");
+                bind_values.push(line_uuid.to_string());
+            } else {
+                println!("[REPORTS_SERVICE] Line_id is empty, skipping");
+            }
+        } else {
+            println!("[REPORTS_SERVICE] Line_id is None");
         }
 
         if let Some(start_date) = &params.start_date {
@@ -307,7 +323,7 @@ impl ReportsService {
         
         // Bind filter parameters
         for (i, value) in bind_values.iter().enumerate() {
-            if conditions[i].contains("product_id") {
+            if conditions[i].contains("product_id") || conditions[i].contains("line_id") {
                 // Bind as UUID
                 let uuid = uuid::Uuid::parse_str(value).unwrap();
                 println!("[REPORTS_SERVICE] Binding UUID: {}", uuid);
