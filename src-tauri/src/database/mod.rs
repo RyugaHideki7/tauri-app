@@ -18,7 +18,7 @@ impl Database {
     pub async fn new() -> Result<Self> {
         // Get database URL from environment variable or use default
         let database_url = env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://postgres:1@localhost/tauri_app".to_string());
+            .unwrap_or_else(|_| "postgres://openpg:Ifri2020**@172.16.10.70:5432/NC".to_string());
         
         println!("Attempting to connect to database: {}", database_url);
         
