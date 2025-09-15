@@ -1199,7 +1199,7 @@ export const ReportsPage: React.FC = () => {
       <Dialog
         isOpen={pictureViewModalOpen}
         onClose={() => setPictureViewModalOpen(false)}
-        title="Photo de la non-conformité"
+        title="Photo attaché"
         maxWidth="4xl"
       >
         <div className="space-y-4">
