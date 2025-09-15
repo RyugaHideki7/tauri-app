@@ -101,16 +101,6 @@ impl LinesService {
         })
     }
 
-    pub async fn get_line_by_id(&self, line_id: &Uuid) -> Result<Option<ProductionLine>> {
-        let line = sqlx::query_as::<_, ProductionLine>(
-            "SELECT id, name, description, is_active, created_at, updated_at FROM production_lines WHERE id = $1"
-        )
-        .bind(line_id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(line)
-    }
 
     pub async fn create_line(&self, request: CreateLineRequest) -> Result<ProductionLine> {
         let line_id = Uuid::new_v4();
@@ -187,17 +177,4 @@ impl LinesService {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn delete_multiple_lines(&self, line_ids: Vec<Uuid>) -> Result<u64> {
-        let mut total_deleted = 0;
-        
-        for line_id in line_ids {
-            let result = sqlx::query("DELETE FROM production_lines WHERE id = $1")
-                .bind(&line_id)
-                .execute(&self.pool)
-                .await?;
-            total_deleted += result.rows_affected();
-        }
-
-        Ok(total_deleted)
-    }
 }

@@ -99,16 +99,6 @@ impl ProductsService {
         })
     }
 
-    pub async fn get_product_by_id(&self, product_id: &Uuid) -> Result<Option<Product>> {
-        let product = sqlx::query_as::<_, Product>(
-            "SELECT id, designation, code, created_at, updated_at FROM products WHERE id = $1"
-        )
-        .bind(product_id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(product)
-    }
 
     pub async fn create_product(&self, request: CreateProductRequest) -> Result<Product> {
         let product_id = Uuid::new_v4();
@@ -181,17 +171,4 @@ impl ProductsService {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn delete_multiple_products(&self, product_ids: Vec<Uuid>) -> Result<u64> {
-        let mut total_deleted = 0;
-        
-        for product_id in product_ids {
-            let result = sqlx::query("DELETE FROM products WHERE id = $1")
-                .bind(&product_id)
-                .execute(&self.pool)
-                .await?;
-            total_deleted += result.rows_affected();
-        }
-
-        Ok(total_deleted)
-    }
 }

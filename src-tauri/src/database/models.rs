@@ -113,19 +113,6 @@ pub enum UserRole {
     Consommateur,
 }
 
-impl UserRole {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            UserRole::ReclamationClient => "Réclamation client",
-            UserRole::RetourClient => "Retour client",
-            UserRole::Site01 => "site01",
-            UserRole::Site02 => "site02",
-            UserRole::Performance => "performance",
-            UserRole::Admin => "admin",
-            UserRole::Consommateur => "consommateur",
-        }
-    }
-}
 
 impl FromStr for UserRole {
     type Err = String;
@@ -151,15 +138,6 @@ pub enum Team {
     C,
 }
 
-impl Team {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Team::A => "A",
-            Team::B => "B",
-            Team::C => "C",
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DescriptionType {
@@ -169,16 +147,6 @@ pub enum DescriptionType {
     Process,
 }
 
-impl DescriptionType {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            DescriptionType::Physique => "Physique",
-            DescriptionType::Chimique => "Chimique",
-            DescriptionType::Biologique => "Biologique",
-            DescriptionType::Process => "Process",
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClaimOrigin {
@@ -189,16 +157,6 @@ pub enum ClaimOrigin {
     Consommateur,
 }
 
-impl ClaimOrigin {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            ClaimOrigin::ReclamationClient => "Reclamation client",
-            ClaimOrigin::Site01 => "site01",
-            ClaimOrigin::Site02 => "site02",
-            ClaimOrigin::Consommateur => "Consommateur",
-        }
-    }
-}
 
 impl FromStr for ClaimOrigin {
     type Err = String;
@@ -222,13 +180,3 @@ pub enum Status {
     Closed,
 }
 
-impl Status {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Status::Open => "open",
-            Status::InProgress => "in_progress",
-            Status::Resolved => "resolved",
-            Status::Closed => "closed",
-        }
-    }
-}

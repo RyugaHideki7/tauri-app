@@ -8,7 +8,7 @@ use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, U
 use database::reports::{ReportsService, CreateReportRequest, UpdateReportRequest, PaginationParams as ReportsPaginationParams, PaginatedResponse as ReportsPaginatedResponse};
 use database::{Database};
 use std::sync::Arc;
-use tauri::{Manager, State};
+use tauri::State;
 use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -301,26 +301,6 @@ async fn delete_line(db_state: State<'_, DatabaseState>, line_id: String) -> Res
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-async fn delete_multiple_lines(
-    db_state: State<'_, DatabaseState>,
-    line_ids: Vec<String>,
-) -> Result<u64, String> {
-    let db = db_state.lock().await;
-    let lines_service = LinesService::new(db.pool.clone());
-
-    let uuids: Result<Vec<uuid::Uuid>, _> = line_ids
-        .iter()
-        .map(|id| uuid::Uuid::parse_str(id))
-        .collect();
-
-    let uuids = uuids.map_err(|e| format!("Invalid UUID: {}", e))?;
-
-    lines_service
-        .delete_multiple_lines(uuids)
-        .await
-        .map_err(|e| e.to_string())
-}
 
 // Products management commands
 #[tauri::command]
@@ -411,26 +391,6 @@ async fn delete_product(
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-async fn delete_multiple_products(
-    db_state: State<'_, DatabaseState>,
-    product_ids: Vec<String>,
-) -> Result<u64, String> {
-    let db = db_state.lock().await;
-    let products_service = ProductsService::new(db.pool.clone());
-
-    let uuids: Result<Vec<uuid::Uuid>, _> = product_ids
-        .iter()
-        .map(|id| uuid::Uuid::parse_str(id))
-        .collect();
-
-    let uuids = uuids.map_err(|e| format!("Invalid UUID: {}", e))?;
-
-    products_service
-        .delete_multiple_products(uuids)
-        .await
-        .map_err(|e| e.to_string())
-}
 
 // Clients management commands
 #[tauri::command]
@@ -521,22 +481,6 @@ async fn delete_client(
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-async fn delete_multiple_clients(
-    db_state: State<'_, DatabaseState>,
-    client_ids: Vec<String>,
-) -> Result<u64, String> {
-    let db = db_state.lock().await;
-    let clients_service = ClientsService::new(db.pool.clone());
-
-    let uuids: Result<Vec<uuid::Uuid>, _> = client_ids.iter().map(|id| uuid::Uuid::parse_str(id)).collect();
-    let uuids = uuids.map_err(|e| format!("Invalid UUID: {}", e))?;
-
-    clients_service
-        .delete_multiple_clients(uuids)
-        .await
-        .map_err(|e| e.to_string())
-}
 
 // Reports management commands
 #[tauri::command]
@@ -682,15 +626,15 @@ async fn update_report_performance(
 #[tauri::command]
 async fn update_report(
     db_state: State<'_, DatabaseState>,
-    reportId: String,
+    report_id: String,
     request: UpdateReportRequest,
 ) -> Result<NonConformityReport, String> {
     let db = db_state.lock().await;
     let reports_service = ReportsService::new(db.pool.clone());
 
     println!(
-        "[TAURI] update_report called with reportId present: {}",
-        !reportId.is_empty()
+        "[TAURI] update_report called with report_id present: {}",
+        !report_id.is_empty()
     );
     println!(
         "[TAURI] update_report request fields: line_id={}, product_id={}, report_date={}, production_date={}",
@@ -700,7 +644,7 @@ async fn update_report(
         request.production_date
     );
 
-    let uuid = Uuid::parse_str(&reportId)
+    let uuid = Uuid::parse_str(&report_id)
         .map_err(|e| format!("Invalid UUID: {}", e))?;
 
     reports_service
@@ -731,22 +675,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
-    name: String,
-    body: Option<String>,
-    published_at: String,
-    assets: Vec<GitHubAsset>,
 }
 
-#[derive(Debug, Deserialize)]
-struct GitHubAsset {
-    name: String,
-    browser_download_url: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct TauriLatestJson {
-    version: String,
-}
 
 // Update system commands
 #[tauri::command]
@@ -757,7 +687,7 @@ async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
     match app.updater() {
         Ok(updater) => {
             match updater.check().await {
-                Ok(Some(update)) => {
+                Ok(Some(_update)) => {
                     println!("Update available!");
                     Ok(true)
                 }
@@ -787,32 +717,9 @@ async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
 }
 
 async fn direct_github_check(current_version: &str) -> Result<bool, String> {
-    println!("Falling back to direct GitHub API check");
+    println!("Checking GitHub API for latest release");
     
     let client = reqwest::Client::new();
-    // 1) Try reading the Tauri latest.json first (matches plugin endpoint)
-    let latest_json_url = "https://github.com/RyugaHideki7/tauri-app/releases/latest/download/latest.json";
-    let latest_json_resp = client
-        .get(latest_json_url)
-        .header("User-Agent", "tauri-app-updater")
-        .send()
-        .await;
-
-    if let Ok(resp) = latest_json_resp {
-        if resp.status().is_success() {
-            if let Ok(latest) = resp.json::<TauriLatestJson>().await {
-                let latest_version = latest.version.trim_start_matches('v');
-                let current_version = current_version.trim_start_matches('v');
-                println!(
-                    "Current version: {}, Latest version: {} (from latest.json)",
-                    current_version, latest_version
-                );
-                return Ok(latest_version != current_version);
-            }
-        }
-    }
-
-    // 2) Fallback to GitHub API and normalize tag names like `app-v0.1.2`
     let response = client
         .get("https://api.github.com/repos/RyugaHideki7/tauri-app/releases/latest")
         .header("User-Agent", "tauri-app-updater")

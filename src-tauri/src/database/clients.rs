@@ -95,16 +95,6 @@ impl ClientsService {
         })
     }
 
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Client>> {
-        let client = sqlx::query_as::<_, Client>(
-            "SELECT id, name, created_at, updated_at FROM clients WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
-        
-        Ok(client)
-    }
 
     pub async fn create(&self, client: CreateClient) -> Result<Client> {
         let client = sqlx::query_as::<_, Client>(
@@ -159,17 +149,4 @@ impl ClientsService {
         Ok(created_clients)
     }
 
-    pub async fn delete_multiple_clients(&self, client_ids: Vec<Uuid>) -> Result<u64> {
-        let mut total_deleted = 0u64;
-
-        for id in client_ids {
-            let result = sqlx::query("DELETE FROM clients WHERE id = $1")
-                .bind(id)
-                .execute(&self.pool)
-                .await?;
-            total_deleted += result.rows_affected();
-        }
-
-        Ok(total_deleted)
-    }
 }
