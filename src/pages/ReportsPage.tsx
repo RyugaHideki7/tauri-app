@@ -230,79 +230,106 @@ export const ReportsPage: React.FC = () => {
   };
 
   const exportToExcel = async () => {
-    // Create a new workbook using ExcelJS
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Rapports');
-
-    // Define column headers
-    const headers = [
-      'N° de rapport',
-      'Date de la réclamation',
-      'Ligne',
-      'Produit',
-      'Date de production',
-      'Format',
-      'Équipe',
-      'Heure',
-      'Description de la NC',
-      'Quantité',
-      'Origine de la réclamation',
-      'Détail de la réclamation',
-      'Détails complémentaires',
-      'Valorisation',
-      ...(canViewPerformance ? ['Performance'] : [])
-    ];
-
-    // Add headers to the worksheet
-    worksheet.addRow(headers);
-
-    // Style the header row
-    const headerRow = worksheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: '000000' }, size: 11 };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'D9EAD3' }
-    };
-    headerRow.alignment = { 
-      horizontal: 'center', 
-      vertical: 'middle',
-      wrapText: true
-    };
-    headerRow.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' }
-    };
-    headerRow.height = 25;
-    
-    // Style data rows
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber > 1) { // Skip header row
-        row.alignment = { 
-          vertical: 'middle',
-          wrapText: true 
-        };
-        
-        // Right align numeric columns
-        [9, 13].forEach(colIndex => { // Quantity and Valuation columns
-          const cell = row.getCell(colIndex);
-          cell.alignment = cell.alignment || {};
-          cell.alignment.horizontal = 'right';
-        });
-        
-        // Center align team and time columns
-        [6, 7].forEach(colIndex => {
-          const cell = row.getCell(colIndex);
-          cell.alignment = cell.alignment || {};
-          cell.alignment.horizontal = 'center';
-        });
+    try {
+      // Fetch ALL filtered reports for export (not just current page)
+      const exportPayload = {
+        page: 1,
+        limit: 999999, // Large number to get all results
+        search: search.trim() || null,
+        product_id: selectedProduct || null,
+        productId: selectedProduct || null,
+        line_id: selectedLine || null,
+        lineId: selectedLine || null,
+        start_date: startDate || null,
+        startDate: startDate || null,
+        end_date: endDate || null,
+        endDate: endDate || null,
+      };
+      
+      console.debug('[Export] Fetching all filtered reports with payload:', exportPayload);
+      const exportResponse = await invoke<PaginatedResponse>('get_reports_paginated', exportPayload);
+      const allFilteredReports = exportResponse.data;
+      
+      console.debug(`[Export] Retrieved ${allFilteredReports.length} reports for export`);
+      
+      if (allFilteredReports.length === 0) {
+        addToast('Aucun rapport à exporter avec les filtres actuels', 'warning');
+        return;
       }
-    });
 
-    // Add data rows
-    reports.forEach(report => {
+      // Create a new workbook using ExcelJS
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Rapports');
+
+      // Define column headers
+      const headers = [
+        'N° de rapport',
+        'Date de la réclamation',
+        'Ligne',
+        'Produit',
+        'Date de production',
+        'Format',
+        'Équipe',
+        'Heure',
+        'Description de la NC',
+        'Quantité',
+        'Origine de la réclamation',
+        'Détail de la réclamation',
+        'Détails complémentaires',
+        'Valorisation',
+        ...(canViewPerformance ? ['Performance'] : [])
+      ];
+
+      // Add headers to the worksheet
+      worksheet.addRow(headers);
+
+      // Style the header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: '000000' }, size: 11 };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9EAD3' }
+      };
+      headerRow.alignment = { 
+        horizontal: 'center', 
+        vertical: 'middle',
+        wrapText: true
+      };
+      headerRow.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      headerRow.height = 25;
+      
+      // Style data rows
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Skip header row
+          row.alignment = { 
+            vertical: 'middle',
+            wrapText: true 
+          };
+          
+          // Right align numeric columns
+          [9, 13].forEach(colIndex => { // Quantity and Valuation columns
+            const cell = row.getCell(colIndex);
+            cell.alignment = cell.alignment || {};
+            cell.alignment.horizontal = 'right';
+          });
+          
+          // Center align team and time columns
+          [6, 7].forEach(colIndex => {
+            const cell = row.getCell(colIndex);
+            cell.alignment = cell.alignment || {};
+            cell.alignment.horizontal = 'center';
+          });
+        }
+      });
+
+      // Add data rows using ALL filtered reports
+      allFilteredReports.forEach(report => {
       const originMap: Record<string, string> = {
         'site01': 'Site 01',
         'site02': 'Site 02',
@@ -355,23 +382,67 @@ export const ReportsPage: React.FC = () => {
       }
     });
 
-    // Generate filename with current date
-    const today = new Date().toISOString().split('T')[0];
-    const filename = `rapports_${today}.xlsx`;
+      // Generate clean, natural filename with actual filter values
+      const today = new Date().toISOString().split('T')[0];
+      let filename = 'Rapports';
+      
+      // Add date range if filtered
+      if (startDate && endDate) {
+        filename += ` ${startDate} au ${endDate}`;
+      } else if (startDate) {
+        filename += ` depuis ${startDate}`;
+      } else if (endDate) {
+        filename += ` jusqu ${endDate}`;
+      } else {
+        filename += ` ${today}`;
+      }
+      
+      // Add line name if filtered
+      if (selectedLine) {
+        const selectedLineObj = lines.find(l => l.id === selectedLine);
+        const lineName = selectedLineObj ? selectedLineObj.name : 'Ligne inconnue';
+        filename += ` -${lineName}`;
+      }
+      
+      // Add product name if filtered
+      if (selectedProduct) {
+        const selectedProductObj = products.find(p => p.id === selectedProduct);
+        if (selectedProductObj) {
+          const productName = selectedProductObj.code ? 
+            `${selectedProductObj.designation} ${selectedProductObj.code}` : 
+            selectedProductObj.designation;
+          filename += ` - ${productName}`;
+        }
+      }
+      
+      // Add search term if used
+      if (search && search.trim()) {
+        const searchTerm = search.trim().substring(0, 20);
+        filename += ` (${searchTerm})`;
+      }
+      
+      // Clean filename and add extension
+      const cleanFilename = filename.replace(/[<>:"/\\|?*]/g, '-') + '.xlsx';
 
-    // Write the file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      // Write the file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = cleanFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      addToast(`Export réussi: ${allFilteredReports.length} rapports exportés`, 'success');
+    } catch (error) {
+      console.error('Erreur lors de l\'export Excel:', error);
+      addToast('Erreur lors de l\'export Excel', 'error');
+    }
   };
 
 
