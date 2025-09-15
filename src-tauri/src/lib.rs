@@ -9,7 +9,6 @@ use database::reports::{ReportsService, CreateReportRequest, UpdateReportRequest
 use database::{Database};
 use std::sync::Arc;
 use tauri::State;
-use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -682,38 +681,11 @@ struct GitHubRelease {
 #[tauri::command]
 async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
     let current_version = app.package_info().version.to_string();
-    println!("Current version: {}", current_version);
-
-    match app.updater() {
-        Ok(updater) => {
-            match updater.check().await {
-                Ok(Some(_update)) => {
-                    println!("Update available!");
-                    Ok(true)
-                }
-                Ok(None) => {
-                    println!("No update available");
-                    Ok(false)
-                }
-                Err(e) => {
-                    println!("Failed to check for updates: {}", e);
-                    // Fallback to direct GitHub API check if the updater fails
-                    match direct_github_check(&current_version).await {
-                        Ok(available) => Ok(available),
-                        Err(e) => Err(format!("Failed to check for updates: {}", e)),
-                    }
-                }
-            }
-        }
-        Err(e) => {
-            println!("Updater not available: {}", e);
-            // Fallback to direct GitHub API check if the updater is not available
-            match direct_github_check(&current_version).await {
-                Ok(available) => Ok(available),
-                Err(e) => Err(format!("Failed to check for updates: {}", e)),
-            }
-        }
-    }
+    println!("Checking for updates - Current version: {}", current_version);
+    
+    // Skip built-in Tauri updater due to version parsing issues with prefixed tags
+    // Use our robust GitHub API implementation instead
+    direct_github_check(&current_version).await
 }
 
 async fn direct_github_check(current_version: &str) -> Result<bool, String> {
@@ -736,48 +708,88 @@ async fn direct_github_check(current_version: &str) -> Result<bool, String> {
         .await
         .map_err(|e| format!("Failed to parse release info: {}", e))?;
 
-    // Normalize a tag like `app-v0.1.2` -> `0.1.2`
-    fn normalize_tag(s: &str) -> &str {
-        match s.find(|c: char| c.is_ascii_digit()) {
-            Some(idx) => &s[idx..],
-            None => s,
+    println!("Raw GitHub tag: '{}'", release.tag_name);
+    println!("Raw GitHub tag bytes: {:?}", release.tag_name.as_bytes());
+
+    // More robust version normalization
+    fn normalize_version(s: &str) -> String {
+        println!("Normalizing version: '{}'", s);
+        
+        // Remove common prefixes
+        let mut normalized = s.trim();
+        
+        // Remove prefixes like 'v', 'app-v', 'release-', etc.
+        let prefixes = ["app-v", "release-v", "version-", "v"];
+        for prefix in &prefixes {
+            if normalized.to_lowercase().starts_with(prefix) {
+                normalized = &normalized[prefix.len()..];
+                break;
+            }
         }
+        
+        // Find the start of the actual version number (first digit)
+        if let Some(idx) = normalized.find(|c: char| c.is_ascii_digit()) {
+            normalized = &normalized[idx..];
+        }
+        
+        // Clean up the version string - only keep digits, dots, and hyphens
+        let cleaned: String = normalized
+            .chars()
+            .take_while(|&c| c.is_ascii_digit() || c == '.' || c == '-')
+            .collect();
+            
+        println!("Normalized to: '{}'", cleaned);
+        cleaned
     }
 
-    let latest_version = normalize_tag(&release.tag_name);
-    let latest_version = latest_version.trim_start_matches('v');
-    let current_version = normalize_tag(current_version).trim_start_matches('v');
+    let latest_version = normalize_version(&release.tag_name);
+    let current_version_normalized = normalize_version(current_version);
 
     println!(
-        "Current version: {}, Latest version: {} (from GitHub API)",
-        current_version, latest_version
+        "Version comparison - Current: '{}', Latest: '{}' (from GitHub API)",
+        current_version_normalized, latest_version
     );
 
-    Ok(latest_version != current_version)
+    // Simple string comparison for now - can be enhanced with semantic versioning later
+    let update_available = latest_version != current_version_normalized && !latest_version.is_empty();
+    
+    if update_available {
+        println!("Update is available: {} -> {}", current_version_normalized, latest_version);
+    } else {
+        println!("No update available or versions are identical");
+    }
+
+    Ok(update_available)
 }
 
 #[tauri::command]
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
-    match app.updater() {
-        Ok(updater) => {
-            match updater.check().await {
-                Ok(Some(update)) => {
-                    println!("Installing update...");
-                    update.download_and_install(|_chunk_length, _content_length| {}, || {}).await.map_err(|e| {
-                        println!("Failed to install update: {}", e);
-                        format!("Failed to install update: {}", e)
-                    })?;
-                    Ok(())
-                }
-                Ok(None) => Err("No update available".to_string()),
-                Err(e) => {
-                    println!("Failed to check for updates: {}", e);
-                    Err(format!("Failed to check for updates: {}", e))
-                }
-            }
-        }
-        Err(e) => Err(format!("Updater not available: {}", e)),
+    println!("Attempting to install update...");
+    
+    // First check if an update is actually available
+    let current_version = app.package_info().version.to_string();
+    let update_available = direct_github_check(&current_version).await
+        .map_err(|e| format!("Failed to check for updates: {}", e))?;
+    
+    if !update_available {
+        return Err("No update available".to_string());
     }
+    
+    // For now, direct users to manually download and install
+    // This is safer than trying to work around the updater parsing issues
+    println!("Update available! Please download the latest version from GitHub releases.");
+    
+    // Try to open the GitHub releases page
+    let releases_url = "https://github.com/RyugaHideki7/tauri-app/releases/latest";
+    if let Err(e) = webbrowser::open(releases_url) {
+        println!("Failed to open browser: {}", e);
+        return Err(format!(
+            "Update available! Please manually visit: {} to download the latest version.", 
+            releases_url
+        ));
+    }
+    
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

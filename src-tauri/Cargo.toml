@@ -31,4 +31,5 @@ chrono = { version = "0.4", features = ["serde"] }
 bcrypt = "0.15"
 anyhow = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
+webbrowser = "0.8"
 
