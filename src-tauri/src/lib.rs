@@ -8,7 +8,8 @@ use database::lines::{LinesService, CreateLineRequest, BulkCreateLinesRequest, U
 use database::reports::{ReportsService, CreateReportRequest, UpdateReportRequest, PaginationParams as ReportsPaginationParams, PaginatedResponse as ReportsPaginatedResponse};
 use database::{Database};
 use std::sync::Arc;
-use tauri::State;
+use tauri::{Manager, State};
+use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -725,6 +726,55 @@ async fn delete_report(
         .map_err(|e| e.to_string())
 }
 
+// Update system commands
+#[tauri::command]
+async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
+    match app.updater() {
+        Ok(updater) => {
+            match updater.check().await {
+                Ok(update) => {
+                    if update.is_some() {
+                        println!("Update available!");
+                        Ok(true)
+                    } else {
+                        println!("No update available");
+                        Ok(false)
+                    }
+                }
+                Err(e) => {
+                    println!("Failed to check for updates: {}", e);
+                    Err(format!("Failed to check for updates: {}", e))
+                }
+            }
+        }
+        Err(e) => Err(format!("Updater not available: {}", e)),
+    }
+}
+
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    match app.updater() {
+        Ok(updater) => {
+            match updater.check().await {
+                Ok(Some(update)) => {
+                    println!("Installing update...");
+                    update.download_and_install(|_chunk_length, _content_length| {}, || {}).await.map_err(|e| {
+                        println!("Failed to install update: {}", e);
+                        format!("Failed to install update: {}", e)
+                    })?;
+                    Ok(())
+                }
+                Ok(None) => Err("No update available".to_string()),
+                Err(e) => {
+                    println!("Failed to check for updates: {}", e);
+                    Err(format!("Failed to check for updates: {}", e))
+                }
+            }
+        }
+        Err(e) => Err(format!("Updater not available: {}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Create a simple runtime for database initialization
@@ -738,6 +788,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(db_state)
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -747,31 +798,6 @@ pub fn run() {
             login,
             get_users,
             get_users_paginated,
-            // Lines management
-            get_lines,
-            get_lines_paginated,
-            create_line,
-            bulk_create_lines,
-            update_line,
-            delete_line,
-            delete_multiple_lines,
-            // Products management
-            get_products,
-            get_products_paginated,
-            create_product,
-            bulk_create_products,
-            update_product,
-            delete_product,
-            delete_multiple_products,
-            // Clients management
-            get_clients,
-            get_clients_paginated,
-            create_client,
-            bulk_create_clients,
-            update_client,
-            delete_client,
-            delete_multiple_clients,
-            // User management
             change_password,
             update_user_role,
             update_user_roles,
@@ -779,7 +805,24 @@ pub fn run() {
             update_username,
             delete_user,
             update_user_password,
-            // Reports management
+            get_lines,
+            get_lines_paginated,
+            create_line,
+            update_line,
+            delete_line,
+            bulk_create_lines,
+            get_clients,
+            get_clients_paginated,
+            create_client,
+            update_client,
+            delete_client,
+            bulk_create_clients,
+            get_products,
+            get_products_paginated,
+            create_product,
+            update_product,
+            delete_product,
+            bulk_create_products,
             create_report,
             get_reports,
             get_reports_paginated,
@@ -789,6 +832,8 @@ pub fn run() {
             update_report_performance,
             update_report,
             delete_report,
+            check_for_updates,
+            install_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
