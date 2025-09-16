@@ -353,10 +353,10 @@ export const ReportsPage: React.FC = () => {
 
       const rowData = [
         report.report_number,
-        formatDate(report.report_date),
+        new Date(report.report_date), // Export as Date object for proper filtering
         report.line_name || 'Ligne inconnue',
         report.product_name || 'Produit inconnu',
-        formatDate(report.production_date),
+        new Date(report.production_date), // Export as Date object for proper filtering
         report.format_display || '-',
         `Équipe ${report.team}`,
         report.time || '-',

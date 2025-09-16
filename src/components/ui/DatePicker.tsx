@@ -20,13 +20,25 @@ const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   error,
   className = '',
-  placeholder = 'Select date...',
+  placeholder = 'Sélectionner une date...',
   disabled = false,
   size = 'md',
   minDate,
   maxDate
 }) => {
+  // Define helper functions first
+  const formatDisplayDate = (dateString: string) => {
+    if (!dateString) return '';
+    // Parse the date string manually to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    // Return in dd/mm/yyyy format
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+  };
+
   const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(() => {
+    return value ? formatDisplayDate(value) : '';
+  });
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
       // Parse the date string manually to avoid timezone issues
@@ -44,6 +56,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   
   const datePickerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const sizeClasses = {
     sm: 'h-8 px-3 text-sm',
@@ -51,7 +64,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     lg: 'h-12 px-6 text-base'
   };
 
-  // Keep the month in sync when the external value changes
+  // Keep the input and month in sync when the external value changes
   useEffect(() => {
     if (value) {
       const [y, m] = value.split('-').map(Number);
@@ -61,19 +74,57 @@ const DatePicker: React.FC<DatePickerProps> = ({
           ? prev
           : target
       ));
+      setInputValue(formatDisplayDate(value));
+    } else {
+      setInputValue('');
     }
   }, [value]);
 
-  const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return '';
-    // Parse the date string manually to avoid timezone issues
-    const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  const parseInputDate = (input: string): string | null => {
+    if (!input.trim()) return null;
+    
+    // First try DD/MM/YYYY format (European - priority format)
+    const ddmmyyyy = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/.exec(input);
+    if (ddmmyyyy) {
+      const [, dayStr, monthStr, yearStr] = ddmmyyyy;
+      const day = parseInt(dayStr, 10);
+      const month = parseInt(monthStr, 10);
+      const year = parseInt(yearStr, 10);
+      
+      if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        // Validate the date actually exists
+        const testDate = new Date(year, month - 1, day);
+        if (testDate.getFullYear() === year && testDate.getMonth() === month - 1 && testDate.getDate() === day) {
+          return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+      }
+    }
+    
+    // Try ISO format (YYYY-MM-DD)
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(input)) {
+      const [year, month, day] = input.split('-').map(Number);
+      if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Validate the date actually exists
+        const testDate = new Date(year, month - 1, day);
+        if (testDate.getFullYear() === year && testDate.getMonth() === month - 1 && testDate.getDate() === day) {
+          return dateStr;
+        }
+      }
+    }
+    
+    // Try parsing with Date constructor as fallback
+    const date = new Date(input);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      if (year >= 1900 && year <= 2100) {
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+    }
+    
+    return null;
   };
 
   const updateDropdownPosition = () => {
@@ -169,6 +220,51 @@ const DatePicker: React.FC<DatePickerProps> = ({
     setIsOpen(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+  };
+
+  const handleInputBlur = () => {
+    if (!inputValue.trim()) {
+      onChange('');
+      return;
+    }
+
+    const parsedDate = parseInputDate(inputValue);
+    if (parsedDate) {
+      // Check if parsed date is within min/max constraints
+      if ((minDate && parsedDate < minDate) || (maxDate && parsedDate > maxDate)) {
+        // Reset to previous valid value
+        setInputValue(value ? formatDisplayDate(value) : '');
+        return;
+      }
+      
+      onChange(parsedDate);
+      // Update the calendar month to match the entered date
+      const [year, month] = parsedDate.split('-').map(Number);
+      setCurrentMonth(new Date(year, month - 1, 1));
+    } else {
+      // Invalid date format, reset to previous valid value
+      setInputValue(value ? formatDisplayDate(value) : '');
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleInputBlur();
+      inputRef.current?.blur();
+    } else if (e.key === 'Escape') {
+      setInputValue(value ? formatDisplayDate(value) : '');
+      setIsOpen(false);
+      inputRef.current?.blur();
+    } else if (e.key === 'ArrowDown' && !isOpen) {
+      e.preventDefault();
+      updateDropdownPosition();
+      setIsOpen(true);
+    }
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => {
       const newMonth = new Date(prev);
@@ -191,7 +287,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     })() : null;
     
     const days = [];
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
     
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
@@ -250,7 +346,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
           </button>
           
           <h3 className="text-sm font-semibold text-foreground">
-            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </h3>
           
           <button
@@ -289,41 +385,60 @@ const DatePicker: React.FC<DatePickerProps> = ({
         </label>
       )}
       <div className="relative" ref={datePickerRef}>
-        <div
-          onClick={() => {
-            if (!disabled) {
-              if (!isOpen) {
+        <div className="relative flex items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            onKeyDown={handleInputKeyDown}
+            onFocus={() => {
+              if (!disabled && !isOpen) {
                 updateDropdownPosition();
+                setIsOpen(true);
               }
-              setIsOpen(!isOpen);
-            }
-          }}
-          className={`
-            flex items-center justify-between w-full rounded-md border bg-background transition-colors duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2
-            ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-primary/50'}
-            ${error ? 'border-destructive focus-visible:ring-destructive/50' : 'border-input'}
-            ${isOpen ? 'border-primary ring-2 ring-primary/20' : ''}
-            ${sizeClasses[size]}
-            ${className}
-          `}
-        >
-          <span className={`truncate ${!value ? 'text-muted-foreground' : 'text-foreground'}`}>
-            {value ? formatDisplayDate(value) : placeholder}
-          </span>
-          <svg 
-            className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
+            }}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={`
+              w-full rounded-md border bg-background pr-10 transition-colors duration-200
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2
+              ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/50'}
+              ${error ? 'border-destructive focus-visible:ring-destructive/50' : 'border-input'}
+              ${isOpen ? 'border-primary ring-2 ring-primary/20' : ''}
+              ${sizeClasses[size]}
+              ${className}
+            `}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (!disabled) {
+                if (!isOpen) {
+                  updateDropdownPosition();
+                }
+                setIsOpen(!isOpen);
+                inputRef.current?.focus();
+              }
+            }}
+            disabled={disabled}
+            className="absolute right-2 p-1 hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
-            />
-          </svg>
+            <svg 
+              className="h-4 w-4 text-muted-foreground" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+              />
+            </svg>
+          </button>
         </div>
         
         {isOpen && createPortal(
