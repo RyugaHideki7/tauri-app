@@ -683,9 +683,21 @@ async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
     let current_version = app.package_info().version.to_string();
     println!("Checking for updates - Current version: {}", current_version);
     
-    // Skip built-in Tauri updater due to version parsing issues with prefixed tags
-    // Use our robust GitHub API implementation instead
-    direct_github_check(&current_version).await
+    // Use custom GitHub check for now - more reliable than plugin
+    match direct_github_check(&current_version).await {
+        Ok(update_available) => {
+            if update_available {
+                println!("Update available via GitHub check!");
+            } else {
+                println!("No update available via GitHub check");
+            }
+            Ok(update_available)
+        }
+        Err(e) => {
+            println!("GitHub check failed: {}", e);
+            Err(format!("Failed to check for updates: {}", e))
+        }
+    }
 }
 
 async fn direct_github_check(current_version: &str) -> Result<bool, String> {
@@ -766,7 +778,7 @@ async fn direct_github_check(current_version: &str) -> Result<bool, String> {
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     println!("Attempting to install update...");
     
-    // First check if an update is actually available
+    // Check if update is available first
     let current_version = app.package_info().version.to_string();
     let update_available = direct_github_check(&current_version).await
         .map_err(|e| format!("Failed to check for updates: {}", e))?;
@@ -775,21 +787,49 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
         return Err("No update available".to_string());
     }
     
-    // For now, direct users to manually download and install
-    // This is safer than trying to work around the updater parsing issues
-    println!("Update available! Please download the latest version from GitHub releases.");
+    // Use Tauri's built-in updater plugin for installation
+    use tauri_plugin_updater::UpdaterExt;
     
-    // Try to open the GitHub releases page
-    let releases_url = "https://github.com/RyugaHideki7/tauri-app/releases/latest";
-    if let Err(e) = webbrowser::open(releases_url) {
-        println!("Failed to open browser: {}", e);
-        return Err(format!(
-            "Update available! Please manually visit: {} to download the latest version.", 
-            releases_url
-        ));
+    match app.updater() {
+        Ok(updater) => {
+            match updater.check().await {
+                Ok(Some(update)) => {
+                    println!("Update found, version: {}", update.version);
+                    
+                    // Download and install the update
+                    match update.download_and_install(
+                        |chunk_length, content_length| {
+                            println!("Downloaded {} of {:?} bytes", chunk_length, content_length);
+                        },
+                        || {
+                            println!("Download completed, installing...");
+                        }
+                    ).await {
+                        Ok(()) => {
+                            println!("Update installed successfully! App will restart.");
+                            Ok(())
+                        }
+                        Err(e) => {
+                            println!("Failed to install update: {}", e);
+                            Err(format!("Failed to install update: {}", e))
+                        }
+                    }
+                }
+                Ok(None) => {
+                    println!("No update available from updater plugin");
+                    Err("No update available".to_string())
+                }
+                Err(e) => {
+                    println!("Updater check failed: {}", e);
+                    Err(format!("Failed to check for updates: {}", e))
+                }
+            }
+        }
+        Err(e) => {
+            println!("Failed to get updater: {}", e);
+            Err(format!("Failed to get updater: {}", e))
+        }
     }
-    
-    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

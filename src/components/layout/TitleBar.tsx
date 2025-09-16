@@ -3,9 +3,29 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTheme } from "./ThemeProvider";
+import { useUpdateManager } from "../ui/UpdateManager";
+import Dialog from "../ui/Dialog";
+import Button from "../ui/Button";
 
 const TitleBar: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
+  const {
+    updateAvailable,
+    checking: checkingUpdate,
+    installing: isInstalling,
+    showUpdateDialog,
+    setShowUpdateDialog,
+    checkForUpdates,
+    installUpdate
+  } = useUpdateManager();
+
+  const handleUpdateCheck = () => {
+    checkForUpdates(true);
+  };
+
+  const handleInstallUpdate = () => {
+    installUpdate();
+  };
 
   const handleMinimize = async () => {
     try {
@@ -64,6 +84,29 @@ const TitleBar: React.FC = () => {
 
       {/* Right side - Controls */}
       <div className="flex items-center">
+        {/* Update icon */}
+        <button
+          onClick={handleUpdateCheck}
+          disabled={checkingUpdate}
+          className={`flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-all duration-200 ${
+            updateAvailable 
+              ? 'text-blue-600 hover:text-blue-700' 
+              : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]'
+          } ${checkingUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={
+            checkingUpdate 
+              ? "Vérification des mises à jour..." 
+              : updateAvailable 
+                ? "Mise à jour disponible ! Cliquez pour installer"
+                : "Vérifier les mises à jour"
+          }
+        >
+          <FontAwesomeIcon
+            icon={checkingUpdate ? "spinner" : updateAvailable ? "download" : "sync"}
+            className={`w-4 h-4 ${checkingUpdate ? 'animate-spin' : ''}`}
+          />
+        </button>
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
@@ -109,6 +152,45 @@ const TitleBar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Update Dialog */}
+      <Dialog 
+        isOpen={showUpdateDialog} 
+        onClose={() => setShowUpdateDialog(false)}
+        title="Mise à jour disponible"
+      >
+        <div className="space-y-4">
+          <p className="text-[var(--color-muted-foreground)]">
+            Une nouvelle version de l'application est disponible. Souhaitez-vous l'installer maintenant ?
+          </p>
+          <p className="text-sm text-[var(--color-muted-foreground)]">
+            L'application sera redémarrée automatiquement après l'installation.
+          </p>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowUpdateDialog(false)}
+              disabled={isInstalling}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleInstallUpdate}
+              disabled={isInstalling}
+              className="min-w-[100px]"
+            >
+              {isInstalling ? (
+                <>
+                  <FontAwesomeIcon icon="spinner" className="animate-spin mr-2" />
+                  Installation...
+                </>
+              ) : (
+                'Installer'
+              )}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 };

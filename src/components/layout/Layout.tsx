@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import TitleBar from "./TitleBar";
 import Sidebar from "./Sidebar";
 import { Toaster } from "react-hot-toast";
-import UpdateManager from "../ui/UpdateManager";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,9 +52,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {children}
             </div>
           </div>
-          
-          {/* Update Manager - handles automatic update checking and notifications */}
-          <UpdateManager />
         </main>
       </div>
     </div>

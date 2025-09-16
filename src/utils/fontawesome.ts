@@ -25,7 +25,10 @@ import {
   faTools,
   faQuestionCircle,
   faChevronLeft,
-  faInfoCircle
+  faInfoCircle,
+  faDownload,
+  faSync,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to the library
@@ -55,5 +58,8 @@ library.add(
   faTools,
   faQuestionCircle,
   faChevronLeft,
-  faInfoCircle
+  faInfoCircle,
+  faDownload,
+  faSync,
+  faSpinner
 );
