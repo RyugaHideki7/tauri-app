@@ -813,7 +813,17 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
                         }
                         Err(e) => {
                             println!("Failed to install update: {}", e);
-                            Err(format!("Failed to install update: {}", e))
+                            // Provide more specific error messages
+                            let error_msg = if e.to_string().contains("signature") {
+                                "Update failed: Invalid or missing signature. Please download manually from GitHub."
+                            } else if e.to_string().contains("permission") {
+                                "Update failed: Insufficient permissions. Please run as administrator or download manually."
+                            } else if e.to_string().contains("network") || e.to_string().contains("download") {
+                                "Update failed: Network error. Please check your internet connection and try again."
+                            } else {
+                                "Update failed: Unknown error. Please download manually from GitHub."
+                            };
+                            Err(error_msg.to_string())
                         }
                     }
                 }
@@ -829,9 +839,22 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
         }
         Err(e) => {
             println!("Failed to get updater: {}", e);
-            Err(format!("Failed to get updater: {}", e))
+            // Fallback: open GitHub releases page
+            println!("Opening GitHub releases page as fallback...");
+            if let Err(open_err) = webbrowser::open("https://github.com/RyugaHideki7/tauri-app/releases/latest") {
+                println!("Failed to open browser: {}", open_err);
+            }
+            Err(format!("Automatic update failed. Please download manually from GitHub: {}", e))
         }
     }
+}
+
+#[tauri::command]
+async fn open_releases_page() -> Result<(), String> {
+    println!("Opening GitHub releases page...");
+    webbrowser::open("https://github.com/RyugaHideki7/tauri-app/releases/latest")
+        .map_err(|e| format!("Failed to open browser: {}", e))?;
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -892,7 +915,8 @@ pub fn run() {
             update_report,
             delete_report,
             check_for_updates,
-            install_update
+            install_update,
+            open_releases_page
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
