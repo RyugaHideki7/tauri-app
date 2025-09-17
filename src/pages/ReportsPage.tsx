@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../components/layout/ThemeProvider';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import SearchableSelect from '../components/ui/SearchableSelect';
-import DatePicker from '../components/ui/DatePicker';
-import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
-import Table from '../components/ui/Table';
-import Dialog from '../components/ui/Dialog';
-import ActionButtons from '../components/ui/ActionButtons';
-import { useToast } from '../components/ui/Toast';
-import * as ExcelJS from 'exceljs';
-import { ROLES } from '../types/auth';
+import React, { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../components/layout/ThemeProvider";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import SearchableSelect from "../components/ui/SearchableSelect";
+import DatePicker from "../components/ui/DatePicker";
+import IntuitiveTimePicker from "../components/ui/IntuitiveTimePicker";
+import Table from "../components/ui/Table";
+import Dialog from "../components/ui/Dialog";
+import ActionButtons from "../components/ui/ActionButtons";
+import { useToast } from "../components/ui/Toast";
+import * as ExcelJS from "exceljs";
+import { ROLES } from "../types/auth";
 
 interface NonConformityReport {
   id: string;
@@ -77,50 +77,68 @@ interface Format {
   format_unit: string;
 }
 
-
 export const ReportsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const { addToast } = useToast();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split("T")[0];
   const [reports, setReports] = useState<NonConformityReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [selectedClaimOrigin, setSelectedClaimOrigin] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Filter states
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState("");
   const [lines, setLines] = useState<ProductionLine[]>([]);
-  const [selectedLine, setSelectedLine] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  
+  const [selectedLine, setSelectedLine] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   // Edit modal states
-  const [editingReport, setEditingReport] = useState<NonConformityReport | null>(null);
-  
+  const [editingReport, setEditingReport] =
+    useState<NonConformityReport | null>(null);
+
   // Full edit modal states
   const [fullEditModalOpen, setFullEditModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<Partial<NonConformityReport>>({});
+  const [editFormData, setEditFormData] = useState<
+    Partial<NonConformityReport>
+  >({});
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editLines, setEditLines] = useState<ProductionLine[]>([]);
   const [formats, setFormats] = useState<Format[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [editSelectedClient, setEditSelectedClient] = useState('');
-  
+  const [editSelectedClient, setEditSelectedClient] = useState("");
+
   // Picture view modal states
   const [pictureViewModalOpen, setPictureViewModalOpen] = useState(false);
   const [viewingPicture, setViewingPicture] = useState<string | null>(null);
 
   useEffect(() => {
     // Debug current filters
-    console.debug('[Reports] loadReports with', { page, itemsPerPage, search, selectedProduct, selectedLine, startDate, endDate });
+    console.debug("[Reports] loadReports triggered with filters:", {
+      page,
+      itemsPerPage,
+      selectedClaimOrigin: `"${selectedClaimOrigin}"`,
+      selectedProduct: `"${selectedProduct}"`,
+      selectedLine: `"${selectedLine}"`,
+      startDate: `"${startDate}"`,
+      endDate: `"${endDate}"`,
+    });
     loadReports();
-  }, [page, search, selectedProduct, selectedLine, startDate, endDate, itemsPerPage]);
+  }, [
+    page,
+    selectedClaimOrigin,
+    selectedProduct,
+    selectedLine,
+    startDate,
+    endDate,
+    itemsPerPage,
+  ]);
 
   useEffect(() => {
     loadProducts();
@@ -131,63 +149,72 @@ export const ReportsPage: React.FC = () => {
   const loadEditData = async () => {
     try {
       const [linesData, formatsData, clientsData] = await Promise.all([
-        invoke<ProductionLine[]>('get_lines'),
-        invoke<Format[]>('get_formats'),
-        invoke<Client[]>('get_clients')
+        invoke<ProductionLine[]>("get_lines"),
+        invoke<Format[]>("get_formats"),
+        invoke<Client[]>("get_clients"),
       ]);
       setEditLines(linesData);
       setFormats(formatsData);
       setClients(clientsData || []);
     } catch (error) {
-      console.error('Failed to load edit data:', error);
+      console.error("Failed to load edit data:", error);
     }
   };
 
   const loadProducts = async () => {
     try {
-      const productsData = await invoke<Product[]>('get_products');
+      const productsData = await invoke<Product[]>("get_products");
       setProducts(productsData);
     } catch (error) {
-      console.error('Échec du chargement des produits :', error);
+      console.error("Échec du chargement des produits :", error);
     }
   };
 
   const loadLines = async () => {
     try {
-      const linesData = await invoke<ProductionLine[]>('get_lines');
+      const linesData = await invoke<ProductionLine[]>("get_lines");
       setLines(linesData);
     } catch (error) {
-      console.error('Échec du chargement des lignes :', error);
+      console.error("Échec du chargement des lignes :", error);
     }
   };
 
   // Debug effect for filter state changes (post-setState values)
   useEffect(() => {
-    console.debug('[Reports] Filter state changed ->', {
+    console.debug("[Reports] Filter state changed ->", {
       selectedProduct,
       selectedLine,
       startDate,
       endDate,
-      search,
+      selectedClaimOrigin,
       page,
       itemsPerPage,
     });
-  }, [selectedProduct, selectedLine, startDate, endDate, search, page, itemsPerPage]);
+  }, [
+    selectedProduct,
+    selectedLine,
+    startDate,
+    endDate,
+    selectedClaimOrigin,
+    page,
+    itemsPerPage,
+  ]);
 
   const loadReports = async () => {
     setLoading(true);
     try {
-      console.debug('[Reports] Raw filter values:', {
-        search: `"${search}"`,
+      console.debug("[Reports] Raw filter values:", {
+        selectedClaimOrigin: `"${selectedClaimOrigin}"`,
         selectedProduct: `"${selectedProduct}"`,
         selectedLine: `"${selectedLine}"`,
         startDate: `"${startDate}"`,
-        endDate: `"${endDate}"`
+        endDate: `"${endDate}"`,
       });
       const payload = {
         page,
         limit: itemsPerPage,
-        search: search.trim() || null,
+        claim_origin: selectedClaimOrigin || null,
+        claimOrigin: selectedClaimOrigin || null, // Add camelCase version for consistency
         // Send both casings to diagnose mapping behavior
         product_id: selectedProduct || null,
         productId: selectedProduct || null,
@@ -198,22 +225,23 @@ export const ReportsPage: React.FC = () => {
         end_date: endDate || null,
         endDate: endDate || null,
       };
-      console.debug('[Reports] Final payload being sent:', JSON.stringify(payload, null, 2));
-      const response = await invoke<PaginatedResponse>('get_reports_paginated', payload);
-      
+      console.debug(
+        "[Reports] Final payload being sent:",
+        JSON.stringify(payload, null, 2)
+      );
+      const response = await invoke<PaginatedResponse>(
+        "get_reports_paginated",
+        payload
+      );
+
       setReports(response.data);
       setTotalPages(response.total_pages);
       setTotal(response.total);
     } catch (error) {
-      console.error('Échec du chargement des rapports :', error);
+      console.error("Échec du chargement des rapports :", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1); // Reset to first page when searching
   };
 
   const handleFilterChange = () => {
@@ -221,11 +249,11 @@ export const ReportsPage: React.FC = () => {
   };
 
   const clearFilters = () => {
-    setSelectedProduct('');
-    setSelectedLine('');
-    setStartDate('');
-    setEndDate('');
-    setSearch('');
+    setSelectedProduct("");
+    setSelectedLine("");
+    setStartDate("");
+    setEndDate("");
+    setSelectedClaimOrigin("");
     setPage(1);
   };
 
@@ -235,7 +263,8 @@ export const ReportsPage: React.FC = () => {
       const exportPayload = {
         page: 1,
         limit: 999999, // Large number to get all results
-        search: search.trim() || null,
+        claim_origin: selectedClaimOrigin || null,
+        claimOrigin: selectedClaimOrigin || null, // Add camelCase version for consistency
         product_id: selectedProduct || null,
         productId: selectedProduct || null,
         line_id: selectedLine || null,
@@ -245,39 +274,50 @@ export const ReportsPage: React.FC = () => {
         end_date: endDate || null,
         endDate: endDate || null,
       };
-      
-      console.debug('[Export] Fetching all filtered reports with payload:', exportPayload);
-      const exportResponse = await invoke<PaginatedResponse>('get_reports_paginated', exportPayload);
+
+      console.debug(
+        "[Export] Fetching all filtered reports with payload:",
+        exportPayload
+      );
+      const exportResponse = await invoke<PaginatedResponse>(
+        "get_reports_paginated",
+        exportPayload
+      );
       const allFilteredReports = exportResponse.data;
-      
-      console.debug(`[Export] Retrieved ${allFilteredReports.length} reports for export`);
-      
+
+      console.debug(
+        `[Export] Retrieved ${allFilteredReports.length} reports for export`
+      );
+
       if (allFilteredReports.length === 0) {
-        addToast('Aucun rapport à exporter avec les filtres actuels', 'warning');
+        addToast(
+          "Aucun rapport à exporter avec les filtres actuels",
+          "warning"
+        );
         return;
       }
 
       // Create a new workbook using ExcelJS
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Rapports');
+      const worksheet = workbook.addWorksheet("Rapports");
 
       // Define column headers
       const headers = [
-        'N° de rapport',
-        'Date de la réclamation',
-        'Ligne',
-        'Produit',
-        'Date de production',
-        'Format',
-        'Équipe',
-        'Heure',
-        'Description de la NC',
-        'Quantité',
-        'Origine de la réclamation',
-        'Détail de la réclamation',
-        'Détails complémentaires',
-        'Valorisation',
-        ...(canViewPerformance ? ['Performance'] : [])
+        "N° de rapport",
+        "Date de la réclamation",
+        "Ligne",
+        "Produit",
+        "Date de production",
+        "Format",
+        "Équipe",
+        "Heure",
+        "Description de la NC",
+        "Quantité",
+        "Origine de la réclamation",
+        "Détail de la réclamation",
+        "Détails complémentaires",
+        "Valorisation",
+        ...(canViewPerformance ? ["Performance"] : []),
       ];
 
       // Add headers to the worksheet
@@ -285,107 +325,115 @@ export const ReportsPage: React.FC = () => {
 
       // Style the header row
       const headerRow = worksheet.getRow(1);
-      headerRow.font = { bold: true, color: { argb: '000000' }, size: 11 };
+      headerRow.font = { bold: true, color: { argb: "000000" }, size: 11 };
       headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'D9EAD3' }
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9EAD3" },
       };
-      headerRow.alignment = { 
-        horizontal: 'center', 
-        vertical: 'middle',
-        wrapText: true
+      headerRow.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
       };
       headerRow.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
       headerRow.height = 25;
-      
+
       // Style data rows
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) { // Skip header row
-          row.alignment = { 
-            vertical: 'middle',
-            wrapText: true 
+        if (rowNumber > 1) {
+          // Skip header row
+          row.alignment = {
+            vertical: "middle",
+            wrapText: true,
           };
-          
+
           // Right align numeric columns
-          [9, 13].forEach(colIndex => { // Quantity and Valuation columns
+          [9, 13].forEach((colIndex) => {
+            // Quantity and Valuation columns
             const cell = row.getCell(colIndex);
             cell.alignment = cell.alignment || {};
-            cell.alignment.horizontal = 'right';
+            cell.alignment.horizontal = "right";
           });
-          
+
           // Center align team and time columns
-          [6, 7].forEach(colIndex => {
+          [6, 7].forEach((colIndex) => {
             const cell = row.getCell(colIndex);
             cell.alignment = cell.alignment || {};
-            cell.alignment.horizontal = 'center';
+            cell.alignment.horizontal = "center";
           });
         }
       });
 
       // Add data rows using ALL filtered reports
-      allFilteredReports.forEach(report => {
-      const originMap: Record<string, string> = {
-        'site01': 'Site 01',
-        'site02': 'Site 02',
-        'Réclamation client': 'Réclamation client',
-        'Retour client': 'Retour client',
-        'consommateur': 'Consommateur'
-      };
-      
-      const originDetail = () => {
-        if (['site01', 'site02'].includes(report.claim_origin)) {
-          return report.claim_origin === 'site01' ? 'Site 01' : 'Site 02';
-        }
-        if (['Réclamation client', 'Retour client'].includes(report.claim_origin)) {
-          return report.claim_origin_detail || '-';
-        }
-        if (report.claim_origin === 'consommateur') {
-          return report.claim_origin_detail || '-';
-        }
-        return '-';
-      };
+      allFilteredReports.forEach((report) => {
+        const originMap: Record<string, string> = {
+          site01: "Site 01",
+          site02: "Site 02",
+          "Réclamation client": "Réclamation client",
+          "Retour client": "Retour client",
+          consommateur: "Consommateur",
+        };
 
-      const rowData = [
-        report.report_number,
-        new Date(report.report_date), // Export as Date object for proper filtering
-        report.line_name || 'Ligne inconnue',
-        report.product_name || 'Produit inconnu',
-        new Date(report.production_date), // Export as Date object for proper filtering
-        report.format_display || '-',
-        `Équipe ${report.team}`,
-        report.time || '-',
-        report.description_type,
-        report.quantity,
-        originMap[report.claim_origin] || report.claim_origin || '-',
-        originDetail(),
-        report.description_details || '-',
-        `${parseFloat(report.valuation).toFixed(2).replace('.', ',')} DZD`,
-        ...(canViewPerformance ? [report.performance || '-'] : [])
+        const originDetail = () => {
+          if (["site01", "site02"].includes(report.claim_origin)) {
+            return report.claim_origin === "site01" ? "Site 01" : "Site 02";
+          }
+          if (
+            ["Réclamation client", "Retour client"].includes(
+              report.claim_origin
+            )
+          ) {
+            return report.claim_origin_detail || "-";
+          }
+          if (report.claim_origin === "consommateur") {
+            return report.claim_origin_detail || "-";
+          }
+          return "-";
+        };
+
+        const rowData = [
+          report.report_number,
+          new Date(report.report_date), // Export as Date object for proper filtering
+          report.line_name || "Ligne inconnue",
+          report.product_name || "Produit inconnu",
+          new Date(report.production_date), // Export as Date object for proper filtering
+          report.format_display || "-",
+          `Équipe ${report.team}`,
+          report.time || "-",
+          report.description_type,
+          report.quantity,
+          originMap[report.claim_origin] || report.claim_origin || "-",
+          originDetail(),
+          report.description_details || "-",
+          `${parseFloat(report.valuation).toFixed(2).replace(".", ",")} DZD`,
+          ...(canViewPerformance ? [report.performance || "-"] : []),
+        ];
+
+        worksheet.addRow(rowData);
+      });
+
+      // Set column widths
+      const columnWidths = [
+        15, 18, 15, 25, 15, 12, 10, 8, 20, 10, 20, 20, 30, 15,
       ];
-      
-      worksheet.addRow(rowData);
-    });
+      if (canViewPerformance) columnWidths.push(15);
 
-    // Set column widths
-    const columnWidths = [15, 18, 15, 25, 15, 12, 10, 8, 20, 10, 20, 20, 30, 15];
-    if (canViewPerformance) columnWidths.push(15);
-    
-    worksheet.columns.forEach((column, index) => {
-      if (columnWidths[index]) {
-        column.width = columnWidths[index];
-      }
-    });
+      worksheet.columns.forEach((column, index) => {
+        if (columnWidths[index]) {
+          column.width = columnWidths[index];
+        }
+      });
 
       // Generate clean, natural filename with actual filter values
-      const today = new Date().toISOString().split('T')[0];
-      let filename = 'Rapports';
-      
+      const today = new Date().toISOString().split("T")[0];
+      let filename = "Rapports";
+
       // Add date range if filtered
       if (startDate && endDate) {
         filename += ` ${startDate} au ${endDate}`;
@@ -396,85 +444,105 @@ export const ReportsPage: React.FC = () => {
       } else {
         filename += ` ${today}`;
       }
-      
+
       // Add line name if filtered
       if (selectedLine) {
-        const selectedLineObj = lines.find(l => l.id === selectedLine);
-        const lineName = selectedLineObj ? selectedLineObj.name : 'Ligne inconnue';
+        const selectedLineObj = lines.find((l) => l.id === selectedLine);
+        const lineName = selectedLineObj
+          ? selectedLineObj.name
+          : "Ligne inconnue";
         filename += ` -${lineName}`;
       }
-      
+
       // Add product name if filtered
       if (selectedProduct) {
-        const selectedProductObj = products.find(p => p.id === selectedProduct);
+        const selectedProductObj = products.find(
+          (p) => p.id === selectedProduct
+        );
         if (selectedProductObj) {
-          const productName = selectedProductObj.code ? 
-            `${selectedProductObj.designation} ${selectedProductObj.code}` : 
-            selectedProductObj.designation;
+          const productName = selectedProductObj.code
+            ? `${selectedProductObj.designation} ${selectedProductObj.code}`
+            : selectedProductObj.designation;
           filename += ` - ${productName}`;
         }
       }
-      
-      // Add search term if used
-      if (search && search.trim()) {
-        const searchTerm = search.trim().substring(0, 20);
-        filename += ` (${searchTerm})`;
+
+      // Add claim origin if filtered
+      if (selectedClaimOrigin) {
+        const originMap: Record<string, string> = {
+          site01: "Site 01",
+          site02: "Site 02",
+          "Réclamation client": "Réclamation client",
+          "Retour client": "Retour client",
+          consommateur: "Consommateur",
+        };
+        const originName =
+          originMap[selectedClaimOrigin] || selectedClaimOrigin;
+        filename += ` - ${originName}`;
       }
-      
+
       // Clean filename and add extension
-      const cleanFilename = filename.replace(/[<>:"/\\|?*]/g, '-') + '.xlsx';
+      const cleanFilename = filename.replace(/[<>:"/\\|?*]/g, "-") + ".xlsx";
 
       // Write the file
       const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = cleanFilename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      addToast(`Export réussi: ${allFilteredReports.length} rapports exportés`, 'success');
+
+      addToast(
+        `Export réussi: ${allFilteredReports.length} rapports exportés`,
+        "success"
+      );
     } catch (error) {
-      console.error('Erreur lors de l\'export Excel:', error);
-      addToast('Erreur lors de l\'export Excel', 'error');
+      console.error("Erreur lors de l'export Excel:", error);
+      addToast("Erreur lors de l'export Excel", "error");
     }
   };
-
 
   const handleFullEdit = (report: NonConformityReport) => {
     setEditingReport(report);
     // Ensure site origins have a visible, immutable detail value
-    const isSite = ['site01', 'site02'].includes(report.claim_origin);
+    const isSite = ["site01", "site02"].includes(report.claim_origin);
     const ensuredDetail = isSite
-      ? (report.claim_origin === 'site01' ? 'Site 01' : 'Site 02')
-      : (report.claim_origin_detail || '');
+      ? report.claim_origin === "site01"
+        ? "Site 01"
+        : "Site 02"
+      : report.claim_origin_detail || "";
 
     setEditFormData({
       ...report,
-      production_date: report.production_date.split('T')[0],
-      report_date: report.report_date.split('T')[0],
-      claim_origin_detail: ensuredDetail
+      production_date: report.production_date.split("T")[0],
+      report_date: report.report_date.split("T")[0],
+      claim_origin_detail: ensuredDetail,
     });
     // Default-select original client for client-origin reports
-    if (['Réclamation client', 'Retour client'].includes(report.claim_origin)) {
+    if (["Réclamation client", "Retour client"].includes(report.claim_origin)) {
       const fallbackId = (() => {
         if (report.claim_origin_client_id) return report.claim_origin_client_id;
-        const match = clients.find(c => c.name === (report.claim_origin_detail || ''));
-        return match ? match.id : '';
+        const match = clients.find(
+          (c) => c.name === (report.claim_origin_detail || "")
+        );
+        return match ? match.id : "";
       })();
       setEditSelectedClient(fallbackId);
       // Also ensure formData has the id so it submits even if user doesn't touch the field
-      setEditFormData(prev => ({
+      setEditFormData((prev) => ({
         ...prev,
         claim_origin_client_id: fallbackId || undefined,
       }));
     } else {
-      setEditSelectedClient('');
+      setEditSelectedClient("");
     }
     setEditErrors({});
     setFullEditModalOpen(true);
@@ -485,52 +553,75 @@ export const ReportsPage: React.FC = () => {
     if (!fullEditModalOpen) return;
     if (!editingReport) return;
     const origin = editFormData.claim_origin || editingReport.claim_origin;
-    if (!['Réclamation client', 'Retour client'].includes(origin)) return;
+    if (!["Réclamation client", "Retour client"].includes(origin)) return;
     if (editSelectedClient) return; // already set
-    const name = (editFormData.claim_origin_detail || editingReport.claim_origin_detail || '').trim();
+    const name = (
+      editFormData.claim_origin_detail ||
+      editingReport.claim_origin_detail ||
+      ""
+    ).trim();
     if (!name) return;
-    const match = clients.find(c => c.name === name);
+    const match = clients.find((c) => c.name === name);
     if (match) {
       setEditSelectedClient(match.id);
-      setEditFormData(prev => ({ ...prev, claim_origin_client_id: match.id }));
+      setEditFormData((prev) => ({
+        ...prev,
+        claim_origin_client_id: match.id,
+      }));
     }
   }, [clients, fullEditModalOpen]);
 
   const handleEditInputChange = (field: string, value: any) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     if (editErrors[field]) {
-      setEditErrors(prev => ({
+      setEditErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
   };
 
   const validateEditForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
-    if (!editFormData.line_id) newErrors.line_id = 'La ligne de production est requise';
-    if (!editFormData.product_id) newErrors.product_id = 'Le produit est requis';
-    if (!editFormData.format_id) newErrors.format_id = 'Le format est requis';
-    if (!editFormData.report_date) newErrors.report_date = 'La date de la réclamation est requise';
-    if (!editFormData.production_date) newErrors.production_date = 'La date de production est requise';
+
+    if (!editFormData.line_id)
+      newErrors.line_id = "La ligne de production est requise";
+    if (!editFormData.product_id)
+      newErrors.product_id = "Le produit est requis";
+    if (!editFormData.format_id) newErrors.format_id = "Le format est requis";
+    if (!editFormData.report_date)
+      newErrors.report_date = "La date de la réclamation est requise";
+    if (!editFormData.production_date)
+      newErrors.production_date = "La date de production est requise";
     if (!editFormData.team) newErrors.team = "L'équipe est requise";
     if (!editFormData.time) newErrors.time = "L'heure est requise";
-    if (!editFormData.description_type) newErrors.description_type = 'Le type de description est requis';
+    if (!editFormData.description_type)
+      newErrors.description_type = "Le type de description est requis";
     // "Détail de la réclamation" must be provided for non-site origins
-    const isSiteEdit = ['site01', 'site02'].includes(editFormData.claim_origin || '');
+    const isSiteEdit = ["site01", "site02"].includes(
+      editFormData.claim_origin || ""
+    );
     if (!isSiteEdit) {
-      if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
-        newErrors.claim_origin_detail = 'Le détail de la réclamation est requis';
+      if (
+        !editFormData.claim_origin_detail ||
+        !editFormData.claim_origin_detail.trim()
+      ) {
+        newErrors.claim_origin_detail =
+          "Le détail de la réclamation est requis";
       }
     }
-    if (!editFormData.quantity || editFormData.quantity <= 0) newErrors.quantity = 'La quantité doit être supérieure à 0';
-    if (editFormData.valuation === undefined || (typeof editFormData.valuation === 'number' && editFormData.valuation < 0)) newErrors.valuation = 'La valorisation ne peut pas être négative';
-    
+    if (!editFormData.quantity || editFormData.quantity <= 0)
+      newErrors.quantity = "La quantité doit être supérieure à 0";
+    if (
+      editFormData.valuation === undefined ||
+      (typeof editFormData.valuation === "number" && editFormData.valuation < 0)
+    )
+      newErrors.valuation = "La valorisation ne peut pas être négative";
+
     setEditErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -544,12 +635,15 @@ export const ReportsPage: React.FC = () => {
   const handleDeleteReport = async (report: NonConformityReport) => {
     try {
       // Send both snake_case and camelCase to satisfy any mapping
-      await invoke<boolean>('delete_report', { report_id: report.id, reportId: report.id });
+      await invoke<boolean>("delete_report", {
+        report_id: report.id,
+        reportId: report.id,
+      });
       await loadReports();
-      addToast('Rapport supprimé avec succès', 'success');
+      addToast("Rapport supprimé avec succès", "success");
     } catch (error) {
-      console.error('Échec de la suppression du rapport :', error);
-      addToast('Échec de la suppression du rapport', 'error');
+      console.error("Échec de la suppression du rapport :", error);
+      addToast("Échec de la suppression du rapport", "error");
     }
   };
 
@@ -558,54 +652,59 @@ export const ReportsPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await invoke('update_report', {
+      await invoke("update_report", {
         report_id: editingReport.id,
         // Also send camelCase variant to be compatible with different backend expectations
         reportId: editingReport.id,
         request: {
           line_id: editFormData.line_id,
           product_id: editFormData.product_id,
-          format_id: editFormData.format_id ? parseInt(editFormData.format_id.toString(), 10) : null,
+          format_id: editFormData.format_id
+            ? parseInt(editFormData.format_id.toString(), 10)
+            : null,
           report_date: editFormData.report_date,
           production_date: editFormData.production_date,
           team: editFormData.team,
-          time: ((editFormData.time || '').trim().slice(0, 5)),
+          time: (editFormData.time || "").trim().slice(0, 5),
           description_type: editFormData.description_type,
           description_details: editFormData.description_details,
           // Ensure site origins persist a consistent detail label
           claim_origin_detail: (() => {
-            const origin = editFormData.claim_origin || '';
-            if (origin === 'site01') return 'Site 01';
-            if (origin === 'site02') return 'Site 02';
-            return (editFormData.claim_origin_detail && editFormData.claim_origin_detail.trim() !== '')
+            const origin = editFormData.claim_origin || "";
+            if (origin === "site01") return "Site 01";
+            if (origin === "site02") return "Site 02";
+            return editFormData.claim_origin_detail &&
+              editFormData.claim_origin_detail.trim() !== ""
               ? editFormData.claim_origin_detail.trim()
               : null;
           })(),
           claim_origin_client_id: editFormData.claim_origin_client_id || null,
-          quantity: parseInt(editFormData.quantity?.toString() || '0', 10),
+          quantity: parseInt(editFormData.quantity?.toString() || "0", 10),
           claim_origin: editFormData.claim_origin,
-          valuation: typeof editFormData.valuation === 'string' ? parseFloat(editFormData.valuation) : editFormData.valuation,
+          valuation:
+            typeof editFormData.valuation === "string"
+              ? parseFloat(editFormData.valuation)
+              : editFormData.valuation,
           performance: editFormData.performance,
           // Preserve existing picture_data - don't overwrite with null
-          picture_data: editingReport.picture_data
-        }
+          picture_data: editingReport.picture_data,
+        },
       });
-      
+
       // Reload reports to get updated data
       await loadReports();
-      
+
       setFullEditModalOpen(false);
       setEditingReport(null);
       setEditFormData({});
-      addToast('Rapport mis à jour avec succès', 'success');
+      addToast("Rapport mis à jour avec succès", "success");
     } catch (error) {
-      console.error('Échec de la mise à jour du rapport :', error);
-      addToast('Échec de la mise à jour du rapport', 'error');
+      console.error("Échec de la mise à jour du rapport :", error);
+      addToast("Échec de la mise à jour du rapport", "error");
     } finally {
       setLoading(false);
     }
   };
-
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -631,13 +730,16 @@ export const ReportsPage: React.FC = () => {
   //   }
   // };
 
-  const canViewPerformance = user?.role === 'performance' || user?.role === 'admin';
-  const canFullEdit = user?.role === 'performance' || user?.role === 'admin';
+  const canViewPerformance =
+    user?.role === "performance" || user?.role === "admin";
+  const canFullEdit = user?.role === "performance" || user?.role === "admin";
 
   return (
     <div className="p-4 lg:p-6 w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Rapports de non-conformité</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          Rapports de non-conformité
+        </h1>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
             onClick={exportToExcel}
@@ -647,7 +749,7 @@ export const ReportsPage: React.FC = () => {
             Exporter vers Excel
           </Button>
           <Button
-            onClick={() => navigate('/reports/new')}
+            onClick={() => navigate("/reports/new")}
             className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
           >
             Nouveau rapport
@@ -658,28 +760,58 @@ export const ReportsPage: React.FC = () => {
       {/* Filters */}
       <div className="mb-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-          <Input
-            label="Rechercher"
-            type="text"
-            placeholder="Rechercher des rapports..."
-            value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
+          <Select
+            label="Filtrer par origine"
+            value={selectedClaimOrigin}
+            onChange={(value) => {
+              console.debug(
+                "[Reports] claim_origin selected:",
+                value,
+                "type:",
+                typeof value
+              );
+              setSelectedClaimOrigin(value);
+              // Note: selectedClaimOrigin will still show old value here due to React state timing
+              console.debug(
+                "[Reports] selectedClaimOrigin will be updated to:",
+                value
+              );
+              handleFilterChange();
+            }}
+            options={[
+              { value: "", label: "Toutes les origines" },
+              { value: "site01", label: "Site 01" },
+              { value: "site02", label: "Site 02" },
+              { value: "Réclamation client", label: "Réclamation client" },
+              { value: "Retour client", label: "Retour client" },
+              { value: "consommateur", label: "Consommateur" },
+            ]}
           />
           <SearchableSelect
             label="Filtrer par produit"
             value={selectedProduct}
             onChange={(value) => {
-              console.debug('[Reports] product selected:', value, 'type:', typeof value);
+              console.debug(
+                "[Reports] product selected:",
+                value,
+                "type:",
+                typeof value
+              );
               setSelectedProduct(value);
-              console.debug('[Reports] selectedProduct state after set:', selectedProduct);
+              console.debug(
+                "[Reports] selectedProduct state after set:",
+                selectedProduct
+              );
               handleFilterChange();
             }}
             options={[
-              { value: '', label: 'Tous les produits' },
+              { value: "", label: "Tous les produits" },
               ...products.map((product) => ({
                 value: product.id,
-                label: product.code ? `${product.designation} (${product.code})` : product.designation
-              }))
+                label: product.code
+                  ? `${product.designation} (${product.code})`
+                  : product.designation,
+              })),
             ]}
             searchPlaceholder="Rechercher un produit..."
           />
@@ -687,17 +819,25 @@ export const ReportsPage: React.FC = () => {
             label="Filtrer par ligne"
             value={selectedLine}
             onChange={(value) => {
-              console.debug('[Reports] line selected:', value, 'type:', typeof value);
+              console.debug(
+                "[Reports] line selected:",
+                value,
+                "type:",
+                typeof value
+              );
               setSelectedLine(value);
-              console.debug('[Reports] selectedLine state after set:', selectedLine);
+              console.debug(
+                "[Reports] selectedLine state after set:",
+                selectedLine
+              );
               handleFilterChange();
             }}
             options={[
-              { value: '', label: 'Toutes les lignes' },
+              { value: "", label: "Toutes les lignes" },
               ...lines.map((line) => ({
                 value: line.id,
-                label: line.name
-              }))
+                label: line.name,
+              })),
             ]}
             searchPlaceholder="Rechercher une ligne..."
           />
@@ -705,17 +845,26 @@ export const ReportsPage: React.FC = () => {
             label="Date de début"
             value={startDate}
             onChange={(value) => {
-              console.debug('[Reports] start date selected:', value, 'type:', typeof value);
+              console.debug(
+                "[Reports] start date selected:",
+                value,
+                "type:",
+                typeof value
+              );
               const hasEnd = !!endDate;
               if (hasEnd && value && value > endDate) {
                 // Keep the selected start date; adjust end date to match
-                addToast('Date de fin ajustée pour maintenir une plage valide.', 'warning', 3000);
+                addToast(
+                  "Date de fin ajustée pour maintenir une plage valide.",
+                  "warning",
+                  3000
+                );
                 setStartDate(value);
                 setEndDate(value);
               } else {
                 setStartDate(value);
               }
-              console.debug('[Reports] startDate state after set:', startDate);
+              console.debug("[Reports] startDate state after set:", startDate);
               handleFilterChange();
             }}
             placeholder="Sélectionner une date de début"
@@ -725,17 +874,26 @@ export const ReportsPage: React.FC = () => {
             label="Date de fin"
             value={endDate}
             onChange={(value) => {
-              console.debug('[Reports] end date selected:', value, 'type:', typeof value);
+              console.debug(
+                "[Reports] end date selected:",
+                value,
+                "type:",
+                typeof value
+              );
               const hasStart = !!startDate;
               if (hasStart && value && value < startDate) {
                 // Keep the selected end date; adjust start date to match
-                addToast('Date de début ajustée pour maintenir une plage valide.', 'warning', 3000);
+                addToast(
+                  "Date de début ajustée pour maintenir une plage valide.",
+                  "warning",
+                  3000
+                );
                 setStartDate(value);
                 setEndDate(value);
               } else {
                 setEndDate(value);
               }
-              console.debug('[Reports] endDate state after set:', endDate);
+              console.debug("[Reports] endDate state after set:", endDate);
               handleFilterChange();
             }}
             placeholder="Sélectionner une date de fin"
@@ -744,11 +902,7 @@ export const ReportsPage: React.FC = () => {
           />
         </div>
         <div className="flex justify-end">
-          <Button
-            onClick={clearFilters}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={clearFilters} variant="outline" size="sm">
             Réinitialiser les filtres
           </Button>
         </div>
@@ -758,13 +912,27 @@ export const ReportsPage: React.FC = () => {
       {reports.length === 0 && !loading ? (
         <div className="text-center py-16 border border-border rounded-lg bg-background">
           <div className="text-muted-foreground">
-            <svg className="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="mx-auto h-12 w-12 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <p className="text-lg font-medium">Aucun rapport trouvé</p>
             <p className="text-sm">
-              {selectedProduct || selectedLine || startDate || endDate || search 
-                ? "Essayez d'ajuster vos filtres ou termes de recherche" 
+              {selectedProduct ||
+              selectedLine ||
+              startDate ||
+              endDate ||
+              selectedClaimOrigin
+                ? "Essayez d'ajuster vos filtres"
                 : "Aucun rapport n'a été créé pour le moment"}
             </p>
           </div>
@@ -772,145 +940,166 @@ export const ReportsPage: React.FC = () => {
       ) : (
         <Table
           columns={[
-          {
-            key: 'report_number',
-            header: 'N° de rapport',
-            render: (value) => <span className="font-medium">{value}</span>
-          },
-          {
-            key: 'report_date',
-            header: 'Date de la réclamation',
-            render: (value) => formatDate(value)
-          },
-          {
-            key: 'line_name',
-            header: 'Ligne',
-            render: (value) => value || 'Ligne inconnue'
-          },
-          {
-            key: 'product_name',
-            header: 'Produit',
-            render: (value) => value || 'Produit inconnu'
-          },
-          {
-            key: 'production_date',
-            header: 'Date de production',
-            render: (value) => formatDate(value)
-          },
-          {
-            key: 'format_display',
-            header: 'Format',
-            render: (value) => value || '-'
-          },
-          {
-            key: 'team',
-            header: 'Équipe',
-            render: (value) => `Équipe ${value}`
-          },
-          {
-            key: 'time',
-            header: 'Heure',
-            render: (value) => value || '-'
-          },
-          {
-            key: 'description_type',
-            header: 'Description de la NC'
-          },
-          {
-            key: 'quantity',
-            header: 'Quantité'
-          },
-          {
-            key: 'claim_origin',
-            header: 'Origine de la réclamation',
-            render: (value) => {
-              const originMap: Record<string, string> = {
-                'site01': 'Site 01',
-                'site02': 'Site 02',
-                'Réclamation client': 'Réclamation client',
-                'Retour client': 'Retour client',
-                'consommateur': 'Consommateur'
-              };
-              return originMap[value] || value || '-';
-            }
-          },
-          {
-            key: 'claim_origin_detail',
-            header: 'Détail de la réclamation',
-            render: (value, row) => {
-              // For site01/site02, show the role name as detail
-              if (['site01', 'site02'].includes(row.claim_origin)) {
-                return row.claim_origin === 'site01' ? 'Site 01' : 'Site 02';
-              }
-              // For client claims, show the client details if available
-              if (['Réclamation client', 'Retour client'].includes(row.claim_origin)) {
-                return value || '-';
-              }
-              // For consumer, show the typed detail
-              if (row.claim_origin === 'consommateur') {
-                return value || '-';
-              }
-              return '-';
-            }
-          },
-          {
-            key: 'description_details',
-            header: 'Détails complémentaires',
-            render: (value) => (
-              <span className="max-w-xs truncate block" title={value}>
-                {value || '-'}
-              </span>
-            )
-          },
-          ...(user?.role === 'performance' || user?.role === 'admin' ? [{
-            key: 'valuation',
-            header: 'Valorisation',
-            render: (value: string) => `${parseFloat(value).toFixed(2)} DZD`
-          }] : []),
-          ...(canViewPerformance ? [{
-            key: 'performance',
-            header: 'Performance',
-            render: (value: string) => (
-              <div className="flex items-center gap-2">
-                <span className="max-w-xs truncate block">
-                  {value || '-'}
+            {
+              key: "report_number",
+              header: "N° de rapport",
+              render: (value) => <span className="font-medium">{value}</span>,
+            },
+            {
+              key: "report_date",
+              header: "Date de la réclamation",
+              render: (value) => formatDate(value),
+            },
+            {
+              key: "line_name",
+              header: "Ligne",
+              render: (value) => value || "Ligne inconnue",
+            },
+            {
+              key: "product_name",
+              header: "Produit",
+              render: (value) => value || "Produit inconnu",
+            },
+            {
+              key: "production_date",
+              header: "Date de production",
+              render: (value) => formatDate(value),
+            },
+            {
+              key: "format_display",
+              header: "Format",
+              render: (value) => value || "-",
+            },
+            {
+              key: "team",
+              header: "Équipe",
+              render: (value) => `Équipe ${value}`,
+            },
+            {
+              key: "time",
+              header: "Heure",
+              render: (value) => value || "-",
+            },
+            {
+              key: "description_type",
+              header: "Description de la NC",
+            },
+            {
+              key: "quantity",
+              header: "Quantité",
+            },
+            {
+              key: "claim_origin",
+              header: "Origine de la réclamation",
+              render: (value) => {
+                const originMap: Record<string, string> = {
+                  site01: "Site 01",
+                  site02: "Site 02",
+                  "Réclamation client": "Réclamation client",
+                  "Retour client": "Retour client",
+                  consommateur: "Consommateur",
+                };
+                return originMap[value] || value || "-";
+              },
+            },
+            {
+              key: "claim_origin_detail",
+              header: "Détail de la réclamation",
+              render: (value, row) => {
+                // For site01/site02, show the role name as detail
+                if (["site01", "site02"].includes(row.claim_origin)) {
+                  return row.claim_origin === "site01" ? "Site 01" : "Site 02";
+                }
+                // For client claims, show the client details if available
+                if (
+                  ["Réclamation client", "Retour client"].includes(
+                    row.claim_origin
+                  )
+                ) {
+                  return value || "-";
+                }
+                // For consumer, show the typed detail
+                if (row.claim_origin === "consommateur") {
+                  return value || "-";
+                }
+                return "-";
+              },
+            },
+            {
+              key: "description_details",
+              header: "Détails complémentaires",
+              render: (value) => (
+                <span className="max-w-xs truncate block" title={value}>
+                  {value || "-"}
                 </span>
-              </div>
-            )
-          }] : []),
-          ...(canFullEdit ? [{
-            key: 'actions',
-            header: 'Actions',
-            render: (_value: any, row: NonConformityReport) => (
-              <ActionButtons
-                onEdit={() => handleFullEdit(row)}
-                onShowImage={row.picture_data ? () => handleViewPicture(row.picture_data!) : undefined}
-                onDelete={() => handleDeleteReport(row)}
-                size="sm"
-                variant="default"
-                showImageButton={!!row.picture_data}
-                theme={isDarkMode ? 'dark' : 'light'}
-                deleteConfirmation={{
-                  title: "Confirmer la suppression",
-                  message: `Êtes-vous sûr de vouloir supprimer le rapport #${row.report_number} ? Cette action est irréversible.`
-                }}
-              />
-            )
-          }] : [])
-        ]}
-        data={loading ? [] : reports}
-        pagination={{
-          currentPage: page,
-          totalPages,
-          totalItems: total,
-          itemsPerPage: itemsPerPage,
-          onPageChange: setPage,
-          onItemsPerPageChange: setItemsPerPage,
-          showItemsPerPage: true
-        }}
+              ),
+            },
+            ...(user?.role === "performance" || user?.role === "admin"
+              ? [
+                  {
+                    key: "valuation",
+                    header: "Valorisation",
+                    render: (value: string) =>
+                      `${parseFloat(value).toFixed(2)} DZD`,
+                  },
+                ]
+              : []),
+            ...(canViewPerformance
+              ? [
+                  {
+                    key: "performance",
+                    header: "Performance",
+                    render: (value: string) => (
+                      <div className="flex items-center gap-2">
+                        <span className="max-w-xs truncate block">
+                          {value || "-"}
+                        </span>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            ...(canFullEdit
+              ? [
+                  {
+                    key: "actions",
+                    header: "Actions",
+                    render: (_value: any, row: NonConformityReport) => (
+                      <ActionButtons
+                        onEdit={() => handleFullEdit(row)}
+                        onShowImage={
+                          row.picture_data
+                            ? () => handleViewPicture(row.picture_data!)
+                            : undefined
+                        }
+                        onDelete={() => handleDeleteReport(row)}
+                        size="sm"
+                        variant="default"
+                        showImageButton={!!row.picture_data}
+                        theme={isDarkMode ? "dark" : "light"}
+                        deleteConfirmation={{
+                          title: "Confirmer la suppression",
+                          message: `Êtes-vous sûr de vouloir supprimer le rapport #${row.report_number} ? Cette action est irréversible.`,
+                        }}
+                      />
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+          data={loading ? [] : reports}
+          pagination={{
+            currentPage: page,
+            totalPages,
+            totalItems: total,
+            itemsPerPage: itemsPerPage,
+            onPageChange: setPage,
+            onItemsPerPageChange: setItemsPerPage,
+            showItemsPerPage: true,
+          }}
         />
       )}
-      
+
       {loading && (
         <div className="text-center py-16">
           <div className="text-muted-foreground">
@@ -918,7 +1107,6 @@ export const ReportsPage: React.FC = () => {
           </div>
         </div>
       )}
-
 
       {/* Full Edit Modal */}
       <Dialog
@@ -931,10 +1119,13 @@ export const ReportsPage: React.FC = () => {
           <div className="bg-muted/30 p-4 rounded-lg border border-border/50 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-foreground">Modification du rapport : {editingReport?.report_number}</span>
+              <span className="text-sm font-medium text-foreground">
+                Modification du rapport : {editingReport?.report_number}
+              </span>
             </div>
             <div className="text-xs text-muted-foreground">
-              Vous pouvez modifier tous les champs de ce rapport. Les modifications seront sauvegardées immédiatement.
+              Vous pouvez modifier tous les champs de ce rapport. Les
+              modifications seront sauvegardées immédiatement.
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -942,11 +1133,14 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Ligne de production *"
-                value={editFormData.line_id || ''}
-                onChange={(value) => handleEditInputChange('line_id', value)}
+                value={editFormData.line_id || ""}
+                onChange={(value) => handleEditInputChange("line_id", value)}
                 options={[
-                  { value: '', label: 'Sélectionnez une ligne' },
-                  ...editLines.map(line => ({ value: line.id, label: line.name }))
+                  { value: "", label: "Sélectionnez une ligne" },
+                  ...editLines.map((line) => ({
+                    value: line.id,
+                    label: line.name,
+                  })),
                 ]}
                 error={editErrors.line_id}
               />
@@ -956,14 +1150,16 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Produit *"
-                value={editFormData.product_id || ''}
-                onChange={(value) => handleEditInputChange('product_id', value)}
+                value={editFormData.product_id || ""}
+                onChange={(value) => handleEditInputChange("product_id", value)}
                 options={[
-                  { value: '', label: 'Sélectionnez un produit' },
-                  ...products.map(product => ({ 
-                    value: product.id, 
-                    label: product.code ? `${product.designation} (${product.code})` : product.designation 
-                  }))
+                  { value: "", label: "Sélectionnez un produit" },
+                  ...products.map((product) => ({
+                    value: product.id,
+                    label: product.code
+                      ? `${product.designation} (${product.code})`
+                      : product.designation,
+                  })),
                 ]}
                 error={editErrors.product_id}
               />
@@ -973,14 +1169,19 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Format *"
-                value={editFormData.format_id?.toString() || ''}
-                onChange={(value) => handleEditInputChange('format_id', value ? parseInt(value) : undefined)}
+                value={editFormData.format_id?.toString() || ""}
+                onChange={(value) =>
+                  handleEditInputChange(
+                    "format_id",
+                    value ? parseInt(value) : undefined
+                  )
+                }
                 options={[
-                  { value: '', label: 'Sélectionnez un format' },
-                  ...formats.map(format => ({ 
-                    value: format.id.toString(), 
-                    label: `${format.format_index} ${format.format_unit}` 
-                  }))
+                  { value: "", label: "Sélectionnez un format" },
+                  ...formats.map((format) => ({
+                    value: format.id.toString(),
+                    label: `${format.format_index} ${format.format_unit}`,
+                  })),
                 ]}
                 error={editErrors.format_id}
               />
@@ -990,10 +1191,12 @@ export const ReportsPage: React.FC = () => {
             <div>
               <DatePicker
                 label="Date de la réclamation *"
-                value={editFormData.report_date || ''}
-                onChange={(value) => handleEditInputChange('report_date', value)}
+                value={editFormData.report_date || ""}
+                onChange={(value) =>
+                  handleEditInputChange("report_date", value)
+                }
                 error={editErrors.report_date}
-                maxDate={new Date().toISOString().split('T')[0]}
+                maxDate={new Date().toISOString().split("T")[0]}
               />
             </div>
 
@@ -1001,10 +1204,12 @@ export const ReportsPage: React.FC = () => {
             <div>
               <DatePicker
                 label="Date de production *"
-                value={editFormData.production_date || ''}
-                onChange={(value) => handleEditInputChange('production_date', value)}
+                value={editFormData.production_date || ""}
+                onChange={(value) =>
+                  handleEditInputChange("production_date", value)
+                }
                 error={editErrors.production_date}
-                maxDate={new Date().toISOString().split('T')[0]}
+                maxDate={new Date().toISOString().split("T")[0]}
               />
             </div>
 
@@ -1012,12 +1217,12 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Équipe *"
-                value={editFormData.team || ''}
-                onChange={(value) => handleEditInputChange('team', value)}
+                value={editFormData.team || ""}
+                onChange={(value) => handleEditInputChange("team", value)}
                 options={[
-                  { value: 'A', label: 'Équipe A' },
-                  { value: 'B', label: 'Équipe B' },
-                  { value: 'C', label: 'Équipe C' }
+                  { value: "A", label: "Équipe A" },
+                  { value: "B", label: "Équipe B" },
+                  { value: "C", label: "Équipe C" },
                 ]}
                 error={editErrors.team}
               />
@@ -1027,8 +1232,8 @@ export const ReportsPage: React.FC = () => {
             <div>
               <IntuitiveTimePicker
                 label="Heure *"
-                value={editFormData.time || ''}
-                onChange={(value) => handleEditInputChange('time', value)}
+                value={editFormData.time || ""}
+                onChange={(value) => handleEditInputChange("time", value)}
                 error={editErrors.time}
                 format="24"
               />
@@ -1038,13 +1243,15 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Description de la NC *"
-                value={editFormData.description_type || ''}
-                onChange={(value) => handleEditInputChange('description_type', value)}
+                value={editFormData.description_type || ""}
+                onChange={(value) =>
+                  handleEditInputChange("description_type", value)
+                }
                 options={[
-                  { value: 'Physique', label: 'Physique' },
-                  { value: 'Chimique', label: 'Chimique' },
-                  { value: 'Biologique', label: 'Biologique' },
-                  { value: 'Process', label: 'Process' }
+                  { value: "Physique", label: "Physique" },
+                  { value: "Chimique", label: "Chimique" },
+                  { value: "Biologique", label: "Biologique" },
+                  { value: "Process", label: "Process" },
                 ]}
                 error={editErrors.description_type}
               />
@@ -1052,12 +1259,19 @@ export const ReportsPage: React.FC = () => {
 
             {/* Quantity */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Quantité *</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Quantité *
+              </label>
               <Input
                 type="number"
                 min="1"
-                value={editFormData.quantity?.toString() || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('quantity', parseInt(e.target.value) || 0)}
+                value={editFormData.quantity?.toString() || ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleEditInputChange(
+                    "quantity",
+                    parseInt(e.target.value) || 0
+                  )
+                }
                 error={editErrors.quantity}
               />
             </div>
@@ -1066,15 +1280,20 @@ export const ReportsPage: React.FC = () => {
             <div>
               <Select
                 label="Origine de la réclamation *"
-                value={editFormData.claim_origin || ''}
-                onChange={(value) => handleEditInputChange('claim_origin', value)}
-                 options={[
-                            { value: ROLES.RECLAMATION_CLIENT, label: ROLES.RECLAMATION_CLIENT },
-                            { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
-                            { value: 'site01', label: 'Site 01' },
-                            { value: 'site02', label: 'Site 02' },
-                            { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
-                          ]}
+                value={editFormData.claim_origin || ""}
+                onChange={(value) =>
+                  handleEditInputChange("claim_origin", value)
+                }
+                options={[
+                  {
+                    value: ROLES.RECLAMATION_CLIENT,
+                    label: ROLES.RECLAMATION_CLIENT,
+                  },
+                  { value: ROLES.RETOUR_CLIENT, label: ROLES.RETOUR_CLIENT },
+                  { value: "site01", label: "Site 01" },
+                  { value: "site02", label: "Site 02" },
+                  { value: ROLES.CONSOMMATEUR, label: ROLES.CONSOMMATEUR },
+                ]}
                 error={editErrors.claim_origin}
                 disabled={true}
               />
@@ -1082,13 +1301,20 @@ export const ReportsPage: React.FC = () => {
 
             {/* Valuation */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Valorisation (DZD) *</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Valorisation (DZD) *
+              </label>
               <Input
                 type="number"
                 min="0"
                 step="0.01"
-                value={editFormData.valuation?.toString() || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditInputChange('valuation', parseFloat(e.target.value) || 0)}
+                value={editFormData.valuation?.toString() || ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleEditInputChange(
+                    "valuation",
+                    parseFloat(e.target.value) || 0
+                  )
+                }
                 error={editErrors.valuation}
               />
             </div>
@@ -1096,57 +1322,78 @@ export const ReportsPage: React.FC = () => {
 
           {/* Détail de la réclamation */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Détail de la réclamation *</label>
-            {['site01', 'site02'].includes(editFormData.claim_origin || '') ? (
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Détail de la réclamation *
+            </label>
+            {["site01", "site02"].includes(editFormData.claim_origin || "") ? (
               <Input
                 type="text"
-                value={(editFormData.claim_origin === 'site01') ? 'Site 01' : 'Site 02'}
+                value={
+                  editFormData.claim_origin === "site01" ? "Site 01" : "Site 02"
+                }
                 disabled
                 className="w-full bg-gray-100"
               />
-            ) : (['Réclamation client', 'Retour client'].includes(editFormData.claim_origin || '') && clients.length > 0) ? (
+            ) : ["Réclamation client", "Retour client"].includes(
+                editFormData.claim_origin || ""
+              ) && clients.length > 0 ? (
               <>
                 <SearchableSelect
                   value={editSelectedClient}
                   onChange={(value) => {
-                    const selected = clients.find(c => c.id === value);
+                    const selected = clients.find((c) => c.id === value);
                     setEditSelectedClient(value);
                     // Store client name in claim_origin_detail and ID in claim_origin_client_id
-                    handleEditInputChange('claim_origin_detail', selected?.name || '');
-                    handleEditInputChange('claim_origin_client_id', value);
+                    handleEditInputChange(
+                      "claim_origin_detail",
+                      selected?.name || ""
+                    );
+                    handleEditInputChange("claim_origin_client_id", value);
                   }}
                   options={[
-                    { value: '', label: 'Sélectionnez un client' },
-                    ...clients.map(c => ({ value: c.id, label: c.name }))
+                    { value: "", label: "Sélectionnez un client" },
+                    ...clients.map((c) => ({ value: c.id, label: c.name })),
                   ]}
                   placeholder="Sélectionnez un client"
                   searchPlaceholder="Rechercher un client..."
                   error={editErrors.claim_origin_detail}
                 />
                 {editErrors.claim_origin_detail && (
-                  <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {editErrors.claim_origin_detail}
+                  </p>
                 )}
               </>
             ) : (
               <>
                 <textarea
-                  value={editFormData.claim_origin_detail || ''}
-                  onChange={(e) => handleEditInputChange('claim_origin_detail', e.target.value)}
+                  value={editFormData.claim_origin_detail || ""}
+                  onChange={(e) =>
+                    handleEditInputChange("claim_origin_detail", e.target.value)
+                  }
                   rows={3}
                   className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   placeholder="Détails de la réclamation..."
                 />
-                {editErrors.claim_origin_detail && <p className="text-destructive text-sm mt-1">{editErrors.claim_origin_detail}</p>}
+                {editErrors.claim_origin_detail && (
+                  <p className="text-destructive text-sm mt-1">
+                    {editErrors.claim_origin_detail}
+                  </p>
+                )}
               </>
             )}
           </div>
 
           {/* Détails complémentaires */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-foreground mb-2">Détails complémentaires</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Détails complémentaires
+            </label>
             <textarea
-              value={editFormData.description_details || ''}
-              onChange={(e) => handleEditInputChange('description_details', e.target.value)}
+              value={editFormData.description_details || ""}
+              onChange={(e) =>
+                handleEditInputChange("description_details", e.target.value)
+              }
               rows={2}
               className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               placeholder="Informations complémentaires..."
@@ -1155,10 +1402,14 @@ export const ReportsPage: React.FC = () => {
 
           {/* Performance */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Performance</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Performance
+            </label>
             <textarea
-              value={editFormData.performance || ''}
-              onChange={(e) => handleEditInputChange('performance', e.target.value)}
+              value={editFormData.performance || ""}
+              onChange={(e) =>
+                handleEditInputChange("performance", e.target.value)
+              }
               rows={2}
               className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               placeholder="Notes de performance..."
@@ -1181,14 +1432,29 @@ export const ReportsPage: React.FC = () => {
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Enregistrement...
                 </>
               ) : (
-                'Enregistrer les modifications'
+                "Enregistrer les modifications"
               )}
             </Button>
           </div>

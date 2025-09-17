@@ -54,6 +54,7 @@ pub struct PaginationParams {
     pub line_id: Option<String>,
     pub start_date: Option<String>,
     pub end_date: Option<String>,
+    pub claim_origin: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -187,8 +188,8 @@ impl ReportsService {
     }
 
     pub async fn get_paginated_reports(&self, params: PaginationParams) -> Result<PaginatedResponse<NonConformityReport>> {
-        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}", 
-                 params.page, params.limit, params.search, params.product_id, params.line_id, params.start_date, params.end_date);
+        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}, claim_origin={:?}", 
+                 params.page, params.limit, params.search, params.product_id, params.line_id, params.start_date, params.end_date, params.claim_origin);
         
         let offset = (params.page - 1) * params.limit;
         
@@ -288,6 +289,20 @@ impl ReportsService {
             }
         } else {
             println!("[REPORTS_SERVICE] End_date is None");
+        }
+
+        if let Some(claim_origin) = &params.claim_origin {
+            println!("[REPORTS_SERVICE] Processing claim_origin: '{}'", claim_origin);
+            if !claim_origin.trim().is_empty() {
+                println!("[REPORTS_SERVICE] Adding claim_origin condition");
+                // Use exact string comparison for claim_origin
+                conditions.push("ncr.claim_origin = $PLACEHOLDER");
+                bind_values.push(claim_origin.clone());
+            } else {
+                println!("[REPORTS_SERVICE] Claim_origin is empty, skipping");
+            }
+        } else {
+            println!("[REPORTS_SERVICE] Claim_origin is None");
         }
         
         println!("[REPORTS_SERVICE] Found {} conditions to apply", conditions.len());

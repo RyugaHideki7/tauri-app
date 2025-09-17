@@ -523,13 +523,14 @@ async fn get_reports_paginated(
     line_id: Option<String>,
     start_date: Option<String>,
     end_date: Option<String>,
+    claim_origin: Option<String>,
 ) -> Result<ReportsPaginatedResponse<database::models::NonConformityReport>, String> {
     let db = db_state.lock().await;
     let reports_service = ReportsService::new(db.pool.clone());
     
     println!(
-        "[TAURI] get_reports_paginated received - page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}",
-        page, limit, search, product_id, line_id, start_date, end_date
+        "[TAURI] get_reports_paginated received - page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}, claim_origin={:?}",
+        page, limit, search, product_id, line_id, start_date, end_date, claim_origin
     );
     
     // Additional debug to check for empty strings vs None
@@ -557,6 +558,7 @@ async fn get_reports_paginated(
         line_id,
         start_date,
         end_date,
+        claim_origin,
     };
     reports_service
         .get_paginated_reports(params)
