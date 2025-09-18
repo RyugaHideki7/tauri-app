@@ -408,6 +408,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               ${error ? 'border-destructive focus-visible:ring-destructive/50' : 'border-input'}
               ${isOpen ? 'border-primary ring-2 ring-primary/20' : ''}
               ${sizeClasses[size]}
+              text-foreground placeholder:text-muted-foreground
               ${className}
             `}
           />
