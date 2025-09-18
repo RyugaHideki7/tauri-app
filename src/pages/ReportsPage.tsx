@@ -940,11 +940,7 @@ export const ReportsPage: React.FC = () => {
       ) : (
         <Table
           columns={[
-            {
-              key: "report_number",
-              header: "N° de rapport",
-              render: (value) => <span className="font-medium">{value}</span>,
-            },
+            // Report number is hidden from the table view but kept in data for exports/actions
             {
               key: "report_date",
               header: "Date de la réclamation",
