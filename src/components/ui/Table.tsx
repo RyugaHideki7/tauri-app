@@ -6,6 +6,8 @@ interface Column {
   header: React.ReactNode;
   width?: string;
   render?: (value: any, row: any) => React.ReactNode;
+  headerClassName?: string;
+  cellClassName?: string;
 }
 
 interface TableProps {
@@ -34,9 +36,24 @@ const Table: React.FC<TableProps> = ({
   hoverable = true,
   pagination,
 }) => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
   const tableScrollRef = React.useRef<HTMLDivElement>(null);
   const stickyScrollRef = React.useRef<HTMLDivElement>(null);
   const [showStickyScroll, setShowStickyScroll] = React.useState(false);
+  const [stickyMetrics, setStickyMetrics] = React.useState<{ left: number; right: number }>({
+    left: 0,
+    right: 0,
+  });
+
+  const updateStickyMetrics = React.useCallback(() => {
+    const el = tableScrollRef.current || wrapperRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const left = rect.left;
+      const right = Math.max(0, window.innerWidth - rect.right);
+      setStickyMetrics({ left, right });
+    }
+  }, []);
 
   React.useEffect(() => {
     const checkScrollNeeded = () => {
@@ -53,6 +70,26 @@ const Table: React.FC<TableProps> = ({
     return () => window.removeEventListener("resize", checkScrollNeeded);
   }, [data]);
 
+  // Keep sticky bar aligned with the table container width/left on resize/data changes
+  React.useEffect(() => {
+    updateStickyMetrics();
+    window.addEventListener("resize", updateStickyMetrics);
+    window.addEventListener("scroll", updateStickyMetrics, { passive: true } as any);
+
+    let ro: ResizeObserver | undefined;
+    if ((tableScrollRef.current || wrapperRef.current) && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => updateStickyMetrics());
+      if (tableScrollRef.current) ro.observe(tableScrollRef.current);
+      if (wrapperRef.current) ro.observe(wrapperRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateStickyMetrics);
+      window.removeEventListener("scroll", updateStickyMetrics as any);
+      if (ro) ro.disconnect();
+    };
+  }, [updateStickyMetrics, data]);
+
   const handleTableScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (stickyScrollRef.current) {
       stickyScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
@@ -68,6 +105,7 @@ const Table: React.FC<TableProps> = ({
   return (
     <>
       <div
+        ref={wrapperRef}
         className={`w-full overflow-hidden border border-border rounded-2xl shadow-sm ${className}`}
       >
         <div
@@ -75,7 +113,7 @@ const Table: React.FC<TableProps> = ({
           className="overflow-x-auto scrollbar-none"
           onScroll={handleTableScroll}
         >
-          <table className="w-full divide-y divide-border min-w-max">
+          <table className="w-full divide-y divide-border min-w-full">
             <thead className="bg-muted/50">
               <tr>
                 {columns.map((column, index) => (
@@ -83,7 +121,9 @@ const Table: React.FC<TableProps> = ({
                     key={column.key}
                     className={`px-6 py-4 text-left text-sm font-medium text-foreground/80 tracking-wide
                     ${index === 0 ? "rounded-tl-2xl" : ""}
-                    ${index === columns.length - 1 ? "rounded-tr-2xl" : ""}`}
+                    ${index === columns.length - 1 ? "rounded-tr-2xl" : ""} ${
+                      column.headerClassName || ""
+                    }`}
                     style={{ width: column.width }}
                   >
                     {column.header}
@@ -108,7 +148,7 @@ const Table: React.FC<TableProps> = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-6 py-4 text-sm text-foreground/90
+                      className={`px-6 py-4 text-sm text-foreground/90 whitespace-normal break-words
                       ${
                         rowIndex === data.length - 1 && colIndex === 0
                           ? "rounded-bl-2xl"
@@ -119,7 +159,7 @@ const Table: React.FC<TableProps> = ({
                         colIndex === columns.length - 1
                           ? "rounded-br-2xl"
                           : ""
-                      }`}
+                      } ${column.cellClassName || ""}`}
                     >
                       {column.render
                         ? column.render(row[column.key], row)
@@ -171,10 +211,13 @@ const Table: React.FC<TableProps> = ({
         )}
       </div>
 
-      {/* Sticky horizontal scrollbar - positioned to cover main content area only */}
+      {/* Sticky horizontal scrollbar - fixed to viewport bottom and aligned to table */}
       {showStickyScroll && (
-        <div className="fixed bottom-0 left-64 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border/50 shadow-lg">
-          <div className="px-4 py-2">
+        <div
+          className="fixed bottom-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border/50 shadow-lg"
+          style={{ left: stickyMetrics.left, right: stickyMetrics.right }}
+        >
+          <div className="py-2">
             <div
               ref={stickyScrollRef}
               className="overflow-x-auto scrollbar-thin scrollbar-thumb-primary/60 scrollbar-track-muted/30"

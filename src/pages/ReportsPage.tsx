@@ -950,11 +950,13 @@ export const ReportsPage: React.FC = () => {
               key: "line_name",
               header: "Ligne",
               render: (value) => value || "Ligne inconnue",
+              cellClassName: "max-w-[14rem]",
             },
             {
               key: "product_name",
               header: "Produit",
               render: (value) => value || "Produit inconnu",
+              cellClassName: "max-w-[16rem]",
             },
             {
               key: "production_date",
@@ -979,6 +981,7 @@ export const ReportsPage: React.FC = () => {
             {
               key: "description_type",
               header: "Description de la NC",
+              cellClassName: "max-w-[16rem]",
             },
             {
               key: "quantity",
@@ -997,6 +1000,7 @@ export const ReportsPage: React.FC = () => {
                 };
                 return originMap[value] || value || "-";
               },
+              cellClassName: "max-w-[14rem]",
             },
             {
               key: "claim_origin_detail",
@@ -1020,15 +1024,17 @@ export const ReportsPage: React.FC = () => {
                 }
                 return "-";
               },
+              cellClassName: "max-w-[20rem]",
             },
             {
               key: "description_details",
               header: "Détails complémentaires",
               render: (value) => (
-                <span className="max-w-xs truncate block" title={value}>
+                <div className="block whitespace-normal break-words max-w-[28rem]">
                   {value || "-"}
-                </span>
+                </div>
               ),
+              cellClassName: "max-w-[28rem]",
             },
             ...(user?.role === "performance" || user?.role === "admin"
               ? [
@@ -1047,11 +1053,12 @@ export const ReportsPage: React.FC = () => {
                     header: "Performance",
                     render: (value: string) => (
                       <div className="flex items-center gap-2">
-                        <span className="max-w-xs truncate block">
+                        <div className="block whitespace-normal break-words max-w-[24rem]">
                           {value || "-"}
-                        </span>
+                        </div>
                       </div>
                     ),
+                    cellClassName: "max-w-[24rem]",
                   },
                 ]
               : []),
