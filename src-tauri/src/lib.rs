@@ -671,191 +671,6 @@ async fn delete_report(
         .map_err(|e| e.to_string())
 }
 
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
-struct GitHubRelease {
-    tag_name: String,
-}
-
-
-// Update system commands
-#[tauri::command]
-async fn check_for_updates(app: tauri::AppHandle) -> Result<bool, String> {
-    let current_version = app.package_info().version.to_string();
-    println!("Checking for updates - Current version: {}", current_version);
-    
-    // Use custom GitHub check for now - more reliable than plugin
-    match direct_github_check(&current_version).await {
-        Ok(update_available) => {
-            if update_available {
-                println!("Update available via GitHub check!");
-            } else {
-                println!("No update available via GitHub check");
-            }
-            Ok(update_available)
-        }
-        Err(e) => {
-            println!("GitHub check failed: {}", e);
-            Err(format!("Failed to check for updates: {}", e))
-        }
-    }
-}
-
-async fn direct_github_check(current_version: &str) -> Result<bool, String> {
-    println!("Checking GitHub API for latest release");
-    
-    let client = reqwest::Client::new();
-    let response = client
-        .get("https://api.github.com/repos/RyugaHideki7/tauri-app/releases/latest")
-        .header("User-Agent", "tauri-app-updater")
-        .send()
-        .await
-        .map_err(|e| format!("Failed to fetch release info: {}", e))?;
-
-    if !response.status().is_success() {
-        return Err(format!("GitHub API error: {}", response.status()));
-    }
-
-    let release: GitHubRelease = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse release info: {}", e))?;
-
-    println!("Raw GitHub tag: '{}'", release.tag_name);
-    println!("Raw GitHub tag bytes: {:?}", release.tag_name.as_bytes());
-
-    // More robust version normalization
-    fn normalize_version(s: &str) -> String {
-        println!("Normalizing version: '{}'", s);
-        
-        // Remove common prefixes
-        let mut normalized = s.trim();
-        
-        // Remove prefixes like 'v', 'app-v', 'release-', etc.
-        let prefixes = ["app-v", "release-v", "version-", "v"];
-        for prefix in &prefixes {
-            if normalized.to_lowercase().starts_with(prefix) {
-                normalized = &normalized[prefix.len()..];
-                break;
-            }
-        }
-        
-        // Find the start of the actual version number (first digit)
-        if let Some(idx) = normalized.find(|c: char| c.is_ascii_digit()) {
-            normalized = &normalized[idx..];
-        }
-        
-        // Clean up the version string - only keep digits, dots, and hyphens
-        let cleaned: String = normalized
-            .chars()
-            .take_while(|&c| c.is_ascii_digit() || c == '.' || c == '-')
-            .collect();
-            
-        println!("Normalized to: '{}'", cleaned);
-        cleaned
-    }
-
-    let latest_version = normalize_version(&release.tag_name);
-    let current_version_normalized = normalize_version(current_version);
-
-    println!(
-        "Version comparison - Current: '{}', Latest: '{}' (from GitHub API)",
-        current_version_normalized, latest_version
-    );
-
-    // Simple string comparison for now - can be enhanced with semantic versioning later
-    let update_available = latest_version != current_version_normalized && !latest_version.is_empty();
-    
-    if update_available {
-        println!("Update is available: {} -> {}", current_version_normalized, latest_version);
-    } else {
-        println!("No update available or versions are identical");
-    }
-
-    Ok(update_available)
-}
-
-#[tauri::command]
-async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
-    println!("Attempting to install update...");
-    
-    // Check if update is available first
-    let current_version = app.package_info().version.to_string();
-    let update_available = direct_github_check(&current_version).await
-        .map_err(|e| format!("Failed to check for updates: {}", e))?;
-    
-    if !update_available {
-        return Err("No update available".to_string());
-    }
-    
-    // Use Tauri's built-in updater plugin for installation
-    use tauri_plugin_updater::UpdaterExt;
-    
-    match app.updater() {
-        Ok(updater) => {
-            match updater.check().await {
-                Ok(Some(update)) => {
-                    println!("Update found, version: {}", update.version);
-                    
-                    // Download and install the update
-                    match update.download_and_install(
-                        |chunk_length, content_length| {
-                            println!("Downloaded {} of {:?} bytes", chunk_length, content_length);
-                        },
-                        || {
-                            println!("Download completed, installing...");
-                        }
-                    ).await {
-                        Ok(()) => {
-                            println!("Update installed successfully! App will restart.");
-                            Ok(())
-                        }
-                        Err(e) => {
-                            println!("Failed to install update: {}", e);
-                            // Provide more specific error messages
-                            let error_msg = if e.to_string().contains("signature") {
-                                "Update failed: Invalid or missing signature. Please download manually from GitHub."
-                            } else if e.to_string().contains("permission") {
-                                "Update failed: Insufficient permissions. Please run as administrator or download manually."
-                            } else if e.to_string().contains("network") || e.to_string().contains("download") {
-                                "Update failed: Network error. Please check your internet connection and try again."
-                            } else {
-                                "Update failed: Unknown error. Please download manually from GitHub."
-                            };
-                            Err(error_msg.to_string())
-                        }
-                    }
-                }
-                Ok(None) => {
-                    println!("No update available from updater plugin");
-                    Err("No update available".to_string())
-                }
-                Err(e) => {
-                    println!("Updater check failed: {}", e);
-                    Err(format!("Failed to check for updates: {}", e))
-                }
-            }
-        }
-        Err(e) => {
-            println!("Failed to get updater: {}", e);
-            // Fallback: open GitHub releases page
-            println!("Opening GitHub releases page as fallback...");
-            if let Err(open_err) = webbrowser::open("https://github.com/RyugaHideki7/tauri-app/releases/latest") {
-                println!("Failed to open browser: {}", open_err);
-            }
-            Err(format!("Automatic update failed. Please download manually from GitHub: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-async fn open_releases_page() -> Result<(), String> {
-    println!("Opening GitHub releases page...");
-    webbrowser::open("https://github.com/RyugaHideki7/tauri-app/releases/latest")
-        .map_err(|e| format!("Failed to open browser: {}", e))?;
-    Ok(())
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -871,6 +686,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(db_state)
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -913,10 +729,7 @@ pub fn run() {
             update_report_status,
             update_report_performance,
             update_report,
-            delete_report,
-            check_for_updates,
-            install_update,
-            open_releases_page
+            delete_report
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { useToast } from './Toast';
 
 export const useUpdateManager = () => {
@@ -7,21 +8,29 @@ export const useUpdateManager = () => {
   const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<any>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const { addToast } = useToast();
 
   const checkForUpdates = async (showToast = false) => {
     setChecking(true);
     try {
-      const hasUpdate = await invoke<boolean>('check_for_updates');
-      setUpdateAvailable(hasUpdate);
+      const update = await check();
       
-      if (hasUpdate) {
+      if (update) {
+        console.log(`Found update ${update.version} from ${update.date} with notes ${update.body}`);
+        setUpdateAvailable(true);
+        setUpdateInfo(update);
         setShowUpdateDialog(true);
         if (showToast) {
           addToast('Mise à jour disponible ! Cliquez pour installer.', 'info');
         }
-      } else if (showToast) {
-        addToast('Vous utilisez la dernière version.', 'success');
+      } else {
+        setUpdateAvailable(false);
+        setUpdateInfo(null);
+        if (showToast) {
+          addToast('Vous utilisez la dernière version.', 'success');
+        }
       }
     } catch (error) {
       console.error('Failed to check for updates:', error);
@@ -34,16 +43,47 @@ export const useUpdateManager = () => {
   };
 
   const installUpdate = async () => {
+    if (!updateInfo) return;
+    
     setInstalling(true);
+    setDownloadProgress(0);
+    
     try {
-      await invoke('install_update');
+      let downloaded = 0;
+      let contentLength = 0;
+      
+      // Download and install the update with progress tracking
+      await updateInfo.downloadAndInstall((event: any) => {
+        switch (event.event) {
+          case 'Started':
+            contentLength = event.data.contentLength;
+            console.log(`Started downloading ${event.data.contentLength} bytes`);
+            break;
+          case 'Progress':
+            downloaded += event.data.chunkLength;
+            const progress = contentLength > 0 ? (downloaded / contentLength) * 100 : 0;
+            setDownloadProgress(Math.round(progress));
+            console.log(`Downloaded ${downloaded} from ${contentLength}`);
+            break;
+          case 'Finished':
+            console.log('Download finished');
+            setDownloadProgress(100);
+            break;
+        }
+      });
+      
+      console.log('Update installed');
       addToast('Mise à jour installée ! L\'application va redémarrer.', 'success');
       setShowUpdateDialog(false);
+      
+      // Restart the application
+      await relaunch();
     } catch (error) {
       console.error('Failed to install update:', error);
       addToast('Échec de l\'installation de la mise à jour', 'error');
     } finally {
       setInstalling(false);
+      setDownloadProgress(0);
     }
   };
 
@@ -73,6 +113,8 @@ export const useUpdateManager = () => {
     showUpdateDialog,
     setShowUpdateDialog,
     checkForUpdates,
-    installUpdate
+    installUpdate,
+    updateInfo,
+    downloadProgress
   };
 };
