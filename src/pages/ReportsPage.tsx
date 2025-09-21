@@ -624,18 +624,10 @@ export const ReportsPage: React.FC = () => {
     if (!editFormData.time) newErrors.time = "L'heure est requise";
     if (!editFormData.description_type)
       newErrors.description_type = "Le type de description est requis";
-    // "Détail de la réclamation" must be provided for non-site origins
-    const isSiteEdit = ["site01", "site02"].includes(
-      editFormData.claim_origin || ""
-    );
-    if (!isSiteEdit) {
-      if (
-        !editFormData.claim_origin_detail ||
-        !editFormData.claim_origin_detail.trim()
-      ) {
-        newErrors.claim_origin_detail =
-          "Le détail de la réclamation est requis";
-      }
+    // "Détail de la réclamation" must be provided for all origins (including site origins)
+    // For site origins, the detail should be auto-filled, but still validate it exists
+    if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
+      newErrors.claim_origin_detail = "Le détail de la réclamation est requis";
     }
     if (!editFormData.quantity || editFormData.quantity <= 0)
       newErrors.quantity = "La quantité doit être supérieure à 0";
@@ -691,15 +683,16 @@ export const ReportsPage: React.FC = () => {
           time: (editFormData.time || "").trim().slice(0, 5),
           description_type: editFormData.description_type,
           description_details: editFormData.description_details,
-          // Ensure site origins persist a consistent detail label
+          // Ensure site origins persist a consistent detail label and never send null
           claim_origin_detail: (() => {
             const origin = editFormData.claim_origin || "";
             if (origin === "site01") return "Site 01";
             if (origin === "site02") return "Site 02";
+            // For other origins, ensure we always have a value
             return editFormData.claim_origin_detail &&
               editFormData.claim_origin_detail.trim() !== ""
               ? editFormData.claim_origin_detail.trim()
-              : null;
+              : "";
           })(),
           claim_origin_client_id: editFormData.claim_origin_client_id || null,
           quantity: parseInt(editFormData.quantity?.toString() || "0", 10),

@@ -212,6 +212,12 @@ export const NewReportPage: React.FC = () => {
       newErrors.claim_origin = 'L\'origine de la réclamation est requise';
     }
 
+    // Validate claim_origin_detail - required for all origins except site01/site02
+    const isSiteOrigin = ['site01', 'site02'].includes(formData.claim_origin);
+    if (!isSiteOrigin && (!formData.claim_origin_detail || !formData.claim_origin_detail.trim())) {
+      newErrors.claim_origin_detail = 'Le détail de la réclamation est requis';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -244,7 +250,13 @@ export const NewReportPage: React.FC = () => {
         description_details: formData.description_details, // "Détails complémentaires" maps to description_details
         quantity: formData.quantity,
         claim_origin: formData.claim_origin,
-        claim_origin_detail: formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null, // "Détail de la réclamation" maps to claim_origin_detail
+        claim_origin_detail: (() => {
+          // For site origins, ensure the detail is always set
+          if (formData.claim_origin === 'site01') return 'Site 01';
+          if (formData.claim_origin === 'site02') return 'Site 02';
+          // For other origins, use the provided detail or null
+          return formData.claim_origin_detail && formData.claim_origin_detail.trim() !== '' ? formData.claim_origin_detail.trim() : null;
+        })(), // "Détail de la réclamation" maps to claim_origin_detail
         valuation: 0,
         // Only include performance field if user has permission
         performance: (user?.role === 'performance' || user?.role === 'admin') ? formData.performance : undefined,
@@ -543,7 +555,7 @@ export const NewReportPage: React.FC = () => {
                         label: client.name
                       }))
                     ]}
-                    error={errors.description_details}
+                    error={errors.claim_origin_detail || errors.description_details}
                     placeholder="Sélectionnez un client"
                     searchPlaceholder="Rechercher un client..."
                   />
@@ -564,8 +576,8 @@ export const NewReportPage: React.FC = () => {
                       required
                     />
                   </div>
-                  {errors.description_details && (
-                    <p className="mt-1 text-sm text-red-500">{errors.description_details}</p>
+                  {errors.claim_origin_detail && (
+                    <p className="mt-1 text-sm text-red-500">{errors.claim_origin_detail}</p>
                   )}
                 </>
               )}
