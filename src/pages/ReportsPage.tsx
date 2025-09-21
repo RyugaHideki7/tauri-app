@@ -90,6 +90,7 @@ export const ReportsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [descriptionTypes, setDescriptionTypes] = useState<Array<{name: string}>>([]);
 
   // Filter states
   const [products, setProducts] = useState<Product[]>([]);
@@ -140,11 +141,33 @@ export const ReportsPage: React.FC = () => {
     itemsPerPage,
   ]);
 
+  // Load initial data
   useEffect(() => {
-    loadProducts();
-    loadLines();
-    loadEditData();
-  }, []);
+    const loadInitialData = async () => {
+      try {
+        // Load products, lines, and edit data in parallel
+        await Promise.all([
+          loadProducts(),
+          loadLines(),
+          loadEditData(),
+          // Load description types
+          (async () => {
+            try {
+              const types = await invoke<Array<{name: string}>>('get_description_types');
+              setDescriptionTypes(types);
+            } catch (error) {
+              console.error('Failed to fetch description types:', error);
+              addToast('Impossible de charger les types de description', 'error');
+            }
+          })(),
+        ]);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      }
+    };
+
+    loadInitialData();
+  }, [addToast]);
 
   const loadEditData = async () => {
     try {
@@ -1223,6 +1246,7 @@ export const ReportsPage: React.FC = () => {
                 value={editFormData.team || ""}
                 onChange={(value) => handleEditInputChange("team", value)}
                 options={[
+                  { value: "", label: "Sélectionnez une équipe" },
                   { value: "A", label: "Équipe A" },
                   { value: "B", label: "Équipe B" },
                   { value: "C", label: "Équipe C" },
@@ -1251,10 +1275,11 @@ export const ReportsPage: React.FC = () => {
                   handleEditInputChange("description_type", value)
                 }
                 options={[
-                  { value: "Physique", label: "Physique" },
-                  { value: "Chimique", label: "Chimique" },
-                  { value: "Biologique", label: "Biologique" },
-                  { value: "Process", label: "Process" },
+                  { value: "", label: "Sélectionnez une description" },
+                  ...descriptionTypes.map(type => ({
+                    value: type.name,
+                    label: type.name
+                  }))
                 ]}
                 error={editErrors.description_type}
               />

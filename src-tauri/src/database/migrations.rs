@@ -188,7 +188,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             production_date DATE NOT NULL,
             team VARCHAR(1) NOT NULL CHECK (team IN ('A', 'B', 'C')),
             time TIME NOT NULL,
-            description_type VARCHAR(50) NOT NULL CHECK (description_type IN ('Physique', 'Chimique', 'Biologique', 'Process')),
+            description_type VARCHAR(50) NOT NULL CHECK (description_type IN ('Physique', 'Chimique', 'Biologique', 'Process', 'GDS')),
             description_details TEXT NOT NULL,
             quantity INTEGER NOT NULL CHECK (quantity > 0),
             claim_origin VARCHAR(20) NOT NULL CHECK (claim_origin IN ('Réclamation client', 'Retour client', 'site01', 'site02', 'consommateur')),
@@ -449,7 +449,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     .await?;
 
     // Insert default description types if they don't exist
-    let description_types = ["Physique", "Chimique", "Biologique", "Process"];
+    let description_types = ["Physique", "Chimique", "Biologique", "Process", "GDS"];
     
     for desc_type in &description_types {
         sqlx::query(
