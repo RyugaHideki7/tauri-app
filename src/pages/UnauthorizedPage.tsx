@@ -22,9 +22,9 @@ const UnauthorizedPage = () => {
             Go Back
           </Button>
           <Button 
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/reports')}
           >
-            Go to Dashboard
+            Aller à la page des rapports
           </Button>
         </div>
       </div>

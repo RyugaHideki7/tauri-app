@@ -1,100 +1,15 @@
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-  faUser,
-  faTachometerAlt,
-  faIndustry,
-  faBoxes,
-  faUsers,
-  faBuilding,
-  faCog,
   faSignOutAlt,
-  faClipboardList,
-  faExclamationTriangle,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { UserRole, User, hasAnyRole, ROLES } from '../types/auth';
-
-const { RECLAMATION_CLIENT, RETOUR_CLIENT, SITE01, SITE02, PERFORMANCE, ADMIN, CONSOMMATEUR } = ROLES;
-
-export interface NavigationItem {
-  icon: IconDefinition;
-  label: string;
-  path: string;
-  allowedRoles: UserRole[];
-  showInNav?: boolean;
-}
-
-export const NAVIGATION_ITEMS: NavigationItem[] = [
-  {
-    icon: faTachometerAlt,
-    label: "Tableau de bord",
-    path: "/dashboard",
-    allowedRoles: [ADMIN],
-    showInNav: true,
-  },
-  {
-    icon: faUser,
-    label: "Profil",
-    path: "/profile",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
-    showInNav: true,
-  },
-  {
-    icon: faIndustry,
-    label: "Lignes",
-    path: "/lines",
-    allowedRoles: [ADMIN],
-    showInNav: true,
-  },
-  {
-    icon: faBoxes,
-    label: "Produits",
-    path: "/products",
-    allowedRoles: [ADMIN],
-    showInNav: true,
-  },
-  {
-    icon: faClipboardList,
-    label: "Rapports",
-    path: "/reports",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
-    showInNav: true,
-  },
-  {
-    icon: faExclamationTriangle,
-    label: "Nouveau rapport",
-    path: "/reports/new",
-    allowedRoles: [ADMIN, SITE01, SITE02, PERFORMANCE, CONSOMMATEUR, RECLAMATION_CLIENT, RETOUR_CLIENT],
-    showInNav: true,
-  },
-  {
-    icon: faBuilding,
-    label: "Clients",
-    path: "/clients",
-    allowedRoles: [ADMIN, RECLAMATION_CLIENT, RETOUR_CLIENT],
-    showInNav: true,
-  },
-  {
-    icon: faUsers,
-    label: "Utilisateurs",
-    path: "/users",
-    allowedRoles: [ADMIN],
-    showInNav: true,
-  },
-  {
-    icon: faCog,
-    label: "Paramètres",
-    path: "/settings",
-    allowedRoles: [ADMIN],
-    showInNav: true,
-  },
-];
+import { User, hasAnyRole } from '../types/auth';
+import { APP_ROUTES } from "./routes";
 
 // Helper function to filter navigation items based on user roles (supports multiple roles)
 export const getFilteredNavItems = (user: User) => {
-  return NAVIGATION_ITEMS.filter(
-    (item) => item.showInNav && hasAnyRole(user, item.allowedRoles)
+  return APP_ROUTES.filter(
+    (route) => route.showInNav && route.label && route.icon && hasAnyRole(user, route.allowedRoles)
   );
 };
 
