@@ -55,6 +55,7 @@ pub struct PaginationParams {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub claim_origin: Option<String>,
+    pub user_accessible_origins: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -188,8 +189,8 @@ impl ReportsService {
     }
 
     pub async fn get_paginated_reports(&self, params: PaginationParams) -> Result<PaginatedResponse<NonConformityReport>> {
-        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}, claim_origin={:?}", 
-                 params.page, params.limit, params.search, params.product_id, params.line_id, params.start_date, params.end_date, params.claim_origin);
+        println!("[REPORTS_SERVICE] Received params: page={}, limit={}, search={:?}, product_id={:?}, line_id={:?}, start_date={:?}, end_date={:?}, claim_origin={:?}, user_accessible_origins={:?}", 
+                 params.page, params.limit, params.search, params.product_id, params.line_id, params.start_date, params.end_date, params.claim_origin, params.user_accessible_origins);
         
         let offset = (params.page - 1) * params.limit;
         
@@ -217,6 +218,9 @@ impl ReportsService {
         let mut conditions = Vec::new();
         let mut bind_values = Vec::new();
         
+        // Track parameter types for proper binding
+        let mut param_types = Vec::new();
+        
         // Collect all filter conditions and their values
         if let Some(search) = &params.search {
             println!("[REPORTS_SERVICE] Processing search: '{}'", search);
@@ -224,6 +228,7 @@ impl ReportsService {
                 println!("[REPORTS_SERVICE] Adding search condition");
                 conditions.push("(ncr.report_number ILIKE $PLACEHOLDER OR ncr.description_details ILIKE $PLACEHOLDER)");
                 bind_values.push(format!("%{}%", search));
+                param_types.push("string");
             } else {
                 println!("[REPORTS_SERVICE] Search is empty, skipping");
             }
@@ -239,6 +244,7 @@ impl ReportsService {
                     .map_err(|e| anyhow::anyhow!("Invalid product UUID: {}", e))?;
                 conditions.push("ncr.product_id = $PLACEHOLDER");
                 bind_values.push(product_uuid.to_string());
+                param_types.push("uuid");
             } else {
                 println!("[REPORTS_SERVICE] Product_id is empty, skipping");
             }
@@ -254,6 +260,7 @@ impl ReportsService {
                     .map_err(|e| anyhow::anyhow!("Invalid line UUID: {}", e))?;
                 conditions.push("ncr.line_id = $PLACEHOLDER");
                 bind_values.push(line_uuid.to_string());
+                param_types.push("uuid");
             } else {
                 println!("[REPORTS_SERVICE] Line_id is empty, skipping");
             }
@@ -269,6 +276,7 @@ impl ReportsService {
                     .map_err(|e| anyhow::anyhow!("Invalid start date format: {}", e))?;
                 conditions.push("ncr.report_date >= $PLACEHOLDER");
                 bind_values.push(start_date.clone());
+                param_types.push("date");
             } else {
                 println!("[REPORTS_SERVICE] Start_date is empty, skipping");
             }
@@ -284,6 +292,7 @@ impl ReportsService {
                     .map_err(|e| anyhow::anyhow!("Invalid end date format: {}", e))?;
                 conditions.push("ncr.report_date <= $PLACEHOLDER");
                 bind_values.push(end_date.clone());
+                param_types.push("date");
             } else {
                 println!("[REPORTS_SERVICE] End_date is empty, skipping");
             }
@@ -291,6 +300,7 @@ impl ReportsService {
             println!("[REPORTS_SERVICE] End_date is None");
         }
 
+        // Handle claim_origin filtering
         if let Some(claim_origin) = &params.claim_origin {
             println!("[REPORTS_SERVICE] Processing claim_origin: '{}'", claim_origin);
             if !claim_origin.trim().is_empty() {
@@ -298,21 +308,53 @@ impl ReportsService {
                 // Use exact string comparison for claim_origin
                 conditions.push("ncr.claim_origin = $PLACEHOLDER");
                 bind_values.push(claim_origin.clone());
+                param_types.push("string");
             } else {
                 println!("[REPORTS_SERVICE] Claim_origin is empty, skipping");
             }
         } else {
             println!("[REPORTS_SERVICE] Claim_origin is None");
+            
+            // If no specific claim_origin is set, but user_accessible_origins is provided,
+            // filter by the user's accessible origins
+            if let Some(accessible_origins) = &params.user_accessible_origins {
+                if !accessible_origins.is_empty() {
+                    println!("[REPORTS_SERVICE] No specific claim_origin, but user has accessible origins: {:?}", accessible_origins);
+                    // Add a special marker for accessible origins
+                    conditions.push("USER_ACCESSIBLE_ORIGINS");
+                    // Add all accessible origins to bind_values
+                    for origin in accessible_origins {
+                        bind_values.push(origin.clone());
+                        param_types.push("string");
+                    }
+                } else {
+                    println!("[REPORTS_SERVICE] User has empty accessible origins list");
+                }
+            } else {
+                println!("[REPORTS_SERVICE] No user_accessible_origins provided");
+            }
         }
         
         println!("[REPORTS_SERVICE] Found {} conditions to apply", conditions.len());
         
         // Build the final queries with proper parameter placeholders
         let mut param_index = 1;
+        
         for condition in &conditions {
             let condition_with_params = if condition.contains("ILIKE $PLACEHOLDER OR") {
                 // For search condition that uses the same parameter twice
                 condition.replace("$PLACEHOLDER", &format!("${}", param_index))
+            } else if *condition == "USER_ACCESSIBLE_ORIGINS" {
+                // Handle the accessible origins IN clause
+                if let Some(accessible_origins) = &params.user_accessible_origins {
+                    let placeholders: Vec<String> = (0..accessible_origins.len())
+                        .map(|i| format!("${}", param_index + i))
+                        .collect();
+                    param_index += accessible_origins.len() - 1; // Adjust for multiple parameters
+                    format!("ncr.claim_origin IN ({})", placeholders.join(", "))
+                } else {
+                    continue; // Skip if no accessible origins
+                }
             } else {
                 condition.replace("$PLACEHOLDER", &format!("${}", param_index))
             };
@@ -338,23 +380,27 @@ impl ReportsService {
         
         // Bind filter parameters
         for (i, value) in bind_values.iter().enumerate() {
-            if conditions[i].contains("product_id") || conditions[i].contains("line_id") {
-                // Bind as UUID
-                let uuid = uuid::Uuid::parse_str(value).unwrap();
-                println!("[REPORTS_SERVICE] Binding UUID: {}", uuid);
-                query_builder = query_builder.bind(uuid);
-                count_builder = count_builder.bind(uuid);
-            } else if conditions[i].contains("report_date") {
-                // Bind as date
-                let date = chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d").unwrap();
-                println!("[REPORTS_SERVICE] Binding date: {}", date);
-                query_builder = query_builder.bind(date);
-                count_builder = count_builder.bind(date);
-            } else {
-                // Bind as string (search pattern)
-                println!("[REPORTS_SERVICE] Binding string: {}", value);
-                query_builder = query_builder.bind(value);
-                count_builder = count_builder.bind(value);
+            match *param_types.get(i).unwrap_or(&"string") {
+                "uuid" => {
+                    // Bind as UUID
+                    let uuid = uuid::Uuid::parse_str(value).unwrap();
+                    println!("[REPORTS_SERVICE] Binding UUID: {}", uuid);
+                    query_builder = query_builder.bind(uuid);
+                    count_builder = count_builder.bind(uuid);
+                },
+                "date" => {
+                    // Bind as date
+                    let date = chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d").unwrap();
+                    println!("[REPORTS_SERVICE] Binding date: {}", date);
+                    query_builder = query_builder.bind(date);
+                    count_builder = count_builder.bind(date);
+                },
+                _ => {
+                    // Bind as string (search pattern, claim_origin, etc.)
+                    println!("[REPORTS_SERVICE] Binding string: {}", value);
+                    query_builder = query_builder.bind(value);
+                    count_builder = count_builder.bind(value);
+                }
             }
         }
         

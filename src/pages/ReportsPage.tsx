@@ -14,7 +14,7 @@ import Dialog from "../components/ui/Dialog";
 import ActionButtons from "../components/ui/ActionButtons";
 import { useToast } from "../components/ui/Toast";
 import * as ExcelJS from "exceljs";
-import { ROLES } from "../types/auth";
+import { ROLES, hasRole } from "../types/auth";
 
 interface NonConformityReport {
   id: string;
@@ -90,7 +90,9 @@ export const ReportsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [descriptionTypes, setDescriptionTypes] = useState<Array<{name: string}>>([]);
+  const [descriptionTypes, setDescriptionTypes] = useState<
+    Array<{ name: string }>
+  >([]);
 
   // Filter states
   const [products, setProducts] = useState<Product[]>([]);
@@ -119,6 +121,72 @@ export const ReportsPage: React.FC = () => {
   const [pictureViewModalOpen, setPictureViewModalOpen] = useState(false);
   const [viewingPicture, setViewingPicture] = useState<string | null>(null);
 
+  // Determine user's accessible claim origins based on their roles
+  const getUserAccessibleClaimOrigins = () => {
+    if (!user) return [];
+
+    const accessibleOrigins = [];
+
+    // Check each role and add corresponding claim origins
+    if (hasRole(user, ROLES.SITE01)) {
+      accessibleOrigins.push("site01");
+    }
+    if (hasRole(user, ROLES.SITE02)) {
+      accessibleOrigins.push("site02");
+    }
+    if (hasRole(user, ROLES.RECLAMATION_CLIENT)) {
+      accessibleOrigins.push("Réclamation client");
+    }
+    if (hasRole(user, ROLES.RETOUR_CLIENT)) {
+      accessibleOrigins.push("Retour client");
+    }
+    if (hasRole(user, ROLES.CONSOMMATEUR)) {
+      accessibleOrigins.push("consommateur");
+    }
+
+    // Admin and performance roles can see all origins
+    if (hasRole(user, ROLES.ADMIN) || hasRole(user, ROLES.PERFORMANCE)) {
+      return [
+        "site01",
+        "site02",
+        "Réclamation client",
+        "Retour client",
+        "consommateur",
+      ];
+    }
+
+    return accessibleOrigins;
+  };
+
+  const userAccessibleOrigins = getUserAccessibleClaimOrigins();
+  const hasOnlyOneRole = userAccessibleOrigins.length === 1;
+  const shouldPreselect = hasOnlyOneRole && !selectedClaimOrigin;
+
+  // Debug user and accessible origins
+  console.error("[Reports] ROLES constants:", ROLES);
+  console.error("[Reports] User object:", user);
+  console.error("[Reports] User roles array:", user?.roles);
+  console.error("[Reports] User primary role:", user?.role);
+  console.error("[Reports] User accessible origins:", userAccessibleOrigins);
+  console.error("[Reports] Has only one role:", hasOnlyOneRole);
+  console.error("[Reports] Should preselect:", shouldPreselect);
+  console.error(
+    "[Reports] hasRole(user, ROLES.ADMIN):",
+    hasRole(user, ROLES.ADMIN)
+  );
+  console.error(
+    "[Reports] hasRole(user, ROLES.PERFORMANCE):",
+    hasRole(user, ROLES.PERFORMANCE)
+  );
+  console.error(
+    "[Reports] hasRole(user, ROLES.SITE01):",
+    hasRole(user, ROLES.SITE01)
+  );
+  console.error(
+    "[Reports] hasRole(user, ROLES.SITE02):",
+    hasRole(user, ROLES.SITE02)
+  );
+
   useEffect(() => {
     // Debug current filters
     console.debug("[Reports] loadReports triggered with filters:", {
@@ -141,6 +209,13 @@ export const ReportsPage: React.FC = () => {
     itemsPerPage,
   ]);
 
+  // Auto-select claim origin if user has only one accessible role
+  useEffect(() => {
+    if (shouldPreselect && userAccessibleOrigins.length === 1) {
+      setSelectedClaimOrigin(userAccessibleOrigins[0]);
+    }
+  }, [shouldPreselect, userAccessibleOrigins]);
+
   // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
@@ -153,16 +228,21 @@ export const ReportsPage: React.FC = () => {
           // Load description types
           (async () => {
             try {
-              const types = await invoke<Array<{name: string}>>('get_description_types');
+              const types = await invoke<Array<{ name: string }>>(
+                "get_description_types"
+              );
               setDescriptionTypes(types);
             } catch (error) {
-              console.error('Failed to fetch description types:', error);
-              addToast('Impossible de charger les types de description', 'error');
+              console.error("Failed to fetch description types:", error);
+              addToast(
+                "Impossible de charger les types de description",
+                "error"
+              );
             }
           })(),
         ]);
       } catch (error) {
-        console.error('Error loading initial data:', error);
+        console.error("Error loading initial data:", error);
       }
     };
 
@@ -228,16 +308,47 @@ export const ReportsPage: React.FC = () => {
     try {
       console.debug("[Reports] Raw filter values:", {
         selectedClaimOrigin: `"${selectedClaimOrigin}"`,
+        selectedClaimOriginLength: selectedClaimOrigin.length,
+        selectedClaimOriginTruthy: !!selectedClaimOrigin,
         selectedProduct: `"${selectedProduct}"`,
         selectedLine: `"${selectedLine}"`,
         startDate: `"${startDate}"`,
         endDate: `"${endDate}"`,
       });
+
+      // Determine the claim origin filter to apply
+      let claimOriginFilter = selectedClaimOrigin || null;
+
+      // For non-admin/performance users, always apply role-based filtering
+      // When selectedClaimOrigin is empty ("Toutes les origines"), show all accessible origins
+      // When selectedClaimOrigin has a value, show only that specific origin (if user has access)
+      if (!hasRole(user, ROLES.ADMIN) && !hasRole(user, ROLES.PERFORMANCE)) {
+        if (!selectedClaimOrigin) {
+          // "Toutes les origines" selected - filter by all accessible origins
+          claimOriginFilter = null; // Let backend handle filtering by user_accessible_origins
+        } else {
+          // Specific origin selected - verify user has access to it
+          if (userAccessibleOrigins.includes(selectedClaimOrigin)) {
+            claimOriginFilter = selectedClaimOrigin;
+          } else {
+            // User doesn't have access to selected origin, fallback to accessible origins
+            claimOriginFilter = null;
+          }
+        }
+      }
+
+      const userAccessibleOriginsToSend =
+        !hasRole(user, ROLES.ADMIN) && !hasRole(user, ROLES.PERFORMANCE)
+          ? userAccessibleOrigins
+          : null;
+
       const payload = {
         page,
         limit: itemsPerPage,
-        claim_origin: selectedClaimOrigin || null,
-        claimOrigin: selectedClaimOrigin || null, // Add camelCase version for consistency
+        claim_origin: claimOriginFilter,
+        claimOrigin: claimOriginFilter, // Add camelCase version for consistency
+        user_accessible_origins: userAccessibleOriginsToSend,
+        userAccessibleOrigins: userAccessibleOriginsToSend, // Try camelCase version
         // Send both casings to diagnose mapping behavior
         product_id: selectedProduct || null,
         productId: selectedProduct || null,
@@ -276,18 +387,47 @@ export const ReportsPage: React.FC = () => {
     setSelectedLine("");
     setStartDate("");
     setEndDate("");
-    setSelectedClaimOrigin("");
+
+    // Only clear claim origin if user has multiple roles
+    // If user has only one role, keep it preselected
+    if (!hasOnlyOneRole) {
+      setSelectedClaimOrigin("");
+    }
+
     setPage(1);
   };
 
   const exportToExcel = async () => {
     try {
+      // Determine the claim origin filter for export (same logic as loadReports)
+      let exportClaimOriginFilter = selectedClaimOrigin || null;
+
+      // For non-admin/performance users, always apply role-based filtering
+      if (!hasRole(user, ROLES.ADMIN) && !hasRole(user, ROLES.PERFORMANCE)) {
+        if (!selectedClaimOrigin) {
+          // "Toutes les origines" selected - filter by all accessible origins
+          exportClaimOriginFilter = null; // Let backend handle filtering by user_accessible_origins
+        } else {
+          // Specific origin selected - verify user has access to it
+          if (userAccessibleOrigins.includes(selectedClaimOrigin)) {
+            exportClaimOriginFilter = selectedClaimOrigin;
+          } else {
+            // User doesn't have access to selected origin, fallback to accessible origins
+            exportClaimOriginFilter = null;
+          }
+        }
+      }
+
       // Fetch ALL filtered reports for export (not just current page)
       const exportPayload = {
         page: 1,
         limit: 999999, // Large number to get all results
-        claim_origin: selectedClaimOrigin || null,
-        claimOrigin: selectedClaimOrigin || null, // Add camelCase version for consistency
+        claim_origin: exportClaimOriginFilter,
+        claimOrigin: exportClaimOriginFilter, // Add camelCase version for consistency
+        user_accessible_origins:
+          !hasRole(user, ROLES.ADMIN) && !hasRole(user, ROLES.PERFORMANCE)
+            ? userAccessibleOrigins
+            : null,
         product_id: selectedProduct || null,
         productId: selectedProduct || null,
         line_id: selectedLine || null,
@@ -626,7 +766,10 @@ export const ReportsPage: React.FC = () => {
       newErrors.description_type = "Le type de description est requis";
     // "Détail de la réclamation" must be provided for all origins (including site origins)
     // For site origins, the detail should be auto-filled, but still validate it exists
-    if (!editFormData.claim_origin_detail || !editFormData.claim_origin_detail.trim()) {
+    if (
+      !editFormData.claim_origin_detail ||
+      !editFormData.claim_origin_detail.trim()
+    ) {
       newErrors.claim_origin_detail = "Le détail de la réclamation est requis";
     }
     if (!editFormData.quantity || editFormData.quantity <= 0)
@@ -747,8 +890,9 @@ export const ReportsPage: React.FC = () => {
   // };
 
   const canViewPerformance =
-    user?.role === "performance" || user?.role === "admin";
-  const canFullEdit = user?.role === "performance" || user?.role === "admin";
+    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
+  const canFullEdit =
+    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
 
   return (
     <div className="p-4 lg:p-6 w-full">
@@ -776,33 +920,87 @@ export const ReportsPage: React.FC = () => {
       {/* Filters */}
       <div className="mb-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-          <Select
-            label="Filtrer par origine"
-            value={selectedClaimOrigin}
-            onChange={(value) => {
-              console.debug(
-                "[Reports] claim_origin selected:",
-                value,
-                "type:",
-                typeof value
-              );
-              setSelectedClaimOrigin(value);
-              // Note: selectedClaimOrigin will still show old value here due to React state timing
-              console.debug(
-                "[Reports] selectedClaimOrigin will be updated to:",
-                value
-              );
-              handleFilterChange();
-            }}
-            options={[
-              { value: "", label: "Toutes les origines" },
-              { value: "site01", label: "Site 01" },
-              { value: "site02", label: "Site 02" },
-              { value: "Réclamation client", label: "Réclamation client" },
-              { value: "Retour client", label: "Retour client" },
-              { value: "consommateur", label: "Consommateur" },
-            ]}
-          />
+          <div className="relative">
+            <Select
+              label="Filtrer par origine"
+              value={selectedClaimOrigin}
+              onChange={(value) => {
+                console.debug(
+                  "[Reports] claim_origin selected:",
+                  value,
+                  "type:",
+                  typeof value
+                );
+                setSelectedClaimOrigin(value);
+                // Note: selectedClaimOrigin will still show old value here due to React state timing
+                console.debug(
+                  "[Reports] selectedClaimOrigin will be updated to:",
+                  value
+                );
+                handleFilterChange();
+              }}
+              disabled={hasOnlyOneRole}
+              options={(() => {
+                // Create origin label mapping
+                const originLabels: Record<string, string> = {
+                  site01: "Site 01",
+                  site02: "Site 02",
+                  "Réclamation client": "Réclamation client",
+                  "Retour client": "Retour client",
+                  consommateur: "Consommateur",
+                };
+
+                // If user has only one role, show only that option
+                if (hasOnlyOneRole) {
+                  const singleOrigin = userAccessibleOrigins[0];
+                  return [
+                    {
+                      value: singleOrigin,
+                      label: originLabels[singleOrigin] || singleOrigin,
+                    },
+                  ];
+                }
+
+                // For multiple roles or admin/performance, show accessible origins
+                const baseOptions = [
+                  { value: "", label: "Toutes les origines" },
+                ];
+
+                if (
+                  hasRole(user, ROLES.ADMIN) ||
+                  hasRole(user, ROLES.PERFORMANCE)
+                ) {
+                  // Admin and performance can see all origins
+                  return [
+                    ...baseOptions,
+                    { value: "site01", label: "Site 01" },
+                    { value: "site02", label: "Site 02" },
+                    {
+                      value: "Réclamation client",
+                      label: "Réclamation client",
+                    },
+                    { value: "Retour client", label: "Retour client" },
+                    { value: "consommateur", label: "Consommateur" },
+                  ];
+                }
+
+                // For users with multiple roles, show only their accessible origins
+                const accessibleOptions = userAccessibleOrigins.map(
+                  (origin) => ({
+                    value: origin,
+                    label: originLabels[origin] || origin,
+                  })
+                );
+
+                return [...baseOptions, ...accessibleOptions];
+              })()}
+            />
+            {hasOnlyOneRole && (
+              <div className="absolute -bottom-5 left-0 text-xs text-muted-foreground">
+                Filtré automatiquement selon votre rôle
+              </div>
+            )}
+          </div>
           <SearchableSelect
             label="Filtrer par produit"
             value={selectedProduct}
@@ -1269,10 +1467,10 @@ export const ReportsPage: React.FC = () => {
                 }
                 options={[
                   { value: "", label: "Sélectionnez une description" },
-                  ...descriptionTypes.map(type => ({
+                  ...descriptionTypes.map((type) => ({
                     value: type.name,
-                    label: type.name
-                  }))
+                    label: type.name,
+                  })),
                 ]}
                 error={editErrors.description_type}
               />
