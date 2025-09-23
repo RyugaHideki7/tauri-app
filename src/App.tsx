@@ -21,7 +21,7 @@ function App() {
           </Layout>
         }
       >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/reports" replace />} />
 
         {/* Dynamically generate protected routes */}
         {APP_ROUTES.map(({ path, element: Element, allowedRoles }) => (
