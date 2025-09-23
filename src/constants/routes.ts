@@ -10,8 +10,6 @@ import { NewReportPage } from '../pages/NewReportPage';
 import { ReportsPage } from '../pages/ReportsPage';
 import SettingsPage from "../pages/SettingsPage";
 
-const { RECLAMATION_CLIENT, RETOUR_CLIENT, SITE01, SITE02, PERFORMANCE, ADMIN, CONSOMMATEUR } = ROLES;
-
 export interface AppRoute {
   path: string;
   element: React.ComponentType;
@@ -27,7 +25,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: DashboardPage,
     label: "Tableau de bord",
     icon: faTachometerAlt,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: true,
   },
   {
@@ -43,7 +41,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: LinesPage,
     label: "Lignes",
     icon: faIndustry,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: true,
   },
   {
@@ -51,7 +49,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: ProductsPage,
     label: "Produits",
     icon: faBoxes,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: true,
   },
   {
@@ -75,7 +73,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: ClientsPage,
     label: "Clients",
     icon: faBuilding,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: true,
   },
   {
@@ -83,7 +81,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: UsersPage,
     label: "Utilisateurs",
     icon: faUsers,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: true,
   },
   {
@@ -91,7 +89,7 @@ export const APP_ROUTES: AppRoute[] = [
     element: SettingsPage,
     label: "Paramètres",
     icon: faCog,
-    allowedRoles: [ADMIN],
+    allowedRoles: [ROLES.ADMIN],
     showInNav: false,
   },
 ];
