@@ -77,6 +77,103 @@ interface Format {
   format_unit: string;
 }
 
+type TableColumnDefinition = {
+  key: string;
+  header: React.ReactNode;
+  width?: string;
+  render?: (value: any, row: any) => React.ReactNode;
+  headerClassName?: string;
+  cellClassName?: string;
+};
+
+const COLUMN_ORDER: string[] = [
+  "report_number",
+  "report_date",
+  "line_name",
+  "product_name",
+  "production_date",
+  "format_display",
+  "team",
+  "time",
+  "description_type",
+  "quantity",
+  "claim_origin",
+  "claim_origin_detail",
+  "description_details",
+  "valuation",
+  "performance",
+  "actions",
+];
+
+const DEFAULT_VISIBLE_COLUMN_KEYS: string[] = [
+  "report_date",
+  "line_name",
+  "product_name",
+  "production_date",
+  "format_display",
+  "team",
+  "time",
+  "description_type",
+  "quantity",
+  "claim_origin",
+  "claim_origin_detail",
+  "description_details",
+  "valuation",
+  "performance",
+  "actions",
+];
+
+const COLUMN_LABELS: Record<string, string> = {
+  report_number: "N° de rapport",
+  report_date: "Date de la réclamation",
+  line_name: "Ligne",
+  product_name: "Produit",
+  production_date: "Date de production",
+  format_display: "Format",
+  team: "Équipe",
+  time: "Heure",
+  description_type: "Description de la NC",
+  quantity: "Quantité",
+  claim_origin: "Origine de la réclamation",
+  claim_origin_detail: "Détail de la réclamation",
+  description_details: "Détails complémentaires",
+  valuation: "Valorisation",
+  performance: "Performance",
+  actions: "Actions",
+};
+
+const arraysEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+};
+
+const isColumnAllowed = (
+  key: string,
+  canViewPerformance: boolean,
+  canFullEdit: boolean
+) => {
+  if (key === "valuation" || key === "performance") {
+    return canViewPerformance;
+  }
+
+  if (key === "actions") {
+    return canFullEdit;
+  }
+
+  return true;
+};
+
+const sanitizeColumnKeys = (
+  keys: string[],
+  canViewPerformance: boolean,
+  canFullEdit: boolean
+) => {
+  const uniqueKeys = Array.from(new Set(keys));
+  return COLUMN_ORDER.filter(
+    (key) => uniqueKeys.includes(key) && isColumnAllowed(key, canViewPerformance, canFullEdit)
+  );
+};
+
 export const ReportsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -120,6 +217,108 @@ export const ReportsPage: React.FC = () => {
   // Picture view modal states
   const [pictureViewModalOpen, setPictureViewModalOpen] = useState(false);
   const [viewingPicture, setViewingPicture] = useState<string | null>(null);
+
+  const canViewPerformance =
+    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
+  const canFullEdit =
+    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
+
+  const storageKey = React.useMemo(
+    () =>
+      user
+        ? `reports_visible_columns_${user.id}`
+        : "reports_visible_columns_guest",
+    [user]
+  );
+
+  const computedDefaultColumnKeys = React.useMemo(
+    () => sanitizeColumnKeys(DEFAULT_VISIBLE_COLUMN_KEYS, canViewPerformance, canFullEdit),
+    [canViewPerformance, canFullEdit]
+  );
+
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>(
+    computedDefaultColumnKeys
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = window.localStorage.getItem(storageKey);
+    let nextKeys = computedDefaultColumnKeys;
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          nextKeys = sanitizeColumnKeys(parsed, canViewPerformance, canFullEdit);
+        }
+      } catch (error) {
+        console.error("Failed to parse stored visible columns:", error);
+      }
+    }
+
+    setVisibleColumnKeys((prev) =>
+      arraysEqual(prev, nextKeys) ? prev : nextKeys
+    );
+  }, [storageKey, computedDefaultColumnKeys, canViewPerformance, canFullEdit]);
+
+  useEffect(() => {
+    if (!visibleColumnKeys.length) return;
+
+    const sanitized = sanitizeColumnKeys(
+      visibleColumnKeys,
+      canViewPerformance,
+      canFullEdit
+    );
+    const fallback = computedDefaultColumnKeys;
+    const finalKeys = sanitized.length ? sanitized : fallback;
+
+    if (!arraysEqual(visibleColumnKeys, finalKeys)) {
+      setVisibleColumnKeys(finalKeys);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(storageKey, JSON.stringify(finalKeys));
+    }
+  }, [
+    visibleColumnKeys,
+    canViewPerformance,
+    canFullEdit,
+    storageKey,
+    computedDefaultColumnKeys,
+  ]);
+
+  const availableColumnKeys = React.useMemo(
+    () =>
+      COLUMN_ORDER.filter((key) =>
+        isColumnAllowed(key, canViewPerformance, canFullEdit)
+      ),
+    [canViewPerformance, canFullEdit]
+  );
+
+  const toggleColumnVisibility = React.useCallback(
+    (key: string) => {
+      if (!isColumnAllowed(key, canViewPerformance, canFullEdit)) {
+        return;
+      }
+
+      setVisibleColumnKeys((prev) => {
+        const exists = prev.includes(key);
+        if (exists) {
+          return prev.filter((item) => item !== key);
+        }
+
+        const nextSet = new Set([...prev, key]);
+        return COLUMN_ORDER.filter((columnKey) => nextSet.has(columnKey));
+      });
+    },
+    [canViewPerformance, canFullEdit]
+  );
+
+  const resetVisibleColumns = React.useCallback(() => {
+    setVisibleColumnKeys(computedDefaultColumnKeys);
+  }, [computedDefaultColumnKeys]);
 
   // Determine user's accessible claim origins based on their roles
   const getUserAccessibleClaimOrigins = () => {
@@ -869,6 +1068,167 @@ export const ReportsPage: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const columnDefinitions: Record<string, TableColumnDefinition> = React.useMemo(
+    () => ({
+      report_number: {
+        key: "report_number",
+        header: COLUMN_LABELS.report_number,
+        render: (value: string) => value || "-",
+      },
+      report_date: {
+        key: "report_date",
+        header: COLUMN_LABELS.report_date,
+        render: (value: string) => formatDate(value),
+      },
+      line_name: {
+        key: "line_name",
+        header: COLUMN_LABELS.line_name,
+        render: (value: string) => value || "Ligne inconnue",
+        cellClassName: "max-w-[14rem]",
+      },
+      product_name: {
+        key: "product_name",
+        header: COLUMN_LABELS.product_name,
+        render: (value: string) => value || "Produit inconnu",
+        cellClassName: "max-w-[16rem]",
+      },
+      production_date: {
+        key: "production_date",
+        header: COLUMN_LABELS.production_date,
+        render: (value: string) => formatDate(value),
+      },
+      format_display: {
+        key: "format_display",
+        header: COLUMN_LABELS.format_display,
+        render: (value: string) => value || "-",
+      },
+      team: {
+        key: "team",
+        header: COLUMN_LABELS.team,
+        render: (value: string) => `Équipe ${value}`,
+      },
+      time: {
+        key: "time",
+        header: COLUMN_LABELS.time,
+        render: (value: string) => value || "-",
+      },
+      description_type: {
+        key: "description_type",
+        header: COLUMN_LABELS.description_type,
+        cellClassName: "max-w-[16rem]",
+      },
+      quantity: {
+        key: "quantity",
+        header: COLUMN_LABELS.quantity,
+      },
+      claim_origin: {
+        key: "claim_origin",
+        header: COLUMN_LABELS.claim_origin,
+        render: (value: string) => {
+          const originMap: Record<string, string> = {
+            site01: "Site 01",
+            site02: "Site 02",
+            "Réclamation client": "Réclamation client",
+            "Retour client": "Retour client",
+            consommateur: "Consommateur",
+          };
+          return originMap[value] || value || "-";
+        },
+        cellClassName: "max-w-[14rem]",
+      },
+      claim_origin_detail: {
+        key: "claim_origin_detail",
+        header: COLUMN_LABELS.claim_origin_detail,
+        render: (value: string, row: NonConformityReport) => {
+          if (["site01", "site02"].includes(row.claim_origin)) {
+            return row.claim_origin === "site01" ? "Site 01" : "Site 02";
+          }
+          if (["Réclamation client", "Retour client"].includes(row.claim_origin)) {
+            return value || "-";
+          }
+          if (row.claim_origin === "consommateur") {
+            return value || "-";
+          }
+          return "-";
+        },
+        cellClassName: "max-w-[20rem]",
+      },
+      description_details: {
+        key: "description_details",
+        header: COLUMN_LABELS.description_details,
+        render: (value: string) => (
+          <div className="block whitespace-normal break-words max-w-[28rem]">
+            {value || "-"}
+          </div>
+        ),
+        cellClassName: "max-w-[28rem]",
+      },
+      valuation: {
+        key: "valuation",
+        header: COLUMN_LABELS.valuation,
+        render: (value: string) => {
+          if (!value) return "-";
+          const numeric = Number.parseFloat(value);
+          if (Number.isNaN(numeric)) return value;
+          return `${numeric.toFixed(2)} DZD`;
+        },
+      },
+      performance: {
+        key: "performance",
+        header: COLUMN_LABELS.performance,
+        render: (value: string) => (
+          <div className="flex items-center gap-2">
+            <div className="block whitespace-normal break-words max-w-[24rem]">
+              {value || "-"}
+            </div>
+          </div>
+        ),
+        cellClassName: "max-w-[24rem]",
+      },
+      actions: {
+        key: "actions",
+        header: COLUMN_LABELS.actions,
+        render: (_value: unknown, row: NonConformityReport) => (
+          <ActionButtons
+            onEdit={() => handleFullEdit(row)}
+            onShowImage={
+              row.picture_data ? () => handleViewPicture(row.picture_data!) : undefined
+            }
+            onDelete={() => handleDeleteReport(row)}
+            size="sm"
+            variant="default"
+            showImageButton={!!row.picture_data}
+            theme={isDarkMode ? "dark" : "light"}
+            deleteConfirmation={{
+              title: "Confirmer la suppression",
+              message: `Êtes-vous sûr de vouloir supprimer le rapport #${row.report_number} ? Cette action est irréversible.`,
+            }}
+          />
+        ),
+      },
+    }),
+    [
+      handleFullEdit,
+      handleViewPicture,
+      handleDeleteReport,
+      isDarkMode,
+      formatDate,
+    ]
+  );
+
+  const tableColumns = React.useMemo(() => {
+    const columns: TableColumnDefinition[] = [];
+
+    visibleColumnKeys.forEach((key) => {
+      const definition = columnDefinitions[key];
+      if (definition) {
+        columns.push(definition);
+      }
+    });
+
+    return columns;
+  }, [visibleColumnKeys, columnDefinitions]);
+
   // ============================================
   // KEPT FOR REFERENCE - NOT CURRENTLY USED
   // Status color mapping function for report status indicators
@@ -888,11 +1248,6 @@ export const ReportsPage: React.FC = () => {
   //       return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400';
   //   }
   // };
-
-  const canViewPerformance =
-    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
-  const canFullEdit =
-    hasRole(user, ROLES.PERFORMANCE) || hasRole(user, ROLES.ADMIN);
 
   return (
     <div className="p-4 lg:p-6 w-full">
@@ -1122,6 +1477,49 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
+      <div className="mb-6">
+        <div className="border border-border rounded-2xl bg-surface/70 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-foreground/90">
+              Colonnes affichées
+            </h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-xs"
+              onClick={resetVisibleColumns}
+            >
+              Réinitialiser
+            </Button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {availableColumnKeys.map((key) => {
+              const isSelected = visibleColumnKeys.includes(key);
+              const label = COLUMN_LABELS[key] || key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleColumnVisibility(key)}
+                  aria-pressed={isSelected}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Sélectionnez les colonnes à afficher. Vos préférences seront conservées pour vos prochaines visites.
+          </p>
+        </div>
+      </div>
+
       {/* Reports Table */}
       {reports.length === 0 && !loading ? (
         <div className="text-center py-16 border border-border rounded-lg bg-background">
@@ -1153,157 +1551,7 @@ export const ReportsPage: React.FC = () => {
         </div>
       ) : (
         <Table
-          columns={[
-            // Report number is hidden from the table view but kept in data for exports/actions
-            {
-              key: "report_date",
-              header: "Date de la réclamation",
-              render: (value) => formatDate(value),
-            },
-            {
-              key: "line_name",
-              header: "Ligne",
-              render: (value) => value || "Ligne inconnue",
-              cellClassName: "max-w-[14rem]",
-            },
-            {
-              key: "product_name",
-              header: "Produit",
-              render: (value) => value || "Produit inconnu",
-              cellClassName: "max-w-[16rem]",
-            },
-            {
-              key: "production_date",
-              header: "Date de production",
-              render: (value) => formatDate(value),
-            },
-            {
-              key: "format_display",
-              header: "Format",
-              render: (value) => value || "-",
-            },
-            {
-              key: "team",
-              header: "Équipe",
-              render: (value) => `Équipe ${value}`,
-            },
-            {
-              key: "time",
-              header: "Heure",
-              render: (value) => value || "-",
-            },
-            {
-              key: "description_type",
-              header: "Description de la NC",
-              cellClassName: "max-w-[16rem]",
-            },
-            {
-              key: "quantity",
-              header: "Quantité",
-            },
-            {
-              key: "claim_origin",
-              header: "Origine de la réclamation",
-              render: (value) => {
-                const originMap: Record<string, string> = {
-                  site01: "Site 01",
-                  site02: "Site 02",
-                  "Réclamation client": "Réclamation client",
-                  "Retour client": "Retour client",
-                  consommateur: "Consommateur",
-                };
-                return originMap[value] || value || "-";
-              },
-              cellClassName: "max-w-[14rem]",
-            },
-            {
-              key: "claim_origin_detail",
-              header: "Détail de la réclamation",
-              render: (value, row) => {
-                // For site01/site02, show the role name as detail
-                if (["site01", "site02"].includes(row.claim_origin)) {
-                  return row.claim_origin === "site01" ? "Site 01" : "Site 02";
-                }
-                // For client claims, show the client details if available
-                if (
-                  ["Réclamation client", "Retour client"].includes(
-                    row.claim_origin
-                  )
-                ) {
-                  return value || "-";
-                }
-                // For consumer, show the typed detail
-                if (row.claim_origin === "consommateur") {
-                  return value || "-";
-                }
-                return "-";
-              },
-              cellClassName: "max-w-[20rem]",
-            },
-            {
-              key: "description_details",
-              header: "Détails complémentaires",
-              render: (value) => (
-                <div className="block whitespace-normal break-words max-w-[28rem]">
-                  {value || "-"}
-                </div>
-              ),
-              cellClassName: "max-w-[28rem]",
-            },
-            ...(user?.role === "performance" || user?.role === "admin"
-              ? [
-                  {
-                    key: "valuation",
-                    header: "Valorisation",
-                    render: (value: string) =>
-                      `${parseFloat(value).toFixed(2)} DZD`,
-                  },
-                ]
-              : []),
-            ...(canViewPerformance
-              ? [
-                  {
-                    key: "performance",
-                    header: "Performance",
-                    render: (value: string) => (
-                      <div className="flex items-center gap-2">
-                        <div className="block whitespace-normal break-words max-w-[24rem]">
-                          {value || "-"}
-                        </div>
-                      </div>
-                    ),
-                    cellClassName: "max-w-[24rem]",
-                  },
-                ]
-              : []),
-            ...(canFullEdit
-              ? [
-                  {
-                    key: "actions",
-                    header: "Actions",
-                    render: (_value: any, row: NonConformityReport) => (
-                      <ActionButtons
-                        onEdit={() => handleFullEdit(row)}
-                        onShowImage={
-                          row.picture_data
-                            ? () => handleViewPicture(row.picture_data!)
-                            : undefined
-                        }
-                        onDelete={() => handleDeleteReport(row)}
-                        size="sm"
-                        variant="default"
-                        showImageButton={!!row.picture_data}
-                        theme={isDarkMode ? "dark" : "light"}
-                        deleteConfirmation={{
-                          title: "Confirmer la suppression",
-                          message: `Êtes-vous sûr de vouloir supprimer le rapport #${row.report_number} ? Cette action est irréversible.`,
-                        }}
-                      />
-                    ),
-                  },
-                ]
-              : []),
-          ]}
+          columns={tableColumns}
           data={loading ? [] : reports}
           pagination={{
             currentPage: page,
