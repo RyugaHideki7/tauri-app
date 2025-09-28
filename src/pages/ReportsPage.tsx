@@ -678,8 +678,7 @@ export const ReportsPage: React.FC = () => {
         "Origine de la réclamation",
         "Détail de la réclamation",
         "Détails complémentaires",
-        "Valorisation",
-        ...(canViewPerformance ? ["Performance"] : []),
+        ...(canViewPerformance ? ["Valorisation", "Performance"] : []),
       ];
 
       // Add headers to the worksheet
@@ -773,18 +772,27 @@ export const ReportsPage: React.FC = () => {
           originMap[report.claim_origin] || report.claim_origin || "-",
           originDetail(),
           report.description_details || "-",
-          `${parseFloat(report.valuation).toFixed(2).replace(".", ",")} DZD`,
-          ...(canViewPerformance ? [report.performance || "-"] : []),
         ];
+
+        if (canViewPerformance) {
+          rowData.push(
+            `${parseFloat(report.valuation)
+              .toFixed(2)
+              .replace(".", ",")} DZD`
+          );
+          rowData.push(report.performance || "-");
+        }
 
         worksheet.addRow(rowData);
       });
 
       // Set column widths
       const columnWidths = [
-        15, 18, 15, 25, 15, 12, 10, 8, 20, 10, 20, 20, 30, 15,
+        15, 18, 15, 25, 15, 12, 10, 8, 20, 10, 20, 20, 30,
       ];
-      if (canViewPerformance) columnWidths.push(15);
+      if (canViewPerformance) {
+        columnWidths.push(15, 15);
+      }
 
       worksheet.columns.forEach((column, index) => {
         if (columnWidths[index]) {
