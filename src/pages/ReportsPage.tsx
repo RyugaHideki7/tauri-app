@@ -758,12 +758,23 @@ export const ReportsPage: React.FC = () => {
           return "-";
         };
 
+        const productionDateExport = (() => {
+          if (!report.production_date) {
+            return "-";
+          }
+          const date = new Date(report.production_date);
+          if (date.getFullYear() === 1900 && date.getMonth() === 0 && date.getDate() === 1) {
+            return "manque de traçabilité";
+          }
+          return date;
+        })();
+
         const rowData = [
           report.report_number,
           new Date(report.report_date), // Export as Date object for proper filtering
           report.line_name || "Ligne inconnue",
           report.product_name || "Produit inconnu",
-          new Date(report.production_date), // Export as Date object for proper filtering
+          productionDateExport,
           report.format_display || "-",
           `Équipe ${report.team}`,
           report.time || "-",
@@ -1076,6 +1087,17 @@ export const ReportsPage: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const formatProductionDate = (dateString: string) => {
+    if (!dateString) {
+      return "-";
+    }
+    const date = new Date(dateString);
+    if (date.getFullYear() === 1900 && date.getMonth() === 0 && date.getDate() === 1) {
+      return "manque de traçabilité";
+    }
+    return formatDate(dateString);
+  };
+
   const columnDefinitions: Record<string, TableColumnDefinition> = React.useMemo(
     () => ({
       report_number: {
@@ -1103,7 +1125,7 @@ export const ReportsPage: React.FC = () => {
       production_date: {
         key: "production_date",
         header: COLUMN_LABELS.production_date,
-        render: (value: string) => formatDate(value),
+        render: (value: string) => formatProductionDate(value),
       },
       format_display: {
         key: "format_display",
@@ -1221,6 +1243,7 @@ export const ReportsPage: React.FC = () => {
       handleDeleteReport,
       isDarkMode,
       formatDate,
+      formatProductionDate,
     ]
   );
 

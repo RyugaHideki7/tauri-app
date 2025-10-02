@@ -196,7 +196,9 @@ export const NewReportPage: React.FC = () => {
     if (!formData.product_id) newErrors.product_id = 'Le produit est requis';
     if (!formData.format_id) newErrors.format_id = 'Le format est requis';
     if (!formData.report_date) newErrors.report_date = 'La date de la réclamation est requise';
-    if (!formData.production_date) newErrors.production_date = 'La date de production est requise';
+    if (!formData.production_date && formData.production_date !== 'manque de traçabilité') {
+      newErrors.production_date = 'La date de production est requise';
+    }
     if (!formData.team) newErrors.team = "L'équipe est requise";
     if (!formData.description_type) newErrors.description_type = 'Le type de description est requis';
     // Skip description_details validation for site01/site02 users or when site01/site02 is selected
@@ -237,13 +239,19 @@ export const NewReportPage: React.FC = () => {
     setLoading(true);
 
     try {
+      // Normalize production date when marked as unavailable
+      const normalizedProductionDate =
+        formData.production_date === 'manque de traçabilité'
+          ? '1900-01-01'
+          : formData.production_date;
+
       // Prepare report data based on user role and claim origin type
       const reportData: CreateReportRequest = {
         line_id: formData.line_id,
         product_id: formData.product_id,
         format_id: formData.format_id,
         report_date: formData.report_date,
-        production_date: formData.production_date,
+        production_date: normalizedProductionDate,
         team: formData.team,
         time: formData.time,
         description_type: formData.description_type,
@@ -448,14 +456,41 @@ export const NewReportPage: React.FC = () => {
 
             {/* Production Date */}
             <div>
-              <DatePicker
-                label="Date de production *"
-                value={formData.production_date}
-                onChange={(value) => handleInputChange('production_date', value)}
-                error={errors.production_date}
-                placeholder="Sélectionnez la date de production"
-                maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
-              />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <DatePicker
+                    label="Date de production *"
+                    value={formData.production_date === 'manque de traçabilité' ? '' : formData.production_date}
+                    onChange={(value) => handleInputChange('production_date', value)}
+                    error={errors.production_date}
+                    placeholder="Sélectionnez la date de production"
+                    maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
+                    disabled={formData.production_date === 'manque de traçabilité'}
+                  />
+                </div>
+                <div className="flex items-center h-10 mb-1">
+                  <label className="flex items-center text-sm text-muted-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      checked={formData.production_date === 'manque de traçabilité'}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        handleInputChange(
+                          'production_date',
+                          isChecked ? 'manque de traçabilité' : new Date().toISOString().split('T')[0]
+                        );
+                      }}
+                    />
+                    <span className="ml-2">Données non disponibles</span>
+                  </label>
+                </div>
+              </div>
+              {formData.production_date === 'manque de traçabilité' && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  La date de production sera enregistrée comme "manque de traçabilité"
+                </p>
+              )}
             </div>
 
             {/* Time */}
