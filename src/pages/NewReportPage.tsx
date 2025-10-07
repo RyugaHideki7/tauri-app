@@ -10,6 +10,7 @@ import IntuitiveTimePicker from '../components/ui/IntuitiveTimePicker';
 import Dialog from '../components/ui/Dialog';
 import PictureUpload from '../components/ui/PictureUpload';
 import { ROLES } from '../types/auth';
+import wilayas from '../data/algerianWilayas.json';
 
 interface Client {
   id: string;
@@ -40,6 +41,13 @@ interface DescriptionType {
   id: number;
   name: string;
 }
+
+interface Wilaya {
+  code: string;
+  name: string;
+}
+
+const ALGERIAN_WILAYAS = wilayas as Wilaya[];
 
 
 interface CreateReportRequest {
@@ -598,6 +606,17 @@ export const NewReportPage: React.FC = () => {
                     <p className="mt-1 text-sm text-red-500">{errors.description_details}</p>
                   )}
                 </>
+              ) : formData.claim_origin === ROLES.CONSOMMATEUR ? (
+                <Select
+                  value={formData.claim_origin_detail || ''}
+                  onChange={(value) => handleInputChange('claim_origin_detail', value)}
+                  options={[{ value: '', label: 'Sélectionnez une wilaya' }, ...ALGERIAN_WILAYAS.map((wilaya) => ({
+                    value: `${wilaya.code} - ${wilaya.name}`,
+                    label: `${wilaya.code} - ${wilaya.name}`
+                  }))]}
+                  error={errors.claim_origin_detail}
+                  placeholder="Sélectionnez une wilaya"
+                />
               ) : (
                 <>
                   <div className="w-full">
